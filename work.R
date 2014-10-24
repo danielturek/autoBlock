@@ -9,6 +9,7 @@ control <- list(
     )
 save(control, file=file.path(path, '.control.RData'))
 source(file.path(path, 'autoBlock_utils.R'))
+load('results.RData')
 
 
 
@@ -23,6 +24,7 @@ partitionsNcode <- substitute({
     library(R.utils)
     source('autoBlock_utils.R')
     load('.control.RData')
+    control$verbose <- FALSE
     args <- commandArgs(trailingOnly=TRUE, asValue=TRUE)
     k <- as.numeric(args[1])
     rho <- as.numeric(args[2])
