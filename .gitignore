@@ -1,3 +1,6 @@
 .Rhistory
 temp*
 TEMP*
+out
+.control.RData
+gen_*

@@ -1,27 +1,38 @@
+path <- '~/GitHub/autoBlock'
 control <- list(
-    sparsifyCov = FALSE,
-    sparseCovThreshold = -1,
     cutree_method = 'custom',
     cutree_h = 0.9,
     cutree_maxGroupSize = 8,
     cutree_maxGroupSizeDynamic = TRUE,
-##    cutree_maxGroupSizeRelHeightOveride = 0,
     cutree_maxHeightRelativeFromBase = 0.3,
     verbose = TRUE
     )
-path <- '~/GitHub/autoBlock'
+save(control, file=file.path(path, '.control.RData'))
 source(file.path(path, 'autoBlock_utils.R'))
-source(file.path(path, 'autoBlock_models.R'))
+
+
+
 
 
 ## partitions of N = 2^k
-if(FALSE) {
-    k <- 3
-    rho <- 0.8
-    runList <- list(givenCov = quote({ spec <- MCMCspec(Rmodel, nodes = NULL)
-                                       spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE, propCov = Sigma), print=FALSE); spec }),
-                    'all', 'auto')
-    runList <- list('auto')   ################## TEMPORARY
+rho <- 0.8
+kValues <- 2
+RscriptName <- 'gen_partitionsN.R'
+shellScriptName <- 'gen_partitionsNwrapper.sh'
+partitionsNcode <- substitute({
+    library(R.utils)
+    source('autoBlock_utils.R')
+    load('.control.RData')
+    args <- commandArgs(trailingOnly=TRUE, asValue=TRUE)
+    k <- as.numeric(args[1])
+    rho <- as.numeric(args[2])
+    runList <- list(
+        givenCov = quote({
+            spec <- MCMCspec(Rmodel, nodes = NULL)
+            spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE, propCov = Sigma), print=FALSE)
+            spec }),
+        'all',
+        'auto')
     N <- 2^k
     blockSizes <- 2^(0:k)
     code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
@@ -47,15 +58,29 @@ if(FALSE) {
         ab$run(runList)
         abList[['blockSzMixed']] <- ab
     }
-    lst <- createDFfromABlist(abList, rho=rho)
-    plotABS(lst$df)
-}
-if(FALSE) {
-    load('dfs.RData')
-    dfs[[k]] <- df
-    save('dfs', file='dfs.RData')
-}
-#plotABS(dfs[[5]])
+    df <- createDFfromABlist(abList, rho=rho)
+    for(ab in abList) { ab$abModel <- NULL; ab$Cmcmcs <- list() }
+    DF <- list()
+    ABLIST <- list()
+    if(file.exists('results.RData')) load('results.RData')
+    DF[[k]] <- df
+    ABLIST[[k]] <- abList
+    save(DF, ABLIST, file='results.RData')
+},
+                              list(DF = as.name(paste0('dfNrho', rho)),
+                                   ABLIST = as.name(paste0('abListNrho', rho))))
+cat(formatForFile(partitionsNcode), file=RscriptName)
+f <- file(shellScriptName)
+writeLines(c(
+    paste0('for k in ', paste(kValues, collapse=' ')),
+    'do',
+        paste0('    R CMD BATCH --no-save --no-restore --no-timing --args -k=$k -rho=', rho, ' ', RscriptName, ' out'),
+    'done',
+    'rm out'
+), f)
+close(f)
+system(paste0('chmod 755 ', shellScriptName))
+
 
 
 ## testing of SSMs
