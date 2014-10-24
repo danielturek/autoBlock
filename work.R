@@ -1,6 +1,6 @@
-path <- '/Users/dturek/Dropbox/Berkeley docs/R/11_automatic_blocking'
-library(nimble)
-source(file.path(path, 'autoBlockClass.R'))
+path <- '/GitHub/autoBlock'
+source(file.path(path, 'autoBlock_utils.R'))
+source(file.path(path, 'autoBlock_models.R'))
 control <- list(
     sparsifyCov = TRUE,
     sparseCovThreshold = 0.001,
@@ -11,16 +11,6 @@ control <- list(
     cutree_maxGroupSizeRelHeightOveride = 0.1,
     verbose = TRUE
     )
-if(TRUE) {
-    models <- c('tester', 'litters', 'SSMmub', 'SSMab')
-    for(model in models) {
-        cat(paste0('loading model ', model, '.....\n'))
-        source(paste0('model_', model, '.R'))
-        eval(substitute(MODEL <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control), list(MODEL = as.name(paste0('ab', model))))) }
-}
-
-
-
 
 
 ## partitions of N = 2^k
@@ -91,6 +81,13 @@ if(FALSE) {
     save('dflitters', file='dflitters.RData')
 }
 
+
+load('dfs.RData')
+dfs
+plotABS(dfs[[3]])
+dfs[[2]]$naming
+df <- dfs[[2]]
+df[df$model=='blockSz2' , 'essPT']
 
 
 ## testing the new adaptation options; and a nice N=3 example

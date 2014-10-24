@@ -386,8 +386,7 @@ plotABS <- function(df, plotGroupSizes=TRUE, xlimToMin=FALSE, together) {
     if(together) { quartz(); eval(parCmd) }
     for(xVarName in xVarNames) {
         if(!together) { quartz(); eval(parCmd) }
-        maxMinXVar <- 0
-        for(mod in models) {dfM<-df[df$model==mod,]; blks<-unique(dfM$blocking); for(blk in blks) {maxMinXVar<-max(maxMinXVar,min(dfM[dfM$blocking==blk,xVarName]))}}
+        maxMinXVar<-0; for(mod in models) {dfMod<-df[df$model==mod,]; blks<-unique(dfMod$blocking); for(blk in blks) {maxMinXVar<-max(maxMinXVar,min(dfMod[dfMod$blocking==blk,xVarName]))}}
         maxXVar <- if(xlimToMin) maxMinXVar else max(df[, xVarName])
         xlim <- c(maxXVar*-0.05, maxXVar)
         maxTiming <- max(df[, 'timing'])
@@ -395,6 +394,7 @@ plotABS <- function(df, plotGroupSizes=TRUE, xlimToMin=FALSE, together) {
             dfMod <- df[df$model==mod,]
             blockings <- unique(dfMod$blocking)
             nBlockings <- length(blockings)
+            bestEssPT<-0; for(blk in blockings) { if(min(dfMod[dfMod$blocking==blk,'essPT'])>bestEssPT && blk!='givenCov') {bestEssPT<-min(dfMod[dfMod$blocking==blk,'essPT']); bestBlk<-blk} }
             plot(-100,-100,xlim=xlim,ylim=c(0,nBlockings+1),xlab='',ylab='',main=paste0(xVarName, ' for model ', mod))
             for(iBlocking in 1:nBlockings) {
                 blocking <- blockings[iBlocking]
@@ -407,7 +407,8 @@ plotABS <- function(df, plotGroupSizes=TRUE, xlimToMin=FALSE, together) {
                 lines(x=c(0,timingOnXaxis), y=rep(yCoord,2), lty=1, lwd=2, col='lightgrey')
                 if(plotGroupSizes) { text(x=xVarValues, y=yCoord, labels=groupSizes, cex=0.7)
                 } else { points(x=xVarValues, y=rep(yCoord,length(xVarValues)), pch=20) }
-                text(x=xlim[1], y=yCoord, labels=blocking, col='blue')
+                col <- if(blocking == bestBlk) 'green' else 'blue'
+                text(x=xlim[1], y=yCoord, labels=blocking, col=col)
                 if(timing==maxTiming) text(xlim[2], yCoord+1, paste0('t = ',round(timing,1)))
             }
         }
