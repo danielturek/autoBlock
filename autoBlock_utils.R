@@ -59,8 +59,9 @@ autoBlockParamDefaults <- function() {
         adaptIntervalBlock = 200,
         cutree_h = 0.9,
         cutree_maxGroupSize = 10,
-        cutree_maxGroupSizeRelHeightOveride = 0.2,
-        cutree_maxHeightRelativeFromBase = 0.5,
+        cutree_maxGroupSizeDynamic = FALSE,
+##        cutree_maxGroupSizeRelHeightOveride = 0.2,
+        cutree_maxHeightRelativeFromBase = 0.3,
         cutree_method = 'custom',
         debug = FALSE,
         niter = 100000,
@@ -88,7 +89,8 @@ autoBlock <- setRefClass(
         adaptIntervalBlock = 'numeric',
         cutree_h = 'numeric',
         cutree_maxGroupSize = 'numeric',
-        cutree_maxGroupSizeRelHeightOveride = 'numeric',
+        cutree_maxGroupSizeDynamic = 'logical',
+##        cutree_maxGroupSizeRelHeightOveride = 'numeric',
         cutree_maxHeightRelativeFromBase = 'numeric',
         cutree_method = 'character',
         debug = 'logical',
@@ -107,6 +109,7 @@ autoBlock <- setRefClass(
         ## persistant LISTS of historical data
         empCov = 'list',
         empCovSparse = 'list',
+        empCovSparseThresh = 'list',
         empCor = 'list',
         distMatrix = 'list',
         hTree = 'list',
@@ -166,16 +169,18 @@ autoBlock <- setRefClass(
 
         runAutoBlock = function() {
             runGroups(abModel$nodeGroupScalars, 'auto-0')
-            runGroups(determineGroupsFromPreviousSample(), 'auto-1', printTree=TRUE)
+            groupsTagList <- determineGroupsFromPreviousSample()
+            runGroups(groupsTagList$groups, paste0('auto-1',groupsTagList$tag), printTree=TRUE)
             autoIt <- 1
             while(min(essPT[[it]]) > min(essPT[[it-1]])) {
                 autoIt <- autoIt + 1
-                runGroups(determineGroupsFromPreviousSample(), paste0('auto-',autoIt), printTree=TRUE)
+                groupsTagList <- determineGroupsFromPreviousSample()
+                runGroups(groupsTagList$groups, paste0('auto-',autoIt,groupsTagList$tag), printTree=TRUE)
             }
         },
 
         determineGroupsFromPreviousSample = function() {
-            empCov[[it]] <<- cov(samples[[it-1]])
+            empCov[[it]] <<- cov(samples[[it]])
             empCovSparse[[it]] <<- empCov[[it]]
             if(sparsifyCov) {
                 sparseSuccess <<- TRUE
@@ -184,14 +189,16 @@ autoBlock <- setRefClass(
                                                     } else { empCovSparse[[it]] <<- sparse_out
                                                              dimnames(empCovSparse[[it]]) <<- dimnames(empCov[[it]]) }
             }
+            empCovSparseThresh[[it]] <<- empCovSparse[[it]]
             if(sparseCovThreshold > 0) {
-                ind <- abs(empCovSparse[[it]]) > sparseCovThreshold
-                diag(ind) <- TRUE
-                empCovSparse[[it]] <<- empCovSparse[[it]] * ind
+                ind <- abs(empCovSparseThresh[[it]]) > sparseCovThreshold
+                diag(ind) <- true
+                empCovSparseThresh[[it]] <<- empCovSparseThresh[[it]] * ind
             }
-            empCor[[it]] <<- cov2cor(empCovSparse[[it]])
+            empCor[[it]] <<- cov2cor(empCovSparseThresh[[it]])
             distMatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
             hTree[[it]] <<- hclust(distMatrix[[it]])
+            tag <- ''
             switch(cutree_method,
                    height = {
                        ct <- cutree(hTree[[it]], h = cutree_h)
@@ -202,9 +209,40 @@ autoBlock <- setRefClass(
                        names(ct) <- hTree[[it]]$labels
                        groups <- lapply(unique(ct), function(x) names(ct)[ct==x]) },
                    custom = {
-                       groups <- cutree_custom(hTree[[it]], maxHeight=cutree_h, maxGroupSize=cutree_maxGroupSize, maxHeightRelativeFromBase=cutree_maxHeightRelativeFromBase, maxGroupSizeRelHeightOveride=cutree_maxGroupSizeRelHeightOveride) },
+                       if(!cutree_maxGroupSizeDynamic) {
+                           groups <- cutree_custom(hTree[[it]], maxHeight=cutree_h, maxGroupSize=cutree_maxGroupSize, maxHeightRelativeFromBase=cutree_maxHeightRelativeFromBase)
+                       } else {
+                           nNodes <- length(abModel$nodeGroupScalars)
+                           if(nNodes == 1) stop()
+                           maxSizes <- unique(c(2^(1:floor(log(nNodes)/log(2))), nNodes))
+                           Rmodel <- abModel$newModel()
+                           groupsTmp <- specsTmp <- RmcmcsTmp <- CmcmcsTmp <- timingTmp <- samplesTmp <- essTmp <- essPTTmp <- essPTminTmp <-list()
+                           for(iSize in seq_along(maxSizes)) {
+                               groupsTmp[[iSize]] <- cutree_custom(hTree[[it]], maxHeight=cutree_h, maxGroupSize=maxSizes[iSize], maxHeightRelativeFromBase=cutree_maxHeightRelativeFromBase)
+                               specsTmp[[iSize]] <- MCMCspec(Rmodel, nodes=NULL, monitors=character(0))
+                               for(nodeGroup in groupsTmp[[iSize]]) addSamplerToSpec(Rmodel, specsTmp[[iSize]], nodeGroup, conjOveride=FALSE)
+                               specsTmp[[iSize]]$addMonitors(Rmodel$getNodeNames(stochOnly=TRUE, includeData=FALSE), print=FALSE)
+                               RmcmcsTmp[[iSize]] <- buildMCMC(specsTmp[[iSize]])
+                           }
+                           Cmodel <- compileNimble(Rmodel)
+                           CmcmcsTmp_temp <- compileNimble(RmcmcsTmp, project = Rmodel)
+                           if(length(RmcmcsTmp) == 1) { CmcmcsTmp[[1]] <- CmcmcsTmp_temp
+                           } else                     { CmcmcsTmp      <- CmcmcsTmp_temp }
+                           if(setSeed0) set.seed(0)
+                           for(iSize in seq_along(maxSizes)) {
+                               timingTmp[[iSize]] <- as.numeric(system.time(CmcmcsTmp[[iSize]](niter))[3])
+                               samplesTmp[[iSize]] <- as.matrix(nfVar(CmcmcsTmp[[iSize]], 'mvSamples'))
+                               essTmp[[iSize]] <- apply(samplesTmp[[iSize]], 2, effectiveSize)
+                               essPTTmp[[iSize]] <- essTmp[[iSize]]/timingTmp[[iSize]]
+                               essPTminTmp[[iSize]] <- sort(essPTTmp[[iSize]])[1]
+                           }
+                           bestInd <- which(unlist(essPTminTmp) == max(unlist(essPTminTmp)))
+                           groups <- groupsTmp[[bestInd]]
+                           tag <- paste0('max', maxSizes[bestInd])
+                       }
+                   },
                    stop('cutree method invalid'))
-            return(groups)
+            return(list(groups=groups, tag=tag))
         },
 
         runGroups = function(groups, name, printTree=FALSE, conjOveride=FALSE, customSpec=FALSE) {
@@ -280,7 +318,7 @@ autoBlock <- setRefClass(
             cat('\ngroups:\n'); g <- grouping[[it]]
             if(is.list(g)) { for(i in seq_along(g)) cat(paste0('[', i, '] ', paste0(g[[i]], collapse=', '), '\n'))
                          } else { cat('custom MCMC specification\n') }
-            if(printTree) { dev.new(); if(inherits(try(plot(as.dendrogram(hTree[[it]]), ylim=c(0,1), main=name), silent=TRUE), 'try-error')) dev.off() }
+            if(printTree) { dev.new(); if(inherits(try(plot(as.dendrogram(hTree[[it-1]]), ylim=c(0,1), main=name), silent=TRUE), 'try-error')) dev.off() }
             cat('\nsamplers:\n'); spec$getSamplers()
             cat(paste0('\nMCMC runtime: ', round(timing[[it]], 2), ' seconds\n'))
             cat('\nESS:\n'); print(ess[[it]])
@@ -293,7 +331,7 @@ autoBlock <- setRefClass(
 
 
 
-cutree_custom <- function(ht, maxHeight, maxGroupSize, maxHeightRelativeFromBase, maxGroupSizeRelHeightOveride) {
+cutree_custom <- function(ht, maxHeight, maxGroupSize, maxHeightRelativeFromBase) {
     labels <- ht$labels;     height <- ht$height;     merge <- ht$merge
     nNodes <- length(labels)
     nMerges <- dim(merge)[1]
@@ -312,8 +350,9 @@ cutree_custom <- function(ht, maxHeight, maxGroupSize, maxHeightRelativeFromBase
         canMerge <- TRUE
         if(height[i] > maxHeight) canMerge <- FALSE
         if(df$num[ind1] + df$num[ind2] > maxGroupSize) {
-            rh <- max(df$recentHeight[c(ind1,ind2)])
-            if(height[i] > rh + maxGroupSizeRelHeightOveride*(1-rh)) canMerge <- FALSE
+##            rh <- max(df$recentHeight[c(ind1,ind2)])
+##            if(height[i] > rh + maxGroupSizeRelHeightOveride*(1-rh)) canMerge <- FALSE
+            canMerge <- FALSE
         }
         bh <- min(df$baseHeight[c(ind1,ind2)])
         if(height[i] > bh + maxHeightRelativeFromBase*(1-bh)) canMerge <- FALSE
@@ -394,7 +433,7 @@ plotABS <- function(df, plotGroupSizes=TRUE, xlimToMin=FALSE, together) {
             dfMod <- df[df$model==mod,]
             blockings <- unique(dfMod$blocking)
             nBlockings <- length(blockings)
-            bestEssPT<-0; for(blk in blockings) { if(min(dfMod[dfMod$blocking==blk,'essPT'])>bestEssPT && blk!='givenCov') {bestEssPT<-min(dfMod[dfMod$blocking==blk,'essPT']); bestBlk<-blk} }
+            bestBlk<-''; bestEssPT<-0; for(blk in blockings) { if(min(dfMod[dfMod$blocking==blk,'essPT'])>bestEssPT && ((blk=='all')||grepl('^auto',blk))) {bestEssPT<-min(dfMod[dfMod$blocking==blk,'essPT']); bestBlk<-blk} }
             plot(-100,-100,xlim=xlim,ylim=c(0,nBlockings+1),xlab='',ylab='',main=paste0(xVarName, ' for model ', mod))
             for(iBlocking in 1:nBlockings) {
                 blocking <- blockings[iBlocking]

@@ -1,26 +1,27 @@
-path <- '/GitHub/autoBlock'
-source(file.path(path, 'autoBlock_utils.R'))
-source(file.path(path, 'autoBlock_models.R'))
 control <- list(
-    sparsifyCov = TRUE,
-    sparseCovThreshold = 0.001,
+    sparsifyCov = FALSE,
+    sparseCovThreshold = -1,
     cutree_method = 'custom',
-    cutree_h = 0.99,
-    cutree_maxGroupSize = 5,
-    cutree_maxHeightRelativeFromBase = 0.2,
-    cutree_maxGroupSizeRelHeightOveride = 0.1,
+    cutree_h = 0.9,
+    cutree_maxGroupSize = 8,
+    cutree_maxGroupSizeDynamic = TRUE,
+##    cutree_maxGroupSizeRelHeightOveride = 0,
+    cutree_maxHeightRelativeFromBase = 0.3,
     verbose = TRUE
     )
+path <- '~/GitHub/autoBlock'
+source(file.path(path, 'autoBlock_utils.R'))
+source(file.path(path, 'autoBlock_models.R'))
 
 
 ## partitions of N = 2^k
 if(FALSE) {
-    k <- 6  ### next to do: k=6
+    k <- 3
     rho <- 0.8
     runList <- list(givenCov = quote({ spec <- MCMCspec(Rmodel, nodes = NULL)
                                        spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE, propCov = Sigma), print=FALSE); spec }),
-                    'all',
-                    'auto')
+                    'all', 'auto')
+    runList <- list('auto')   ################## TEMPORARY
     N <- 2^k
     blockSizes <- 2^(0:k)
     code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
@@ -37,7 +38,7 @@ if(FALSE) {
         abList[[paste0('blockSz', blockSize)]] <- ab
     }
     if(k > 1) {
-        blockLengths <- c(1, 2^(0:(k-1)));    if(k==0) stop('k=0 doesnt work here')
+        blockLengths <- c(1, 2^(0:(k-1)))
         indList <- list(); cur <- 1
         for(len in blockLengths) { indList <- c(indList, list(cur:(cur+len-1))); cur <- cur+len }
         Sigma <- createCov(N, indList=indList, rho=rho)
@@ -46,8 +47,8 @@ if(FALSE) {
         ab$run(runList)
         abList[['blockSzMixed']] <- ab
     }
-    df <- createDFfromABlist(abList, rho=rho)
-    plotABS(df)
+    lst <- createDFfromABlist(abList, rho=rho)
+    plotABS(lst$df)
 }
 if(FALSE) {
     load('dfs.RData')
@@ -73,7 +74,13 @@ if(FALSE) {
 
 ## testing of litters
 if(FALSE) {
-    runList <- list('all', 'auto', blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')))
+    runList <- list(
+        'all',
+        'auto',
+        blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')),
+        blockABP = list(c('a[1]','b[1]'), c('a[2]','b[2]'), 'p[1,1:16]', 'p[2,1:16]'),
+        blockABPhalf = list(c('a[1]','b[1]'), c('a[2]','b[2]'), 'p[1,1:8]', 'p[1,9:16]', 'p[2,1:8]', 'p[2,9:16]')
+        )
     ablitters$run(runList)
     abList <- list(litters=ablitters)
     dflitters <- createDFfromABlist(abList)
@@ -82,12 +89,38 @@ if(FALSE) {
 }
 
 
-load('dfs.RData')
-dfs
-plotABS(dfs[[3]])
-dfs[[2]]$naming
-df <- dfs[[2]]
-df[df$model=='blockSz2' , 'essPT']
+
+
+
+
+
+
+
+
+
+
+Cmcmcs <- ablitters$Cmcmcs
+samples <- ablitters$samples
+empCov <- ablitters$empCov
+empCovSparse <- ablitters$empCovSparse
+empCovSparseThresh <- ablitters$empCovSparseThresh
+grouping <- ablitters$grouping
+length(ablitters$empCov)
+length(samples)
+names(samples)
+dim(samples[[2]])
+cov(samples[[2]]) - empCovSparseThresh[[3]]
+length(empCov)
+length(empCovSparse)
+empCovSparseThresh[[3]]
+ablitters$sparseCovThreshold
+cov2cor(empCov[[3]])[1:4,1:4]
+nfVar(Cmcmcs[[3]], 'samplerFunctions')$contentsList[[1]]$propCov
+cov2cor(nfVar(Cmcmcs[[3]], 'samplerFunctions')$contentsList[[3]]$propCov)
+cov(samples[[3]])[1:4,1:4]
+cov2cor(cov(samples[[3]]))[1:4,1:4]
+length(Cmcmcs)
+grouping[[3]]
 
 
 ## testing the new adaptation options; and a nice N=3 example
@@ -150,7 +183,58 @@ df[df$model=='blockSz2' , 'essPT']
 
 
 
+library(cluster)
+Rmodel <- ablitters$abModel$newModel()
+spec <- MCMCspec(Rmodel, onlyRW=TRUE)                      
+spec$addSampler('RW_block', list(targetNodes=c('a[1]','b[1]')))
+spec$addSampler('RW_block', list(targetNodes=c('a[2]','b[2]')))
+spec$setSamplers(c(37,38,5:36))
+spec <- MCMCspec(Rmodel, nodes=NULL)
+spec$addSampler('RW_block', list(targetNodes=c('a[1]','b[1]')))
+spec$addSampler('RW_block', list(targetNodes=c('a[2]','b[2]')))
+spec$addSampler('RW_block', list(targetNodes=c('p[1, 1:16]')))
+spec$addSampler('RW_block', list(targetNodes=c('p[2, 1:16]')))
+spec$getSamplers()
+spec$addMonitors(c('a','b','p'))
+Rmcmc <- buildMCMC(spec)
+Cmodel <- compileNimble(Rmodel)
+Cmcmc <- compileNimble(Rmcmc, project=Rmodel)
+set.seed(0)
+Cmcmc(100000)
+samples <- as.matrix(nfVar(Cmcmc, 'mvSamples'))
+Cor <- cor(samples)
+cov(samples)[1:4,1:4]
+cor(samples)[1:4,1:4]
+empCor <- cor(samples)
+dd <- as.dist(1-abs(empCor))
+hTree <- hclust(dd)
+plot(hTree)
+groups <- cutree_custom(hTree, maxHeight=0.9, maxGroupSize=10, maxHeightRelativeFromBase=0.3, maxGroupSizeRelHeightOveride=0.1)
+groups
+i <- 4
+nfVar(Cmcmc, 'samplerFunctions')$contentsList[[i]]$d
+nfVar(Cmcmc, 'samplerFunctions')$contentsList[[i]]$acceptanceRateHistory
+nfVar(Cmcmc, 'samplerFunctions')$contentsList[[i]]$propCov
+cov2cor(nfVar(Cmcmc, 'samplerFunctions')$contentsList[[i]]$propCov)
 
+ag <- agnes(dd)
+plot(ag)
+
+
+
+runList <- list(
+    'auto', 'all'
+
+    )
+ablitters$run(runList)
+abList <- list(litters=ablitters)
+df <- createDFfromABlist(abList)
+plotABS(df, xlimToMin=TRUE)
+for(i in 4:7) {
+    print(ablitters$naming[[i]])
+    print(ablitters$essPT[[i]][c('a[1]','a[2]','b[1]','b[2]')])
+    print(cor(ablitters$samples[[i]])[1:4,1:4])
+}
 
 
 

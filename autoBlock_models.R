@@ -32,7 +32,7 @@ constants <- list(mu=mu, Sigma=Sigma, Ident=Ident)
 data <- list(y = y)
 inits <- list()
 
-abtester <- autoBlock(code=code, constants=constants, data=data, inits=inits)
+abtester <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
 
 
 ################
@@ -62,7 +62,7 @@ code <- modelCode({
      }
 })
 
-ablitters <- autoBlock(code=code, constants=constants, data=data, inits=inits)
+ablitters <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
 
 
 
@@ -99,7 +99,7 @@ simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
 data <- list(y = Rmodel$y)
 inits <- list(mu = Rmodel$mu, b = Rmodel$b, sigPN = Rmodel$sigPN, sigOE = Rmodel$sigOE, x = Rmodel$x)
 
-abSSMmub <- autoBlock(code=code, constants=constants, data=data, inits=inits)
+abSSMmub <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
 
 
 ################
@@ -134,5 +134,5 @@ simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
 data <- list(y = Rmodel$y)
 inits <- list(a = Rmodel$a, b = Rmodel$b, sigPN = Rmodel$sigPN, sigOE = Rmodel$sigOE, x = Rmodel$x)
 
-abSSMab <- autoBlock(code=code, constants=constants, data=data, inits=inits)
+abSSMab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
 
