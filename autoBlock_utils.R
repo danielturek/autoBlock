@@ -168,14 +168,14 @@ autoBlock <- setRefClass(
         },
 
         runAutoBlock = function() {
-            runGroups(abModel$nodeGroupScalars, 'auto-0')
+            runGroups(abModel$nodeGroupScalars, 'auto0')
             groupsTagList <- determineGroupsFromPreviousSample()
-            runGroups(groupsTagList$groups, paste0('auto-1',groupsTagList$tag), printTree=TRUE)
+            runGroups(groupsTagList$groups, paste0('auto1',groupsTagList$tag), printTree=TRUE)
             autoIt <- 1
             while(min(essPT[[it]]) > min(essPT[[it-1]])) {
                 autoIt <- autoIt + 1
                 groupsTagList <- determineGroupsFromPreviousSample()
-                runGroups(groupsTagList$groups, paste0('auto-',autoIt,groupsTagList$tag), printTree=TRUE)
+                runGroups(groupsTagList$groups, paste0('auto',autoIt,groupsTagList$tag), printTree=TRUE)
             }
         },
 
@@ -238,7 +238,7 @@ autoBlock <- setRefClass(
                            }
                            bestInd <- which(unlist(essPTminTmp) == max(unlist(essPTminTmp)))
                            groups <- groupsTmp[[bestInd]]
-                           tag <- paste0('max', maxSizes[bestInd])
+                           tag <- paste0('-max', maxSizes[bestInd])
                        }
                    },
                    stop('cutree method invalid'))
