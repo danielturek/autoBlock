@@ -17,7 +17,7 @@ load('results.RData')
 
 ## partitions of N = 2^k
 rho <- 0.8
-kValues <- 2
+kValues <- 1:7
 RscriptName <- 'gen_partitionsN.R'
 shellScriptName <- 'gen_partitionsNwrapper.sh'
 partitionsNcode <- substitute({
@@ -77,8 +77,8 @@ writeLines(c(
     paste0('for k in ', paste(kValues, collapse=' ')),
     'do',
         paste0('    R CMD BATCH --no-save --no-restore --no-timing --args -k=$k -rho=', rho, ' ', RscriptName, ' out'),
-    'done',
-    'rm out'
+    'done'
+##    'rm out'
 ), f)
 close(f)
 system(paste0('chmod 755 ', shellScriptName))
