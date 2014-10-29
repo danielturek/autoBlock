@@ -1,13 +1,19 @@
 path <- '~/GitHub/autoBlock'
-control <- list(
-    cutree_heights = seq(0, 1, by=0.1),
-    verbose = TRUE
-    )
-save(control, file=file.path(path, '.control.RData'))
+#control <- list(cutree_heights = seq(0, 1, by=0.1))
+#save(control, file=file.path(path, '.control.RData'))
 source(file.path(path, 'autoBlock_utils.R'))
 #load('results.RData')
 
 
+
+## runList <- list('none', 'all', 'default',
+##     list(c('x[1]','x[2]','x[3]'), c('x[5]','z1')),
+##     quote({ spec <- MCMCspec(Rmodel, nodes=NULL); spec$addSampler('slice', list(targetNode='x[1]'), print=FALSE); spec }),
+##     'auto')
+## abtester$run(runList)
+## abList <- list(tester = abtester)
+## df <- createDFfromABlist(abList)
+## plotABS(df)
 
 
 
@@ -103,7 +109,7 @@ if(FALSE) {
     abSSMab$run(runListAB)
     abList <- list(independent=abSSMmub, correlated=abSSMab)
     dfSSM <- createDFfromABlist(abList)
-    plotABS(dfSSM, xlimToMin=FALSE)
+    plotABS(dfSSM, xlimToMin=TRUE)
     save('dfSSM', file='dfSSM.RData')
 }
     
