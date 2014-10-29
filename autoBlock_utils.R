@@ -58,13 +58,13 @@ autoBlockParamDefaults <- function() {
         adaptInterval = 200,
         adaptIntervalBlock = 200,
         cutree_h = 0.9,
+        cutree_hDynamic = FALSE,
         cutree_maxGroupSize = 10,
         cutree_maxGroupSizeDynamic = FALSE,
-##        cutree_maxGroupSizeRelHeightOveride = 0.2,
         cutree_maxHeightRelativeFromBase = 0.3,
-        cutree_method = 'custom',
+        cutree_method = 'height',
         debug = FALSE,
-        niter = 100000,
+        niter = 200000,
         setSeed0 = TRUE,
         sparsifyCov = FALSE,
         sparseCovThreshold = -1,
@@ -88,9 +88,9 @@ autoBlock <- setRefClass(
         adaptInterval = 'numeric',
         adaptIntervalBlock = 'numeric',
         cutree_h = 'numeric',
+        cutree_hDynamic = 'logical',
         cutree_maxGroupSize = 'numeric',
         cutree_maxGroupSizeDynamic = 'logical',
-##        cutree_maxGroupSizeRelHeightOveride = 'numeric',
         cutree_maxHeightRelativeFromBase = 'numeric',
         cutree_method = 'character',
         debug = 'logical',
@@ -155,7 +155,7 @@ autoBlock <- setRefClass(
                     lst <- el
                     name <- if(names(runList)[i] == '') 'customSpec' else names(runList)[i]
                 } else stop('dont understand element in run list')
-                
+
                 switch(type,
                        none    = runGroups(abModel$nodeGroupScalars,    'none'),
                        blocks  = runGroups(abModel$createGroups(lst),    name),
@@ -180,7 +180,8 @@ autoBlock <- setRefClass(
         },
 
         determineGroupsFromPreviousSample = function() {
-            empCov[[it]] <<- cov(samples[[it]])
+            burnedSamples <- samples[[it]][floor(niter/2):niter, ]
+            empCov[[it]] <<- cov(burnedSamples)
             empCovSparse[[it]] <<- empCov[[it]]
             if(sparsifyCov) {
                 sparseSuccess <<- TRUE
@@ -201,52 +202,83 @@ autoBlock <- setRefClass(
             tag <- ''
             switch(cutree_method,
                    height = {
-                       ct <- cutree(hTree[[it]], h = cutree_h)
-                       groups <- lapply(unique(ct), function(x) names(ct)[ct==x]) },
-                   dynamic = {
-                       hybrid <- cutreeHybrid(dendro=hTree[[it]], distM=as.matrix(distMatrix[[it]]), minClusterSize=1, cutHeight=cutree_h, deepSplit=4, verbose=0)
-                       ct <- hybrid$labels
-                       names(ct) <- hTree[[it]]$labels
-                       groups <- lapply(unique(ct), function(x) names(ct)[ct==x]) },
-                   custom = {
-                       if(!cutree_maxGroupSizeDynamic) {
-                           groups <- cutree_custom(hTree[[it]], maxHeight=cutree_h, maxGroupSize=cutree_maxGroupSize, maxHeightRelativeFromBase=cutree_maxHeightRelativeFromBase)
+                       if(!cutree_hDynamic) {
+                           ct <- cutree(hTree[[it]], h = cutree_h)
+                           groups <- lapply(unique(ct), function(x) names(ct)[ct==x])
                        } else {
-                           nNodes <- length(abModel$nodeGroupScalars)
-                           if(nNodes == 1) stop()
-                           maxSizes <- unique(c(2^(1:floor(log(nNodes)/log(2))), nNodes))
+                           cutHeights <- c(.1, .3, .5, .7, .9)
                            Rmodel <- abModel$newModel()
-                           groupsTmp <- specsTmp <- RmcmcsTmp <- CmcmcsTmp <- timingTmp <- samplesTmp <- essTmp <- essPTTmp <- essPTminTmp <-list()
-                           for(iSize in seq_along(maxSizes)) {
-                               groupsTmp[[iSize]] <- cutree_custom(hTree[[it]], maxHeight=cutree_h, maxGroupSize=maxSizes[iSize], maxHeightRelativeFromBase=cutree_maxHeightRelativeFromBase)
-                               specsTmp[[iSize]] <- MCMCspec(Rmodel, nodes=NULL, monitors=character(0))
-                               for(nodeGroup in groupsTmp[[iSize]]) addSamplerToSpec(Rmodel, specsTmp[[iSize]], nodeGroup, conjOveride=FALSE)
-                               specsTmp[[iSize]]$addMonitors(Rmodel$getNodeNames(stochOnly=TRUE, includeData=FALSE), print=FALSE)
-                               RmcmcsTmp[[iSize]] <- buildMCMC(specsTmp[[iSize]])
+                           groupsTmp <- specsTmp <- RmcmcsTmp <- CmcmcsTmp <- timingTmp <- samplesTmp <- essTmp <- essPTTmp <- essPTminTmp <- list()
+                           for(iHeight in seq_along(cutHeights)) {
+                               ct <- cutree(hTree[[it]], h = cutHeights[iHeight])
+                               groupsTmp[[iHeight]] <- lapply(unique(ct), function(x) names(ct)[ct==x])
+                               specsTmp[[iHeight]] <- MCMCspec(Rmodel, nodes=NULL, monitors=character(0))
+                               for(nodeGroup in groupsTmp[[iHeight]]) addSamplerToSpec(Rmodel, specsTmp[[iHeight]], nodeGroup, conjOveride=FALSE)
+                               specsTmp[[iHeight]]$addMonitors(Rmodel$getNodeNames(stochOnly=TRUE, includeData=FALSE), print=FALSE)
+                               RmcmcsTmp[[iHeight]] <- buildMCMC(specsTmp[[iHeight]])
                            }
                            Cmodel <- compileNimble(Rmodel)
                            CmcmcsTmp_temp <- compileNimble(RmcmcsTmp, project = Rmodel)
                            if(length(RmcmcsTmp) == 1) { CmcmcsTmp[[1]] <- CmcmcsTmp_temp
                            } else                     { CmcmcsTmp      <- CmcmcsTmp_temp }
                            if(setSeed0) set.seed(0)
-                           for(iSize in seq_along(maxSizes)) {
-                               timingTmp[[iSize]] <- as.numeric(system.time(CmcmcsTmp[[iSize]](niter))[3])
-                               samplesTmp[[iSize]] <- as.matrix(nfVar(CmcmcsTmp[[iSize]], 'mvSamples'))
-                               essTmp[[iSize]] <- apply(samplesTmp[[iSize]], 2, effectiveSize)
-                               essPTTmp[[iSize]] <- essTmp[[iSize]]/timingTmp[[iSize]]
-                               essPTminTmp[[iSize]] <- sort(essPTTmp[[iSize]])[1]
+                           for(iHeight in seq_along(cutHeights)) {
+                               Cmodel$setInits(abModel$inits)
+                               timingTmp[[iHeight]] <- as.numeric(system.time(CmcmcsTmp[[iHeight]](niter))[3])
+                               samplesTmp[[iHeight]] <- as.matrix(nfVar(CmcmcsTmp[[iHeight]], 'mvSamples'))
+                               essTmp[[iHeight]] <- apply(samplesTmp[[iHeight]], 2, effectiveSize)
+                               essPTTmp[[iHeight]] <- essTmp[[iHeight]]/timingTmp[[iHeight]]
+                               essPTminTmp[[iHeight]] <- sort(essPTTmp[[iHeight]])[1]
                            }
                            bestInd <- which(unlist(essPTminTmp) == max(unlist(essPTminTmp)))
                            groups <- groupsTmp[[bestInd]]
-                           tag <- paste0('-max', maxSizes[bestInd])
+                           tag <- paste0('-cut', cutHeights[bestInd])
                        }
+                   },
+                   dynamic = {
+                       hybrid <- cutreeHybrid(dendro=hTree[[it]], distM=as.matrix(distMatrix[[it]]), minClusterSize=1, cutHeight=cutree_h, deepSplit=4, verbose=0)
+                       ct <- hybrid$labels
+                       names(ct) <- hTree[[it]]$labels
+                       groups <- lapply(unique(ct), function(x) names(ct)[ct==x]) },
+                   custom = {
+                       ## if(!cutree_maxGroupSizeDynamic) {
+                       groups <- cutree_custom(hTree[[it]], maxHeight=cutree_h, maxGroupSize=cutree_maxGroupSize, maxHeightRelativeFromBase=cutree_maxHeightRelativeFromBase)
+                       ## } else {
+                       ##     nNodes <- length(abModel$nodeGroupScalars)
+                       ##     if(nNodes == 1) stop()
+                       ##     maxSizes <- unique(c(2^(1:floor(log(nNodes)/log(2))), nNodes))
+                       ##     Rmodel <- abModel$newModel()
+                       ##     groupsTmp <- specsTmp <- RmcmcsTmp <- CmcmcsTmp <- timingTmp <- samplesTmp <- essTmp <- essPTTmp <- essPTminTmp <-list()
+                       ##     for(iSize in seq_along(maxSizes)) {
+                       ##         groupsTmp[[iSize]] <- cutree_custom(hTree[[it]], maxHeight=cutree_h, maxGroupSize=maxSizes[iSize], maxHeightRelativeFromBase=cutree_maxHeightRelativeFromBase)
+                       ##         specsTmp[[iSize]] <- MCMCspec(Rmodel, nodes=NULL, monitors=character(0))
+                       ##         for(nodeGroup in groupsTmp[[iSize]]) addSamplerToSpec(Rmodel, specsTmp[[iSize]], nodeGroup, conjOveride=FALSE)
+                       ##         specsTmp[[iSize]]$addMonitors(Rmodel$getNodeNames(stochOnly=TRUE, includeData=FALSE), print=FALSE)
+                       ##         RmcmcsTmp[[iSize]] <- buildMCMC(specsTmp[[iSize]])
+                       ##     }
+                       ##     Cmodel <- compileNimble(Rmodel)
+                       ##     CmcmcsTmp_temp <- compileNimble(RmcmcsTmp, project = Rmodel)
+                       ##     if(length(RmcmcsTmp) == 1) { CmcmcsTmp[[1]] <- CmcmcsTmp_temp
+                       ##     } else                     { CmcmcsTmp      <- CmcmcsTmp_temp }
+                       ##     if(setSeed0) set.seed(0)
+                       ##     for(iSize in seq_along(maxSizes)) {
+                       ##         Cmodel$setInits(abModel$inits)
+                       ##         timingTmp[[iSize]] <- as.numeric(system.time(CmcmcsTmp[[iSize]](niter))[3])
+                       ##         samplesTmp[[iSize]] <- as.matrix(nfVar(CmcmcsTmp[[iSize]], 'mvSamples'))
+                       ##         essTmp[[iSize]] <- apply(samplesTmp[[iSize]], 2, effectiveSize)
+                       ##         essPTTmp[[iSize]] <- essTmp[[iSize]]/timingTmp[[iSize]]
+                       ##         essPTminTmp[[iSize]] <- sort(essPTTmp[[iSize]])[1]
+                       ##     }
+                       ##     bestInd <- which(unlist(essPTminTmp) == max(unlist(essPTminTmp)))
+                       ##     groups <- groupsTmp[[bestInd]]
+                       ##     tag <- paste0('-max', maxSizes[bestInd])
+                       ## }
                    },
                    stop('cutree method invalid'))
             return(list(groups=groups, tag=tag))
         },
 
         runGroups = function(groups, name, printTree=FALSE, conjOveride=FALSE, customSpec=FALSE) {
-            if(setSeed0) set.seed(0)
             it <<- it + 1
             naming[[it]] <<- name
             Rmodel <- abModel$newModel()
@@ -269,6 +301,7 @@ autoBlock <- setRefClass(
             Rmcmc <- buildMCMC(spec)
             Cmodel <- compileNimble(Rmodel)
             Cmcmcs[[it]] <<- compileNimble(Rmcmc, project = Rmodel)
+            if(setSeed0) set.seed(0)
             timing[[it]] <<- as.numeric(system.time(Cmcmcs[[it]](niter))[3])
             samples[[it]] <<- as.matrix(nfVar(Cmcmcs[[it]], 'mvSamples'))
             ess[[it]] <<- round(apply(samples[[it]], 2, effectiveSize), 0)
@@ -518,10 +551,12 @@ N <- 16
 n <- array(c(13, 12, 12, 11, 9, 10, 9, 9, 8, 11, 8, 10, 13, 10, 12, 9, 10, 9, 10, 5, 9, 9, 13, 7, 5, 10, 7, 6, 10, 10, 10, 7), dim = c(2, 16))
 r <- array(c(13, 12, 12, 11, 9, 10, 9, 9, 8, 10, 8, 9, 12, 9, 11, 8, 9, 8, 9, 4, 8, 7, 11, 4, 4, 5, 5, 3, 7, 3, 7, 0), dim = c(2, 16))
 p <- array(0.5, dim = c(2, 16))
+a <- c(1, 1)
+b <- c(1, 1)
 
 constants_litters<- list(G=G, N=N, n=n)
 data_litters      <- list(r=r)
-inits_litters     <- list(p=p)
+inits_litters     <- list(a=a, b=b, p=p)
 
 code_litters <- modelCode({
      for (i in 1:G) {
