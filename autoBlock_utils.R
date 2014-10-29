@@ -116,7 +116,6 @@ autoBlock <- setRefClass(
         initialize = function(code, constants=list(), data=list(), inits=list(), control=list()) {
             library(lattice)
             library(coda)
-            library(dynamicTreeCut)
             library(nimble)
             library(spcov)
             abModel <<- autoBlockModel(code=code, constants=constants, data=data, inits=inits)
@@ -301,7 +300,7 @@ autoBlock <- setRefClass(
 
         printCurrent = function(name, spec, auto) {
             cat(paste0('\n################################\nBEGIN ITERATION ', it, ': ', name, '\n################################\n'))
-            if(length(candidateGroups[[it]]) > 1) { cat('\ncandidate groups:\n'); cg<-candidateGroups[[it]]; for(i in seq_along(cg)) { cat(paste0('\n',names(cg)[i],'\n')); printGrouping(cg[[i]]) } }
+            if(length(candidateGroups[[it]]) > 1) { cat('\ncandidate groups:\n'); cg<-candidateGroups[[it]]; for(i in seq_along(cg)) { cat(paste0('\n',names(cg)[i],':\n')); printGrouping(cg[[i]]) } }
             if(auto && sparsifyCov) {
                 if(sparseSuccess) cat('\nsparsifying empirical covariance matrix.....\n') else cat('\nsparsification failed, covariance matrix nearly singular\n') }
             cat('\ngroups:\n'); printGrouping(grouping[[it]])
@@ -371,7 +370,7 @@ createDFfromABlist <- function(lst, rho=NA, rho2=NA) {
 
 
 
-plotABS <- function(df, plotGroupSizes=TRUE, xlimToMin=FALSE, together) {
+plotABS <- function(df, xlimToMin=FALSE, together) {
     models <- unique(df$model)
     nModels <- length(models)
     if(missing(together)) together <- if(nModels <= 5) TRUE else FALSE
@@ -389,7 +388,8 @@ plotABS <- function(df, plotGroupSizes=TRUE, xlimToMin=FALSE, together) {
             dfMod <- df[df$model==mod,]
             blockings <- unique(dfMod$blocking)
             nBlockings <- length(blockings)
-            bestBlk<-''; bestEssPT<-0; for(blk in blockings) { if(min(dfMod[dfMod$blocking==blk,'essPT'])>bestEssPT && ((blk=='all')||grepl('^auto',blk))) {bestEssPT<-min(dfMod[dfMod$blocking==blk,'essPT']); bestBlk<-blk} }
+##            bestBlk<-''; bestEssPT<-0; for(blk in blockings) { if(min(dfMod[dfMod$blocking==blk,'essPT'])>bestEssPT && ((blk=='all')||(blk=='default')||grepl('^auto',blk))) {bestEssPT<-min(dfMod[dfMod$blocking==blk,'essPT']); bestBlk<-blk} }
+            bestBlk<-''; bestEssPT<-0; for(blk in blockings) { if(min(dfMod[dfMod$blocking==blk,'essPT'])>bestEssPT) {bestEssPT<-min(dfMod[dfMod$blocking==blk,'essPT']); bestBlk<-blk} }
             plot(-100,-100,xlim=xlim,ylim=c(0,nBlockings+1),xlab='',ylab='',main=paste0(xVarName, ' for model ', mod))
             for(iBlocking in 1:nBlockings) {
                 blocking <- blockings[iBlocking]
@@ -400,8 +400,8 @@ plotABS <- function(df, plotGroupSizes=TRUE, xlimToMin=FALSE, together) {
                 timingOnXaxis <- timing/maxTiming * xlim[2]
                 yCoord <- nBlockings+1-iBlocking
                 lines(x=c(0,timingOnXaxis), y=rep(yCoord,2), lty=1, lwd=2, col='lightgrey')
-                if(plotGroupSizes) { text(x=xVarValues, y=yCoord, labels=groupSizes, cex=0.7)
-                } else { points(x=xVarValues, y=rep(yCoord,length(xVarValues)), pch=20) }
+                col <- if(blocking == bestBlk) 'green' else 'black'
+                text(x=xVarValues, y=yCoord, labels=groupSizes, cex=0.7, col=col)
                 col <- if(blocking == bestBlk) 'green' else 'blue'
                 text(x=xlim[1], y=yCoord, labels=blocking, col=col)
                 if(timing==maxTiming) text(xlim[2], yCoord+1, paste0('t = ',round(timing,1)))
@@ -464,11 +464,13 @@ data_litters      <- list(r=r)
 inits_litters     <- list(a=a, b=b, p=p)
 
 code_litters <- modelCode({
+    a[1] ~ dunif(0, 50000)
+    b[1] ~ dunif(0, 5000)
+    a[2] ~ dunif(0, 100)
+    b[2] ~ dunif(0, 50)
      for (i in 1:G) {
-         a[i] ~ dgamma(1, 0.001)
-         b[i] ~ dgamma(1, 0.001)
-         # mu[i] <- a[i] / (a[i] + b[i])
-         # theta[i] <- 1 / (a[i] + b[i])
+#         a[i] ~ dgamma(1, 0.001)
+#         b[i] ~ dgamma(1, 0.001)
          for (j in 1:N) {
              r[i,j] ~ dbin(p[i,j], n[i,j])
              p[i,j] ~ dbeta(a[i], b[i])

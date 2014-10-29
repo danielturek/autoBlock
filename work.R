@@ -1,43 +1,60 @@
 path <- '~/GitHub/autoBlock'
 #control <- list(cutree_heights = seq(0, 1, by=0.1))
-#save(control, file=file.path(path, '.control.RData'))
 source(file.path(path, 'autoBlock_utils.R'))
-#load('results.RData')
 
 
 
-## runList <- list('none', 'all', 'default',
-##     list(c('x[1]','x[2]','x[3]'), c('x[5]','z1')),
-##     quote({ spec <- MCMCspec(Rmodel, nodes=NULL); spec$addSampler('slice', list(targetNode='x[1]'), print=FALSE); spec }),
-##     'auto')
-## abtester$run(runList)
-## abList <- list(tester = abtester)
-## df <- createDFfromABlist(abList)
-## plotABS(df)
+
+
+## state space models
+if(FALSE) {
+    runListMUB <- list('all', 'auto', blockMUB = list(c('mu','b')), 'default')
+    runListAB  <- list('all', 'auto', blockAB  = list(c('a', 'b')), 'default')
+    abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
+    abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
+    abSSMmub$run(runListMUB)
+    abSSMab$run(runListAB)
+    abList <- list(independent=abSSMmub, correlated=abSSMab)
+    dfSSM <- createDFfromABlist(abList)
+    save('dfSSM', file='dfSSM.RData')
+    plotABS(dfSSM, xlimToMin=TRUE)
+}
+
+
+## litters
+if(FALSE) {
+    runList <- list('all',
+                    'auto',
+                    blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')),
+                    crossLevel = quote({
+                        spec <- MCMCspec(Rmodel, nodes=NULL)
+                        spec$addSampler('crossLevel', list(topNodes = c('a[1]', 'b[1]')), print=FALSE)
+                        spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
+                        spec
+                    }),
+                    'default')
+    ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
+    ablitters$run(runList)
+    abList <- list(litters=ablitters)
+    dflitters <- createDFfromABlist(abList)
+    save('dflitters', file='dflitters.RData')
+    plotABS(dflitters, xlimToMin=TRUE)
+}
 
 
 
 ## partitions of N = 2^k
-rho <- 0.8
-kValues <- 1:7
-RscriptName <- 'gen_partitionsN.R'
-shellScriptName <- 'gen_partitionsNwrapper.sh'
-partitionsNcode <- substitute({
-    library(R.utils)
-    source('autoBlock_utils.R')
-    load('.control.RData')
-    control$verbose <- FALSE
-    args <- commandArgs(trailingOnly=TRUE, asValue=TRUE)
-    k <- as.numeric(args[1])
-    rho <- as.numeric(args[2])
+if(FALSE) {
+    rho <- 0.7
+    k <- 3
+    N <- 2^k
+    tag <- paste0('N', N, 'rho', rho)
     runList <- list(
         givenCov = quote({
             spec <- MCMCspec(Rmodel, nodes = NULL)
             spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE, propCov = Sigma), print=FALSE)
             spec }),
-        'all',
-        'auto')
-    N <- 2^k
+        'all', 'auto')
     blockSizes <- 2^(0:k)
     code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
     data <- list()
@@ -62,68 +79,80 @@ partitionsNcode <- substitute({
         ab$run(runList)
         abList[['blockSzMixed']] <- ab
     }
-    df <- createDFfromABlist(abList, rho=rho)
-    for(ab in abList) { ab$abModel <- NULL; ab$Cmcmcs <- list() }
-    DF <- list()
-    ABLIST <- list()
-    if(file.exists('results.RData')) load('results.RData')
-    DF[[k]] <- df
-    ABLIST[[k]] <- abList
-    save(DF, ABLIST, file='results.RData')
-
-    dfT <- df
-    abListT <- abList
-    load('results.RData')
-    dim(df)
-    dim(dfT)
-    length(abList)
-    length(abListT)
-    df <- rbind(df, dfT)
-    abList <- c(abList, abListT)
-    save(df, abList, file='results.RData')
-    plotABS(df)
-},
-                              list(DF = as.name(paste0('dfNrho', rho)),
-                                   ABLIST = as.name(paste0('abListNrho', rho))))
-cat(formatForFile(partitionsNcode), file=RscriptName)
-f <- file(shellScriptName)
-writeLines(c(
-    paste0('for k in ', paste(kValues, collapse=' ')),
-    'do',
-        paste0('    R CMD BATCH --no-save --no-restore --no-timing --args -k=$k -rho=', rho, ' ', RscriptName, ' out'),
-    'done'
-##    'rm out'
-), f)
-close(f)
-system(paste0('chmod 755 ', shellScriptName))
-
-
-
-## testing of SSMs
-if(FALSE) {
-    runListMUB <- list('all', 'auto', blockMUB = list(c('mu','b')))
-    runListAB  <- list('all', 'auto', blockAB   = list(c('a', 'b')))
-    abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
-    abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
-    abSSMmub$run(runListMUB)
-    abSSMab$run(runListAB)
-    abList <- list(independent=abSSMmub, correlated=abSSMab)
-    dfSSM <- createDFfromABlist(abList)
-    plotABS(dfSSM, xlimToMin=TRUE)
-    save('dfSSM', file='dfSSM.RData')
+    dfText <- paste0('df', tag)
+    eval(substitute(DF <- createDFfromABlist(abList, rho=rho), list(DF=as.name(dfText))))
+    eval(substitute(save(DF, file=FILE), list(DF=as.name(dfText), FILE=paste0(dfText,'.RData'))))
+    eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
 }
+
+
+
+
+
+## testing of litters priors
+if(FALSE) {
     
+    library(nimble)
+    library(coda)
 
+    suite <- MCMCsuite(
+        model = code_litters,
+        constants = constants_litters,
+        data = data_litters,
+        inits = inits_litters,
+        monitors = c('a', 'b', 'p'),
+        niter = 200000,
+        thin = 1,
+        burnin = 100000,
+        MCMCs = c('ABfirst', 'ABlast', 'crossLevel'),
+        MCMCdefs = list(
+            ABfirst = quote({
+                spec <- MCMCspec(Rmodel, useConjugacy = FALSE)
+                spec$addSampler('RW_block', list(targetNodes = c('a[1]', 'b[1]')), print=FALSE)
+                spec$addSampler('RW_block', list(targetNodes = c('a[2]', 'b[2]')), print=FALSE)
+                spec$setSamplers(c(37,38,5:36), print=FALSE)
+                spec$getSamplers()
+                spec
+            }),
+            ABlast = quote({
+                spec <- MCMCspec(Rmodel, useConjugacy = FALSE)
+                spec$addSampler('RW_block', list(targetNodes = c('a[1]', 'b[1]')), print=FALSE)
+                spec$addSampler('RW_block', list(targetNodes = c('a[2]', 'b[2]')), print=FALSE)
+                spec$setSamplers(c(5:36,37,38), print=FALSE)
+                spec$getSamplers()
+                spec
+            }),
+            crossLevel = quote({
+                spec <- MCMCspec(Rmodel, nodes=NULL)
+                spec$addSampler('crossLevel', list(topNodes = c('a[1]', 'b[1]')), print=FALSE)
+                spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
+                spec$getSamplers()
+                spec
+            })
+            ),
+        summaryStats = c('mean', 'sd', 'function(x) effectiveSize(x)'),
+        makePlot = FALSE,
+        savePlot = FALSE
+        )
 
-## testing of litters
-if(FALSE) {
-    runList <- list('all', 'auto', blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')))
-    ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
-    ablitters$run(runList)
-    abList <- list(litters=ablitters)
-    dflitters <- createDFfromABlist(abList)
-    plotABS(dflitters, xlimToMin=TRUE)
-    save('dflitters', file='dflitters.RData')
+    suite$output$summary
+
+    samples <- suite$output$samples
+    
+    littersTraceplots <- function(node, samples) {
+        num <- dim(samples)[1]
+        par(mfrow = c(num, 1))
+        tsplot <- function(x) plot(1:length(x), x, type='l')
+        for(i in 1:num) tsplot(samples[i, node, ])
+    }
+
+    littersTraceplots('p[1, 15]', samples)
+    littersTraceplots('p[1, 8]', samples)
+    littersTraceplots('a[1]', samples)   # 50,000
+    littersTraceplots('b[1]', samples)   # 5,000
+    littersTraceplots('a[2]', samples)   # 100  (200 too high)
+    littersTraceplots('b[2]', samples)   # 50 (100 to high)
+
 }
 
 
@@ -133,54 +162,6 @@ if(FALSE) {
 
 
 
-
-
-
-
-
-Cmcmcs <- ablitters$Cmcmcs
-samples <- ablitters$samples
-empCov <- ablitters$empCov
-empCovSparse <- ablitters$empCovSparse
-empCovSparseThresh <- ablitters$empCovSparseThresh
-grouping <- ablitters$grouping
-length(ablitters$empCov)
-length(samples)
-names(samples)
-dim(samples[[2]])
-cov(samples[[2]]) - empCovSparseThresh[[3]]
-length(empCov)
-length(empCovSparse)
-empCovSparseThresh[[3]]
-ablitters$sparseCovThreshold
-cov2cor(empCov[[3]])[1:4,1:4]
-nfVar(Cmcmcs[[3]], 'samplerFunctions')$contentsList[[1]]$propCov
-cov2cor(nfVar(Cmcmcs[[3]], 'samplerFunctions')$contentsList[[3]]$propCov)
-cov(samples[[3]])[1:4,1:4]
-cov2cor(cov(samples[[3]]))[1:4,1:4]
-length(Cmcmcs)
-grouping[[3]]
-
-bsamp <- list()
-for(i in 1:8) bsamp[[i]] <- samples[[i]][50001:100000,]
-names(bsamp) <- names(samples)
-
-
-a1b1 <- c('a[1]', 'b[1]')
-a2b2 <- c('a[2]', 'b[2]')
-ab <- c('a[1]', 'a[2]', 'b[1]', 'b[2]')
-
-for(i in 1:8) {
-    print(names(bsamp)[i])
-    print('mean')
-    print(apply(bsamp[[i]][, ab], 2, mean))
-    print('var')
-    print(apply(bsamp[[i]][, ab], 2, var))
-}
-
-
-
-1
 
 
 ## testing the new adaptation options; and a nice N=3 example

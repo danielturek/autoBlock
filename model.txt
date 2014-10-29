@@ -1,0 +1,13 @@
+model
+{
+    a[1] ~ dunif(0, 50000)
+    b[1] ~ dunif(0, 5000)
+    a[2] ~ dunif(0, 100)
+    b[2] ~ dunif(0, 50)
+    for (i in 1:G) {
+        for (j in 1:N) {
+            r[i, j] ~ dbin(p[i, j], n[i, j])
+            p[i, j] ~ dbeta(a[i], b[i])
+        }
+    }
+}
