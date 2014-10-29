@@ -161,13 +161,8 @@ autoBlock <- setRefClass(
                        auto =    { specList <- list(createSpecFromGroups(Rmodel, abModel$nodeGroupScalars))
                                    runSpecListAndSaveBest(Rmodel, specList, 'auto0', auto=TRUE)
                                    
-                                   candidateGroupsList <- determineCandidateGroupsFromCurrentSample()
-                                   Rmodel <- abModel$newModel()
-                                   specList <- lapply(candidateGroupsList, function(groups) createSpecFromGroups(Rmodel, groups))
-                                   runSpecListAndSaveBest(Rmodel, specList, 'auto1', auto=TRUE)
-                                   
-                                   autoIt <- 2
-                                   while(min(essPT[[it]]) > min(essPT[[it-1]])) {
+                                   autoIt <- 1
+                                   while((autoIt == 1) || (min(essPT[[it]]) > min(essPT[[it-1]]))) {
                                        candidateGroupsList <- determineCandidateGroupsFromCurrentSample()
                                        Rmodel <- abModel$newModel()
                                        specList <- lapply(candidateGroupsList, function(groups) createSpecFromGroups(Rmodel, groups))
@@ -177,7 +172,14 @@ autoBlock <- setRefClass(
                                },
                        stop('dont understand element in run list'))
             }
-            updateNames()
+            
+            names(grouping) <<- naming
+            names(groupSizes) <<- naming
+            names(Cmcmcs) <<- naming
+            names(timing) <<- naming
+            names(samples) <<- naming
+            names(ess) <<- naming
+            names(essPT) <<- naming
         },
         
         runSpecListAndSaveBest = function(Rmodel, specList, name, auto=FALSE) {
@@ -290,16 +292,6 @@ autoBlock <- setRefClass(
                 spec$addSampler(type = 'RW_block', control = list(targetNodes=nodeGroup, adaptInterval=adaptIntervalBlock), print = FALSE); return()
             }
             spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup, adaptInterval=adaptInterval), print = FALSE); return()
-        },
-
-        updateNames = function() {
-            names(grouping) <<- naming
-            names(groupSizes) <<- naming
-            names(Cmcmcs) <<- naming
-            names(timing) <<- naming
-            names(samples) <<- naming
-            names(ess) <<- naming
-            names(essPT) <<- naming
         },
 
         printCurrent = function(name, spec, auto) {
