@@ -83,7 +83,7 @@ autoBlock <- setRefClass(
         setSeed0 = 'logical',
         verbose = 'logical',
 
-        ## persistant LISTS of historical data
+        ## persistant lists of historical data
         naming = 'list',
         candidateGroups = 'list',
         grouping = 'list',
