@@ -102,9 +102,9 @@ if(FALSE) {
 ## two different (overlapping) values of rho, rho2
 if(FALSE) {
     rho  <- 0.2
-    rho2 <- 0.5
-    rho3 <- 0.8
-    N <- 100
+    rho2 <- 0.4
+    rho3 <- 0.6
+    N <- 50
     control$niter <- 200000
     runList <- list(
         'all',
@@ -116,10 +116,10 @@ if(FALSE) {
     code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
     data <- list()
     inits <- list(x=rep(0,N))
-    Sigma <- createCov(N, indList=list(21:60, 51:90), indList2=list(1:10, 31:50, 81:100), indList3=list(8:12, 25:30, 55:58, 90:95), rho=rho, rho2=rho2, rho3=rho3)
+    Sigma <- createCov(N, indList=list(21:50), indList2=list(1:10, 31:40), indList3=list(11:15,33:38), rho=rho, rho2=rho2, rho3=rho3)
     constants <- list(N=N, mu=rep(0,N), Sigma=Sigma)
     ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-    ab$run(runList)
+    system.time(ab$run(runList))
     abList <- list(mixedRhos=ab)
     dfmixedRhos <- createDFfromABlist(abList)
     filename <- 'dfmixedRhos.RData'
