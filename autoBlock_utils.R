@@ -552,6 +552,41 @@ rm(list = c('t','Rmodel'))
 
 
 
+
+
+
+
+
+################
+### dipper
+################
+## load('dipperData.RData')
+## ## optionally, truncate data
+## ind <- 1:3;   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE]
+## code_dipper <- modelCode({
+##     phi ~ dunif(0, 1)
+##     p ~ dunif(0, 1)
+##     for (i in 1:nind) {
+##         x[i, first[i]] <- 1
+##         for (t in (first[i] + 1):k) {
+##             mu.x[i, t] <- phi * x[i, t-1]
+##             mu.y[i, t] <- p * x[i, t]
+##             x[i, t] ~ dbin(mu.x[i, t], 1)
+##             y[i, t] ~ dbin(mu.y[i, t], 1)
+##         }
+##     }
+## })
+## 
+## constants_dipper <- list(k=k, nind=nind, first=first)
+## data_dipper      <- list(y=y)
+## inits_dipper     <- list(phi=0.6, p=0.9, x=x_init)
+## abdipper <- autoBlock(code=code_dipper, constants=constants_dipper, data=data_dipper, inits=inits_dipper, control=control)
+## if(exists('ind')) rm(list = 'ind')
+## rm(list = c('first', 'k', 'nind', 'x_init', 'y'))
+
+
+
+
 ## cutree_custom <- function(ht, maxHeight, maxGroupSize, maxHeightRelativeFromBase) {
 ##     labels <- ht$labels;     height <- ht$height;     merge <- ht$merge
 ##     nNodes <- length(labels)

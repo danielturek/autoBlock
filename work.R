@@ -4,28 +4,6 @@ source(file.path(path, 'autoBlock_utils.R'))
 
 
 
-
-
-## state space models
-if(FALSE) {
-    control$niter <- 400000    
-    runListMUB <- list('all', blockMUB = list(c('mu','b')), 'default', 'auto')
-    runListAB  <- list('all', blockAB  = list(c('a', 'b')), 'default', 'auto')
-    abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
-    abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
-    system.time(abSSMmub$run(runListMUB))  ## 26 minutes
-    system.time(abSSMab$run(runListAB))    ## 31 minutes
-    abList <- list(independent=abSSMmub, correlated=abSSMab)
-    dfSSM <- createDFfromABlist(abList)
-    filename <- 'dfSSM.RData'
-    save(dfSSM, file = filename)
-    load(filename)
-    plotABS(dfSSM, xlimToMin=FALSE)
-    plotABS(dfSSM, xlimToMin=TRUE)
-    printMinTimeABS(dfSSM)
-}
-
-
 ## litters
 if(FALSE) {
     control$niter <- 400000
@@ -50,6 +28,29 @@ if(FALSE) {
     plotABS(dflitters, xlimToMin=TRUE)
     printMinTimeABS(dflitters)
 }
+
+
+## state space models
+if(FALSE) {
+    control$niter <- 400000    
+    runListMUB <- list('all', blockMUB = list(c('mu','b')), 'default', 'auto')
+    runListAB  <- list('all', blockAB  = list(c('a', 'b')), 'default', 'auto')
+    abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
+    abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
+    system.time(abSSMmub$run(runListMUB))  ## 26 minutes
+    system.time(abSSMab$run(runListAB))    ## 31 minutes
+    abList <- list(independent=abSSMmub, correlated=abSSMab)
+    dfSSM <- createDFfromABlist(abList)
+    filename <- 'dfSSM.RData'
+    save(dfSSM, file = filename)
+    load(filename)
+    plotABS(dfSSM, xlimToMin=FALSE)
+    plotABS(dfSSM, xlimToMin=TRUE)
+    printMinTimeABS(dfSSM)
+}
+
+
+
 
 
 
