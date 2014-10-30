@@ -8,23 +8,28 @@ source(file.path(path, 'autoBlock_utils.R'))
 
 ## state space models
 if(FALSE) {
-    runListMUB <- list('all', 'auto', blockMUB = list(c('mu','b')), 'default')
-    runListAB  <- list('all', 'auto', blockAB  = list(c('a', 'b')), 'default')
+    control$niter <- 400000    
+    runListMUB <- list('all', blockMUB = list(c('mu','b')), 'default', 'auto')
+    runListAB  <- list('all', blockAB  = list(c('a', 'b')), 'default', 'auto')
     abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
     abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
-    abSSMmub$run(runListMUB)
-    abSSMab$run(runListAB)
+    system.time(abSSMmub$run(runListMUB))  ## 26 minutes
+    system.time(abSSMab$run(runListAB))    ## 31 minutes
     abList <- list(independent=abSSMmub, correlated=abSSMab)
     dfSSM <- createDFfromABlist(abList)
-    save('dfSSM', file='dfSSM.RData')
+    filename <- 'dfSSM.RData'
+    save(dfSSM, file = filename)
+    load(filename)
+    plotABS(dfSSM, xlimToMin=FALSE)
     plotABS(dfSSM, xlimToMin=TRUE)
+    printMinTimeABS(dfSSM)
 }
 
 
 ## litters
 if(FALSE) {
+    control$niter <- 400000
     runList <- list('all',
-                    'auto',
                     blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')),
                     crossLevel = quote({
                         spec <- MCMCspec(Rmodel, nodes=NULL)
@@ -32,13 +37,18 @@ if(FALSE) {
                         spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
                         spec
                     }),
-                    'default')
+                    'default',
+                    'auto')
     ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
-    ablitters$run(runList)
+    system.time(ablitters$run(runList))  ## 26 minutes
     abList <- list(litters=ablitters)
     dflitters <- createDFfromABlist(abList)
-    save('dflitters', file='dflittersGAMMA-UNIFprior.RData')
+    filename <- 'dflittersGAMMA-UNIFprior.RData'
+    save(dflitters, file = filename)
+    load(filename)
+    plotABS(dflitters, xlimToMin=FALSE)
     plotABS(dflitters, xlimToMin=TRUE)
+    printMinTimeABS(dflitters)
 }
 
 
@@ -49,12 +59,14 @@ if(FALSE) {
     k <- 3
     N <- 2^k
     tag <- paste0('N', N, 'rho', rho)
+    control$niter <- 100000
     runList <- list(
+        'all',
         givenCov = quote({
             spec <- MCMCspec(Rmodel, nodes = NULL)
             spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE, propCov = Sigma), print=FALSE)
             spec }),
-        'all', 'auto')
+        'auto')
     blockSizes <- 2^(0:k)
     code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
     data <- list()

@@ -389,15 +389,30 @@ plotABS <- function(df, xlimToMin=FALSE, together) {
 }
 
 
-formatForFile <- function(code) {
-    a <- deparse(code, width.cutoff=500L)
-    a <- a[c(-1, -length(a))]
-    a <- sub('^    ', '', a)
-    a[length(a) + 1] <- ''
-    a <- paste0(a, collapse='\n')
-    a
+printMinTimeABS <- function(df) {
+    if(names(df)[2] != 'rho')  stop('missing rho name in df')
+    if(names(df)[3] != 'rho2') stop('missing rho2 name in df')
+    for(i in 1:2) if(any(is.na(df[, 2]))) {
+        if(!all(is.na(df[, 2]))) stop('some NAs in rho column, but not all')
+        df <- df[, -2]
+    }
+    models <- unique(df$model)
+    cat('\n')
+    for(mod in models) {
+        dfMod <- df[df$model == mod, ]
+        blockings <- unique(dfMod$blocking)
+        dfOut <- dfMod[numeric(0), ]
+        for(blk in blockings) {
+            dfModBlk <- dfMod[dfMod$blocking == blk, ]
+            ind <- which(dfModBlk$essPT == min(dfModBlk$essPT))[1]
+            dfOut[dim(dfOut)[1] + 1, ] <- dfModBlk[ind, ]
+        }
+        dfOut <- dfOut[sort(dfOut$essPT,index.return=TRUE)$ix, ]
+        dimnames(dfOut)[[1]] <- 1:(dim(dfOut)[1])
+        print(dfOut)
+        cat('\n')
+    }
 }
-
 
 
 
@@ -586,3 +601,11 @@ rm(list = c('t','Rmodel'))
 
 
 
+## formatForFile <- function(code) {
+##     a <- deparse(code, width.cutoff=500L)
+##     a <- a[c(-1, -length(a))]
+##     a <- sub('^    ', '', a)
+##     a[length(a) + 1] <- ''
+##     a <- paste0(a, collapse='\n')
+##     a
+## }
