@@ -104,8 +104,8 @@ if(FALSE) {
     rho  <- 0.2
     rho2 <- 0.5
     rho3 <- 0.8
-    N <- 64
-    control$niter <- 100000
+    N <- 100
+    control$niter <- 200000
     runList <- list(
         'all',
         givenCov = quote({
