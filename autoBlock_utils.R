@@ -46,6 +46,33 @@ autoBlockModel <- setRefClass(
         )
     )
 
+createCodeAndConstants <- function(N, listOfBlockIndexes, rhoVector) {
+    code <- quote({})
+    constants <- list()
+    if(length(listOfBlockIndexes) != length(rhoVector)) stop()
+    for(i in seq_along(listOfBlockIndexes)) {
+        blockIndexes <- listOfBlockIndexes[[i]]
+        rho <- rhoVector[i]
+        numNodes <- as.numeric(length(blockIndexes))
+        if(numNodes == 1) {
+            code[[length(code)+1]] <- substitute(x[IND] ~ dnorm(0, 1), list(IND=as.numeric(blockIndexes)))
+        } else {
+            muText <- paste0('mu', i)
+            sigmaText <- paste0('Sigma', i)
+            indMin <- as.numeric(min(blockIndexes))
+            indMax <- as.numeric(max(blockIndexes))
+            code[[length(code)+1]] <- substitute(x[MIN:MAX] ~ dmnorm(MU[1:NUM], cov = SIGMA[1:NUM,1:NUM]), list(MIN=indMin, MAX=indMax, NUM=numNodes, MU=as.name(muText), SIGMA=as.name(sigmaText)))
+            constants[[muText]] <- rep(0, numNodes)
+            constants[[sigmaText]] <- createCov(N=numNodes, rho=rho)
+        }
+    }
+    allInd <- 1:N
+    leftoverInd <- setdiff(allInd, unlist(listOfBlockIndexes))
+    for(ind in leftoverInd) code[[length(code)+1]] <- substitute(x[IND] ~ dnorm(0, 1), list(IND=as.numeric(ind)))
+    codeAndConstantsList <- list(code=code, constants=constants)
+    return(codeAndConstantsList)
+}
+
 createCov <- function(N, indList=list(1:N), rho=0.8, indList2=list(), rho2=0.3, indList3=list(), rho3=0.5) {
     Sigma <- diag(N)
     for(gp in indList)  { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- rho  }
@@ -263,10 +290,10 @@ autoBlock <- setRefClass(
             if(!(nodeGroup %in% Rmodel$getNodeNames())) {
                 spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup), print = FALSE); return()
             }
-            if(nodeGroup %in% Rmodel$getMaps('nodeNamesEnd')) {
-                cat(paste0('warning: using \'end\' sampler for node ', nodeGroup, ' may lead to results we don\'t want\n\n'))
-                spec$addSampler(type = 'end', control = list(targetNode=nodeGroup), print = FALSE); return()
-            }
+            ## if(nodeGroup %in% Rmodel$getMaps('nodeNamesEnd')) {
+            ##     cat(paste0('warning: using \'end\' sampler for node ', nodeGroup, ' may lead to results we don\'t want\n\n'))
+            ##     spec$addSampler(type = 'end', control = list(targetNode=nodeGroup), print = FALSE); return()
+            ## }
             conjugacyResult <- Rmodel$checkConjugacy(nodeGroup)
             if((!is.null(conjugacyResult)) && conjOveride) {
                 spec$addSampler(type = conjugacyResult$samplerType, control = conjugacyResult$control, print = FALSE); return()

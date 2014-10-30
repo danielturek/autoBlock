@@ -52,29 +52,23 @@ if(FALSE) {
 
 
 ## partitions of N = 2^k
-if(FALSE) {
+system.time(if(TRUE) {
     rho <- 0.8
     k <- 4
     N <- 2^k
     tag <- paste0('N', N, 'rho', rho)
     control$niter <- 100000
-    runList <- list(
-        'all',
-        givenCov = quote({
-            spec <- MCMCspec(Rmodel, nodes = NULL)
-            spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE, propCov = Sigma), print=FALSE)
-            spec }),
-        'auto')
+    runList <- list('all', 'auto')
     blockSizes <- 2^(0:k)
-    code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
     data <- list()
     inits <- list(x=rep(0,N))
     abList <- list()
     for(blockSize in blockSizes) {
         numberOfBlocks <- N / blockSize
-        listOfBlockIndexs <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
-        Sigma <- createCov(N, indList=listOfBlockIndexs, rho=rho)
-        constants <- list(N=N, mu=rep(0,N), Sigma=Sigma)
+        listOfBlockIndexes <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
+        codeAndConstants <- createCodeAndConstants(N, listOfBlockIndexes, rep(rho,numberOfBlocks))
+        code <- codeAndConstants$code
+        constants <- codeAndConstants$constants
         ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
         ab$run(runList)
         abList[[paste0('blockSz', blockSize)]] <- ab
@@ -83,8 +77,9 @@ if(FALSE) {
         blockLengths <- c(1, 2^(0:(k-1)))
         indList <- list(); cur <- 1
         for(len in blockLengths) { indList <- c(indList, list(cur:(cur+len-1))); cur <- cur+len }
-        Sigma <- createCov(N, indList=indList, rho=rho)
-        constants <- list(N=N, mu=rep(0,N), Sigma=Sigma)
+        codeAndConstants <- createCodeAndConstants(N, indList, rep(rho,length(indList)))
+        code <- codeAndConstants$code
+        constants <- codeAndConstants$constants
         ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
         ab$run(runList)
         abList[['blockSzMixed']] <- ab
@@ -95,31 +90,24 @@ if(FALSE) {
     eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
     eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
     eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
-}
+})
 
 
 
-## two different (overlapping) values of rho, rho2
-if(FALSE) {
-    rho  <- 0.2
-    rho2 <- 0.4
-    rho3 <- 0.6
-    N <- 50
-    control$niter <- 200000
-    runList <- list(
-        'all',
-        givenCov = quote({
-            spec <- MCMCspec(Rmodel, nodes = NULL)
-            spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE, propCov = Sigma), print=FALSE)
-            spec }),
-        'auto')
-    code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
+## mixed, overlapping, rhos
+system.time(if(TRUE) {
+    N <- 100
+    indList <- list(1:5, 6:10, 21:30, 31:40, 41:60, 61:80)
+    rhoVector <- c(  .8,   .6,    .5,    .3,    .2,    .1)
+    control$niter <- 400000
+    runList <- list('all', 'auto')
+    codeAndConstants <- createCodeAndConstants(N, indList, rhoVector)
+    code <- codeAndConstants$code
+    constants <- codeAndConstants$constants
     data <- list()
     inits <- list(x=rep(0,N))
-    Sigma <- createCov(N, indList=list(21:50), indList2=list(1:10, 31:40), indList3=list(11:15,33:38), rho=rho, rho2=rho2, rho3=rho3)
-    constants <- list(N=N, mu=rep(0,N), Sigma=Sigma)
     ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-    system.time(ab$run(runList))
+    ab$run(runList)
     abList <- list(mixedRhos=ab)
     dfmixedRhos <- createDFfromABlist(abList)
     filename <- 'dfmixedRhos.RData'
@@ -127,7 +115,7 @@ if(FALSE) {
     load(filename)
     plotABS(dfmixedRhos)
     printMinTimeABS(dfmixedRhos)
-}
+})
 
 
 
