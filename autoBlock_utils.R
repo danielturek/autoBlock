@@ -61,10 +61,6 @@ autoBlockParamDefaults <- function() {
         adaptIntervalBlock = 200,
         cutree_heights = seq(0, 1, by=0.1),
         niter = 200000,
-        sparsifyCov = FALSE,
-        sparseCovThreshold = -1,
-        spcov_lambda = 0.06,
-        spcov_step = 100,
         verbose = TRUE
         )
 }
@@ -79,17 +75,12 @@ autoBlock <- setRefClass(
         ## special
         abModel = 'ANY',
         it = 'numeric',
-        sparseSuccess = 'logical',
 
         ## overall control
         adaptInterval = 'numeric',
         adaptIntervalBlock = 'numeric',
         cutree_heights = 'numeric',
         niter = 'numeric',
-        sparsifyCov = 'logical',
-        sparseCovThreshold = 'numeric',
-        spcov_lambda = 'numeric',
-        spcov_step = 'numeric',
         verbose = 'logical',
 
         ## persistant LISTS of historical data
@@ -104,8 +95,6 @@ autoBlock <- setRefClass(
         essPT = 'list',
         burnedSamples = 'list',
         empCov = 'list',
-        empCovSparse = 'list',
-        empCovSparseThresh = 'list',
         empCor = 'list',
         distMatrix = 'list',
         hTree = 'list'
@@ -117,7 +106,6 @@ autoBlock <- setRefClass(
             library(lattice)
             library(coda)
             library(nimble)
-            library(spcov)
             abModel <<- autoBlockModel(code=code, constants=constants, data=data, inits=inits)
             defaultsList <- autoBlockParamDefaults()
             for(i in seq_along(defaultsList)) if(is.null(control[[names(defaultsList)[i]]])) control[[names(defaultsList)[i]]] <- defaultsList[[i]]
@@ -217,21 +205,7 @@ autoBlock <- setRefClass(
             if(auto) {
                 burnedSamples[[it]] <<- samples[[it]][(floor(niter/2)+1):niter, ]
                 empCov[[it]] <<- cov(burnedSamples[[it]])
-                empCovSparse[[it]] <<- empCov[[it]]
-                if(sparsifyCov) {
-                    sparseSuccess <<- TRUE
-                    sparse_out <- try(spcov(Sigma=diag(diag(empCov[[it]])), S=empCov[[it]], lambda=spcov_lambda, step.size=spcov_step)$Sigma, silent=TRUE)
-                    if(inherits(sparse_out, 'try-error')) { sparseSuccess <<- FALSE
-                                                        } else { empCovSparse[[it]] <<- sparse_out
-                                                                 dimnames(empCovSparse[[it]]) <<- dimnames(empCov[[it]]) }
-                }
-                empCovSparseThresh[[it]] <<- empCovSparse[[it]]
-                if(sparseCovThreshold > 0) {
-                    ind <- abs(empCovSparseThresh[[it]]) > sparseCovThreshold
-                    diag(ind) <- true
-                    empCovSparseThresh[[it]] <<- empCovSparseThresh[[it]] * ind
-                }
-                empCor[[it]] <<- cov2cor(empCovSparseThresh[[it]])
+                empCor[[it]] <<- cov2cor(empCov[[it]])
                 distMatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
                 hTree[[it]] <<- hclust(distMatrix[[it]])
             }
@@ -301,16 +275,13 @@ autoBlock <- setRefClass(
         printCurrent = function(name, spec, auto) {
             cat(paste0('\n################################\nBEGIN ITERATION ', it, ': ', name, '\n################################\n'))
             if(length(candidateGroups[[it]]) > 1) { cat('\ncandidate groups:\n'); cg<-candidateGroups[[it]]; for(i in seq_along(cg)) { cat(paste0('\n',names(cg)[i],':\n')); printGrouping(cg[[i]]) } }
-            if(auto && sparsifyCov) {
-                if(sparseSuccess) cat('\nsparsifying empirical covariance matrix.....\n') else cat('\nsparsification failed, covariance matrix nearly singular\n') }
             cat('\ngroups:\n'); printGrouping(grouping[[it]])
             if(auto) { dev.new(); if(inherits(try(plot(as.dendrogram(hTree[[it]]), ylim=c(0,1), main=name), silent=TRUE), 'try-error')) dev.off() }
             cat('\nsamplers:\n'); spec$getSamplers()
             cat(paste0('\nMCMC runtime: ', round(timing[[it]], 2), ' seconds\n'))
             cat('\nESS:\n'); print(ess[[it]])
             cat('\nESS/time:\n'); print(essPT[[it]])
-            cat(paste0('\n################################\nEND ITERATION ', it, ': ', name, '\n################################\n'))
-            cat('\n')
+            cat(paste0('\n################################\nEND ITERATION ', it, ': ', name, '\n################################\n\n'))
         },
 
         printGrouping = function(g) {
