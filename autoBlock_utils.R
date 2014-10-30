@@ -57,7 +57,6 @@ createCov <- function(N, indList=list(1:N), rho=0.8, indList2=list(), rho2=0.3) 
 
 autoBlockParamDefaults <- function() {
     list(
-        adaptInterval = 200,
         adaptIntervalBlock = 200,
         cutree_heights = seq(0, 1, by=0.1),
         niter = 200000,
@@ -78,7 +77,6 @@ autoBlock <- setRefClass(
         it = 'numeric',
 
         ## overall control
-        adaptInterval = 'numeric',
         adaptIntervalBlock = 'numeric',
         cutree_heights = 'numeric',
         niter = 'numeric',
@@ -262,7 +260,7 @@ autoBlock <- setRefClass(
                 spec$addSampler(type = 'RW_block', control = list(targetNodes=nodeGroup, adaptInterval=adaptIntervalBlock), print = FALSE); return()
             }
             if(!(nodeGroup %in% Rmodel$getNodeNames())) {
-                spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup, adaptInterval=adaptInterval), print = FALSE); return()
+                spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup), print = FALSE); return()
             }
             if(nodeGroup %in% Rmodel$getMaps('nodeNamesEnd')) {
                 cat(paste0('warning: using \'end\' sampler for node ', nodeGroup, ' may lead to results we don\'t want\n\n'))
@@ -278,7 +276,7 @@ autoBlock <- setRefClass(
             if(length(Rmodel$expandNodeNames(nodeGroup, returnScalarComponents = TRUE)) > 1) {
                 spec$addSampler(type = 'RW_block', control = list(targetNodes=nodeGroup, adaptInterval=adaptIntervalBlock), print = FALSE); return()
             }
-            spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup, adaptInterval=adaptInterval), print = FALSE); return()
+            spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup), print = FALSE); return()
         },
 
         printCurrent = function(name, spec, auto) {
