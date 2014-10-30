@@ -170,6 +170,19 @@ autoBlock <- setRefClass(
             names(ess) <<- naming
             names(essPT) <<- naming
         },
+
+        determineCandidateGroupsFromCurrentSample = function() {
+            cutreeList <- lapply(cutree_heights, function(height) cutree(hTree[[it]], h = height))
+            names(cutreeList) <- paste0('cut', cutree_heights)
+            uniqueCutreeList <- unique(cutreeList)
+            for(i in seq_along(uniqueCutreeList)) { for(j in seq_along(cutreeList)) { if(all(uniqueCutreeList[[i]]==cutreeList[[j]])) { names(uniqueCutreeList)[i] <- names(cutreeList)[j]; break } } }
+            candidateGroupsList <- lapply(uniqueCutreeList, function(ct) determineGroupsFromCutree(ct))
+            return(candidateGroupsList)
+        },
+        
+        determineGroupsFromCutree = function(ct) {
+            return(lapply(unique(ct), function(x) names(ct)[ct==x]))
+        },
         
         runSpecListAndSaveBest = function(Rmodel, specList, name, auto=FALSE) {
             RmcmcList <- timingList <- samplesList <- essList <- essPTList <- essPTminList <- list()
@@ -211,28 +224,22 @@ autoBlock <- setRefClass(
                 distMatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
                 hTree[[it]] <<- hclust(distMatrix[[it]])
             }
-
+            
             if(verbose) printCurrent(name, specList[[bestInd]], auto)
         },
-
-        determineCandidateGroupsFromCurrentSample = function() {
-            cutreeList <- lapply(cutree_heights, function(height) cutree(hTree[[it]], h = height))
-            names(cutreeList) <- paste0('cut', cutree_heights)
-            uniqueCutreeList <- unique(cutreeList)
-            for(i in seq_along(uniqueCutreeList)) { for(j in seq_along(cutreeList)) { if(all(uniqueCutreeList[[i]]==cutreeList[[j]])) { names(uniqueCutreeList)[i] <- names(cutreeList)[j]; break } } }
-            candidateGroupsList <- lapply(uniqueCutreeList, function(ct) determineGroupsFromCutree(ct))
-            return(candidateGroupsList)
-        },
-
-        determineGroupsFromCutree = function(ct) {
-            groups <- lapply(unique(ct), function(x) names(ct)[ct==x])
-            return(groups)
-        },
-
+        
         determineGroupsFromSpec = function(spec) {
             groups <- list()
             for(ss in spec$samplerSpecs) {
-                nodes <- if(!is.null(ss$control$targetNode)) ss$control$targetNode else ss$control$targetNodes
+                if(ss$type == 'RW_block') {
+                    nodes <- ss$control$targetNodes
+                } else if(ss$type == 'crossLevel') {
+                    topNodes <- ss$control$topNodes
+                    lowNodes <- spec$model$getDependencies(topNodes, self=FALSE, stochOnly=TRUE, includeData=FALSE)
+                    nodes <- c(topNodes, lowNodes)
+                } else if(!is.null(ss$control$targetNode)) {
+                    nodes <- ss$control$targetNode
+                } else stop('don\'t understand sampler type')
                 groups[[length(groups)+1]] <- spec$model$expandNodeNames(nodes, returnScalarComponents=TRUE)
             }
             return(groups)
@@ -243,7 +250,7 @@ autoBlock <- setRefClass(
             for(gp in groups) for(node in gp) groupSizeVector[[node]] <- length(gp)
             return(groupSizeVector)
         },
-
+        
         createSpecFromGroups = function(Rmodel, groups, conjOveride=FALSE) {
             spec <- MCMCspec(Rmodel, nodes=NULL, monitors=character(0))
             for(nodeGroup in groups) addSamplerToSpec(Rmodel, spec, nodeGroup, conjOveride)
