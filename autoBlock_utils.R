@@ -464,10 +464,12 @@ data_litters      <- list(r=r)
 inits_litters     <- list(a=a, b=b, p=p)
 
 code_litters <- modelCode({
-    a[1] ~ dunif(0, 50000)
-    b[1] ~ dunif(0, 5000)
-    a[2] ~ dunif(0, 100)
-    b[2] ~ dunif(0, 50)
+#    a[1] ~ dunif(0, 80000)
+#    b[1] ~ dunif(0, 10000)
+    a[1] ~ dgamma(1, 0.001)
+    b[1] ~ dgamma(1, 0.001)
+    a[2] ~ dunif(0, 100)   # works well
+    b[2] ~ dunif(0, 50)    # works well
      for (i in 1:G) {
 #         a[i] ~ dgamma(1, 0.001)
 #         b[i] ~ dgamma(1, 0.001)

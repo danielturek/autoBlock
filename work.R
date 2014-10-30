@@ -37,7 +37,7 @@ if(FALSE) {
     ablitters$run(runList)
     abList <- list(litters=ablitters)
     dflitters <- createDFfromABlist(abList)
-    save('dflitters', file='dflitters.RData')
+    save('dflitters', file='dflittersGAMMA-UNIFprior.RData')
     plotABS(dflitters, xlimToMin=TRUE)
 }
 
@@ -148,47 +148,14 @@ if(FALSE) {
 
     littersTraceplots('p[1, 15]', samples)
     littersTraceplots('p[1, 8]', samples)
-    littersTraceplots('a[1]', samples)   # 50,000
-    littersTraceplots('b[1]', samples)   # 5,000
+    littersTraceplots('a[1]', samples)   # 80,000
+    littersTraceplots('b[1]', samples)   # 10,000
     littersTraceplots('a[2]', samples)   # 100  (200 too high)
     littersTraceplots('b[2]', samples)   # 50 (100 to high)
 
 }
 
 
-
-
-
-
-
-
-
-
-## testing the new adaptation options; and a nice N=3 example
-## N <- 3
-## Sigma <- createCov(N, rho=0.8)
-## code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
-## constants <- list(N=N, mu=rep(0,N), Sigma=Sigma)
-## data <- list()
-## inits <- list(x=rep(0,N))
-## runList <- list(adaptTT = quote({ spec <- MCMCspec(Rmodel, nodes = NULL)
-##                                   spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE))
-##                                   spec}),
-##                 adaptTF = quote({ spec <- MCMCspec(Rmodel, nodes = NULL)
-##                                   spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=FALSE))
-##                                   spec}),
-##                 adaptFT = quote({ spec <- MCMCspec(Rmodel, nodes = NULL)
-##                                   spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=FALSE, adaptScaleOnly=TRUE))
-##                                   spec}),
-##                 adaptFF = quote({ spec <- MCMCspec(Rmodel, nodes = NULL)
-##                                   spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=FALSE, adaptScaleOnly=FALSE))
-##                                   spec})
-##                 )
-## ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-## ab$run(runList)
-## abList <- list(N3 = ab)
-## df <- createDFfromABlist(abList)
-## plotABS(df)
 
 
 
