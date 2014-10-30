@@ -1,5 +1,5 @@
 path <- '~/GitHub/autoBlock'
-#control <- list(cutree_heights = seq(0, 1, by=0.1))
+control <- list(setSeed0 = TRUE)
 source(file.path(path, 'autoBlock_utils.R'))
 
 
