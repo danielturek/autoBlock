@@ -61,6 +61,7 @@ autoBlockParamDefaults <- function() {
         adaptIntervalBlock = 200,
         cutree_heights = seq(0, 1, by=0.1),
         niter = 200000,
+        setSeed0 = FALSE,
         verbose = TRUE
         )
 }
@@ -81,6 +82,7 @@ autoBlock <- setRefClass(
         adaptIntervalBlock = 'numeric',
         cutree_heights = 'numeric',
         niter = 'numeric',
+        setSeed0 = 'logical',
         verbose = 'logical',
 
         ## persistant LISTS of historical data
@@ -181,7 +183,7 @@ autoBlock <- setRefClass(
             CmcmcList <- compiledList[-1]
             for(i in seq_along(CmcmcList)) {
                 Cmodel$setInits(abModel$inits)
-                set.seed(0)
+                if(setSeed0) set.seed(0)
                 timingList[[i]] <- as.numeric(system.time(CmcmcList[[i]](niter))[3])
                 samplesList[[i]] <- as.matrix(nfVar(CmcmcList[[i]], 'mvSamples'))
                 essList[[i]] <- apply(samplesList[[i]], 2, effectiveSize)
