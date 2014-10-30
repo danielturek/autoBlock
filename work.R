@@ -51,13 +51,10 @@ if(FALSE) {
 
 
 
-
-
-
 ## partitions of N = 2^k
 if(FALSE) {
-    rho <- 0.7
-    k <- 3
+    rho <- 0.8
+    k <- 4
     N <- 2^k
     tag <- paste0('N', N, 'rho', rho)
     control$niter <- 100000
@@ -94,11 +91,43 @@ if(FALSE) {
     }
     dfText <- paste0('df', tag)
     eval(substitute(DF <- createDFfromABlist(abList, rho=rho), list(DF=as.name(dfText))))
-    eval(substitute(save(DF, file=FILE), list(DF=as.name(dfText), FILE=paste0(dfText,'.RData'))))
+    filename <- paste0(dfText, '.RData')
+    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
     eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
 }
 
 
+
+## two different (overlapping) values of rho, rho2
+if(FALSE) {
+    rho  <- 0.2
+    rho2 <- 0.5
+    rho3 <- 0.8
+    N <- 64
+    control$niter <- 100000
+    runList <- list(
+        'all',
+        givenCov = quote({
+            spec <- MCMCspec(Rmodel, nodes = NULL)
+            spec$addSampler('RW_block', control=list(targetNodes='x', adaptive=TRUE, adaptScaleOnly=TRUE, propCov = Sigma), print=FALSE)
+            spec }),
+        'auto')
+    code <- quote({ x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N]) })
+    data <- list()
+    inits <- list(x=rep(0,N))
+    Sigma <- createCov(N, indList=list(21:60, 51:90), indList2=list(1:10, 31:50, 81:100), indList3=list(8:12, 25:30, 55:58, 90:95), rho=rho, rho2=rho2, rho3=rho3)
+    constants <- list(N=N, mu=rep(0,N), Sigma=Sigma)
+    ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
+    ab$run(runList)
+    abList <- list(mixedRhos=ab)
+    dfmixedRhos <- createDFfromABlist(abList)
+    filename <- 'dfmixedRhos.RData'
+    save(dfmixedRhos, file = filename)
+    load(filename)
+    plotABS(dfmixedRhos)
+    printMinTimeABS(dfmixedRhos)
+}
 
 
 

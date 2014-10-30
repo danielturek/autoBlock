@@ -46,10 +46,11 @@ autoBlockModel <- setRefClass(
         )
     )
 
-createCov <- function(N, indList=list(1:N), rho=0.8, indList2=list(), rho2=0.3) {
+createCov <- function(N, indList=list(1:N), rho=0.8, indList2=list(), rho2=0.3, indList3=list(), rho3=0.5) {
     Sigma <- diag(N)
     for(gp in indList)  { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- rho  }
     for(gp in indList2) { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- rho2 }
+    for(gp in indList3) { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- rho3 }
     diag(Sigma) <- 1
     Sigma
 }
@@ -390,11 +391,13 @@ plotABS <- function(df, xlimToMin=FALSE, together) {
 
 
 printMinTimeABS <- function(df) {
-    if(names(df)[2] != 'rho')  stop('missing rho name in df')
-    if(names(df)[3] != 'rho2') stop('missing rho2 name in df')
-    for(i in 1:2) if(any(is.na(df[, 2]))) {
-        if(!all(is.na(df[, 2]))) stop('some NAs in rho column, but not all')
-        df <- df[, -2]
+    namesToRemove <- c('rho', 'rho2')
+    for(name in namesToRemove) {
+        colInd <- which(names(df) == name)
+        if(any(is.na(df[, colInd]))) {
+            if(!all(is.na(df[, colInd]))) stop(paste0('some NAs in ', name, ' column, but not all'))
+            df <- df[, -1*colInd]
+        }
     }
     models <- unique(df$model)
     cat('\n')
@@ -475,7 +478,7 @@ code_litters <- modelCode({
 
 ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
 
-rm(list = c('G','N','n','r','p'))
+rm(list = c('G','N','n','r','p','a','b'))
 
 ################
 ### SSMmub
