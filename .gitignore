@@ -3,4 +3,4 @@ temp*
 TEMP*
 out
 .control.RData
-gen_*
+run*

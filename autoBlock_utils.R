@@ -119,6 +119,8 @@ autoBlock <- setRefClass(
         Cmcmcs = 'list',
         timing = 'list',
         samples = 'list',
+        means = 'list',
+        sds = 'list',
         ess = 'list',
         essPT = 'list',
         burnedSamples = 'list',
@@ -193,6 +195,8 @@ autoBlock <- setRefClass(
             names(Cmcmcs) <<- naming
             names(timing) <<- naming
             names(samples) <<- naming
+            names(means) <<- naming
+            names(sds) <<- naming
             names(ess) <<- naming
             names(essPT) <<- naming
         },
@@ -238,8 +242,10 @@ autoBlock <- setRefClass(
             grouping[[it]] <<- candidateGroups[[it]][[bestInd]]
             groupSizes[[it]] <<- determineNodeGroupSizesFromGroups(grouping[[it]])
             Cmcmcs[[it]] <<- CmcmcList[[bestInd]]
-            timing[[it]] <<- timingList[[bestInd]]
+            timing[[it]] <<- round(timingList[[bestInd]], 1)
             samples[[it]] <<- samplesList[[bestInd]]
+            means[[it]] <<- round(apply(samples[[it]], 2, mean), 2)
+            sds[[it]] <<- round(apply(samples[[it]], 2, sd), 2)
             ess[[it]] <<- round(essList[[bestInd]], 0)
             essPT[[it]] <<- sort(round(essPTList[[bestInd]], 1))
             
@@ -345,8 +351,8 @@ autoBlock <- setRefClass(
     )
 
 
-createDFfromABlist <- function(lst, rho=NA, rho2=NA) {
-    df <- data.frame(model=character(), rho=numeric(), rho2=numeric(), blocking=character(), timing=numeric(), node=character(), groupSize=numeric(), ess=numeric(), essPT=numeric(), stringsAsFactors=FALSE)
+createDFfromABlist <- function(lst) {
+    df <- data.frame(model=character(), blocking=character(), timing=numeric(), node=character(), groupSize=numeric(), mean=numeric(), sd=numeric(), ess=numeric(), essPT=numeric(), stringsAsFactors=FALSE)
     for(iAB in seq_along(lst)) {
         ab <- lst[[iAB]]
         abName <- names(lst)[iAB]
@@ -355,9 +361,10 @@ createDFfromABlist <- function(lst, rho=NA, rho2=NA) {
             timing <- ab$timing[[iBlock]]
             ess <- ab$ess[[iBlock]]
             nodes <- names(ess)
-            nNodes <- 
-            essPT <- ab$essPT[[iBlock]][nodes]            ## sort
-            groupSizes <- ab$groupSizes[[iBlock]][nodes]  ## sort
+            means <- ab$means[[iBlock]][nodes]            ## sort
+            sds <- ab$sds[[iBlock]][nodes]                ##
+            essPT <- ab$essPT[[iBlock]][nodes]            ##
+            groupSizes <- ab$groupSizes[[iBlock]][nodes]  ##
             newIndDF <- (1:length(nodes)) + dim(df)[1]
             df[newIndDF,] <- NA
             df[newIndDF,]$model <- abName
@@ -365,12 +372,12 @@ createDFfromABlist <- function(lst, rho=NA, rho2=NA) {
             df[newIndDF,]$timing <- timing
             df[newIndDF,]$node <- nodes
             df[newIndDF,]$groupSize <- groupSizes
+            df[newIndDF,]$mean <- means
+            df[newIndDF,]$sd <- sds
             df[newIndDF,]$ess <- ess
             df[newIndDF,]$essPT <- essPT
         }
     }
-    df$rho  <- rho
-    df$rho2 <- rho2
     return(df)
 }
 
@@ -418,14 +425,8 @@ plotABS <- function(df, xlimToMin=FALSE, together) {
 
 
 printMinTimeABS <- function(df) {
-    namesToRemove <- c('rho', 'rho2')
-    for(name in namesToRemove) {
-        colInd <- which(names(df) == name)
-        if(any(is.na(df[, colInd]))) {
-            if(!all(is.na(df[, colInd]))) stop(paste0('some NAs in ', name, ' column, but not all'))
-            df <- df[, -1*colInd]
-        }
-    }
+    namesToRemove <- c('mean', 'sd')
+    for(name in namesToRemove) { ind <- which(names(df)==name); df <- df[, -ind] }
     models <- unique(df$model)
     cat('\n')
     for(mod in models) {
@@ -443,6 +444,18 @@ printMinTimeABS <- function(df) {
         cat('\n')
     }
 }
+
+
+codeToText <- function(code) {
+    a <- deparse(code, width.cutoff=500L)
+    a <- a[c(-1, -length(a))]
+    a <- sub('^    ', '', a)
+    a[length(a) + 1] <- ''
+    a[length(a) + 1] <- ''
+    a <- paste0(a, collapse='\n')
+    return(a)
+}
+
 
 
 
@@ -666,11 +679,3 @@ rm(list = c('t','Rmodel'))
 
 
 
-## formatForFile <- function(code) {
-##     a <- deparse(code, width.cutoff=500L)
-##     a <- a[c(-1, -length(a))]
-##     a <- sub('^    ', '', a)
-##     a[length(a) + 1] <- ''
-##     a <- paste0(a, collapse='\n')
-##     a
-## }

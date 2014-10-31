@@ -1,16 +1,20 @@
-path <- '~/GitHub/autoBlock'
-control <- list(setSeed0 = TRUE)
-source(file.path(path, 'autoBlock_utils.R'))
+preCode <- quote({
+    path <- '~/GitHub/autoBlock'
+    control <- list(setSeed0 = TRUE)
+    source(file.path(path, 'autoBlock_utils.R'))
+})
+eval(preCode)
+preCode[[length(preCode)+1]] <- quote(control$verbose <- FALSE)
 
 
 
 ## litters
-if(FALSE) {
+littersCode <- quote({
     control$niter <- 400000
     runList <- list('all',
                     blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')),
                     crossLevel = quote({
-                        spec <- MCMCspec(Rmodel, nodes=NULL)
+                        spnec <- MCMCspec(Rmodel, nodes=NULL)
                         spec$addSampler('crossLevel', list(topNodes = c('a[1]', 'b[1]')), print=FALSE)
                         spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
                         spec
@@ -18,43 +22,48 @@ if(FALSE) {
                     'default',
                     'auto')
     ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
-    system.time(ablitters$run(runList))  ## 26 minutes
+    ablitters$run(runList)
     abList <- list(litters=ablitters)
     dflitters <- createDFfromABlist(abList)
-    filename <- 'dflittersGAMMA-UNIFprior.RData'
+    filename <- file.path(path, 'dflittersGAMMA-UNIFprior.RData')
     save(dflitters, file = filename)
-    load(filename)
-    plotABS(dflitters, xlimToMin=FALSE)
-    plotABS(dflitters, xlimToMin=TRUE)
+    if(control$verbose) plotABS(dflitters, xlimToMin=FALSE)
+    if(control$verbose) plotABS(dflitters, xlimToMin=TRUE)
     printMinTimeABS(dflitters)
-}
+})
+filename <- file.path(path, 'runLitters.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(littersCode), file=filename, append=TRUE)
+
 
 
 ## state space models
-if(FALSE) {
-    control$niter <- 400000    
+SSMCode <- quote({
+    control$niter <- 400000
     runListMUB <- list('all', blockMUB = list(c('mu','b')), 'default', 'auto')
     runListAB  <- list('all', blockAB  = list(c('a', 'b')), 'default', 'auto')
     abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
     abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
-    system.time(abSSMmub$run(runListMUB))  ## 26 minutes
-    system.time(abSSMab$run(runListAB))    ## 31 minutes
+    abSSMmub$run(runListMUB)
+    abSSMab$run(runListAB)
     abList <- list(independent=abSSMmub, correlated=abSSMab)
     dfSSM <- createDFfromABlist(abList)
-    filename <- 'dfSSM.RData'
+    filename <- file.path(path, 'dfSSM.RData')
     save(dfSSM, file = filename)
-    load(filename)
-    plotABS(dfSSM, xlimToMin=FALSE)
-    plotABS(dfSSM, xlimToMin=TRUE)
+    if(control$verbose) plotABS(dfSSM, xlimToMin=FALSE)
+    if(control$verbose) plotABS(dfSSM, xlimToMin=TRUE)
     printMinTimeABS(dfSSM)
-}
+})
+filename <- file.path(path, 'runSSM.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(SSMCode), file=filename, append=TRUE)
 
 
 
 ## partitions of N = 2^k
-system.time(if(TRUE) {
-    rho <- 0.8
-    k <- 4
+partitionsCode <- quote({
+    rho <- 0.2
+    k <- 5
     N <- 2^k
     tag <- paste0('N', N, 'rho', rho)
     control$niter <- 100000
@@ -85,20 +94,27 @@ system.time(if(TRUE) {
         abList[['blockSzMixed']] <- ab
     }
     dfText <- paste0('df', tag)
-    eval(substitute(DF <- createDFfromABlist(abList, rho=rho), list(DF=as.name(dfText))))
-    filename <- paste0(dfText, '.RData')
+    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
+    filename <- file.path(path, paste0(dfText, '.RData'))
     eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
-    eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+    if(control$verbose) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
     eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
 })
+filename <- file.path(path, 'runPartitions0.2.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(partitionsCode), file=filename, append=TRUE)
+
 
 
 
 ## mixed, overlapping, rhos
-system.time(if(TRUE) {
-    N <- 100
-    indList <- list(1:5, 6:10, 21:30, 31:40, 41:60, 61:80)
-    rhoVector <- c(  .8,   .6,    .5,    .3,    .2,    .1)
+mixedRhosCode <- ({
+    N <- 100   ## multiple of 10
+    tag <- paste0('N', N, 'mixedRhos')
+    blockSize <- N/10
+    numberOfBlocks <- 9
+    indList <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
+    rhoVector <- seq(from=0.9, to=0.1, by=0.1)
     control$niter <- 400000
     runList <- list('all', 'auto')
     codeAndConstants <- createCodeAndConstants(N, indList, rhoVector)
@@ -109,13 +125,16 @@ system.time(if(TRUE) {
     ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
     ab$run(runList)
     abList <- list(mixedRhos=ab)
-    dfmixedRhos <- createDFfromABlist(abList)
-    filename <- 'dfmixedRhos.RData'
-    save(dfmixedRhos, file = filename)
-    load(filename)
-    plotABS(dfmixedRhos)
-    printMinTimeABS(dfmixedRhos)
+    dfText <- paste0('df', tag)
+    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
+    filename <- file.path(path, paste0(dfText, '.RData'))
+    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
+    eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
 })
+filename <- file.path(path, 'runMixedRhos100.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
 
 
 
@@ -186,37 +205,6 @@ if(FALSE) {
 }
 
 
-
-
-
-
-## some general code for testing run times
-## library(nimble)
-## N <- 200
-## points <- c(10,50,100,150,200)
-## niter <- 10000
-## code <- quote({
-##     x[1:N] ~ dmnorm(mu[1:N], cov = Sigma[1:N,1:N])
-## })
-## constants <- list(N=N, mu=rep(0,N), Sigma=diag(N))
-## data <- list()
-## inits <- list(x=rep(0,N))
-## md <- nimbleModel(code=code, constants=constants, data=data, inits=inits, returnDef=TRUE)
-## timing <- numeric(0)
-## for(i in seq_along(points)) {
-##     pt <- points[i]
-##     cat(paste0(i, '\n'))
-##     Rmodel <- md$newModel()
-##     spec <- MCMCspec(Rmodel, nodes=NULL)
-##     targetNodes <- paste0('x[1:', pt, ']')
-##     spec$addSampler('RW_block', control=list(targetNodes=targetNodes))
-##     spec$addMonitors('x', print=FALSE)
-##     Rmcmc <- buildMCMC(spec)
-##     Cmodel <- compileNimble(Rmodel)
-##     Cmcmc <- compileNimble(Rmcmc, project=Rmodel)
-##     timing[i] <- system.time(Cmcmc(niter))[3]
-## }
-## plot(points, timing, pch=19, ylim=c(0, max(timing)))
 
 
 
