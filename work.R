@@ -61,80 +61,90 @@ cat(codeToText(SSMCode), file=filename, append=TRUE)
 
 
 ## partitions of N = 2^k
-partitionsCode <- quote({
-    rho <- 0.2
-    k <- 5
-    N <- 2^k
-    tag <- paste0('N', N, 'rho', rho)
-    control$niter <- 100000
-    runList <- list('all', 'auto')
-    blockSizes <- 2^(0:k)
-    data <- list()
-    inits <- list(x=rep(0,N))
-    abList <- list()
-    for(blockSize in blockSizes) {
-        numberOfBlocks <- N / blockSize
-        listOfBlockIndexes <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
-        codeAndConstants <- createCodeAndConstants(N, listOfBlockIndexes, rep(rho,numberOfBlocks))
-        code <- codeAndConstants$code
-        constants <- codeAndConstants$constants
-        ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-        ab$run(runList)
-        abList[[paste0('blockSz', blockSize)]] <- ab
-    }
-    if(k > 1) {
-        blockLengths <- c(1, 2^(0:(k-1)))
-        indList <- list(); cur <- 1
-        for(len in blockLengths) { indList <- c(indList, list(cur:(cur+len-1))); cur <- cur+len }
-        codeAndConstants <- createCodeAndConstants(N, indList, rep(rho,length(indList)))
-        code <- codeAndConstants$code
-        constants <- codeAndConstants$constants
-        ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-        ab$run(runList)
-        abList[['blockSzMixed']] <- ab
-    }
-    dfText <- paste0('df', tag)
-    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
-    filename <- file.path(path, paste0(dfText, '.RData'))
-    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
-    if(control$verbose) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
-    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
-})
-filename <- file.path(path, 'runPartitions0.2.R')
-cat(codeToText(preCode), file=filename)
-cat(codeToText(partitionsCode), file=filename, append=TRUE)
-
+## constant rho
+k <- 4
+rhoVector <- c(0.2, 0.5, 0.8)
+for(rho in rhoVector) {
+    partitionsCode <- substitute({
+        rho <- RHO
+        k <- KKK
+        N <- 2^k
+        tag <- paste0('N', N, 'rho', rho)
+        control$niter <- 100000
+        runList <- list('all', 'auto')
+        blockSizes <- 2^(0:k)
+        data <- list()
+        inits <- list(x=rep(0,N))
+        abList <- list()
+        for(blockSize in blockSizes) {
+            numberOfBlocks <- N / blockSize
+            listOfBlockIndexes <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
+            codeAndConstants <- createCodeAndConstants(N, listOfBlockIndexes, rep(rho,numberOfBlocks))
+            code <- codeAndConstants$code
+            constants <- codeAndConstants$constants
+            ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
+            ab$run(runList)
+            abList[[paste0('blockSz', blockSize)]] <- ab
+        }
+        if(k > 1) {
+            blockLengths <- c(1, 2^(0:(k-1)))
+            indList <- list(); cur <- 1
+            for(len in blockLengths) { indList <- c(indList, list(cur:(cur+len-1))); cur <- cur+len }
+            codeAndConstants <- createCodeAndConstants(N, indList, rep(rho,length(indList)))
+            code <- codeAndConstants$code
+            constants <- codeAndConstants$constants
+            ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
+            ab$run(runList)
+            abList[['blockSzMixed']] <- ab
+        }
+        dfText <- paste0('df', tag)
+        eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
+        filename <- file.path(path, paste0(dfText, '.RData'))
+        eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
+        if(control$verbose) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+        eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
+    }, list(RHO=rho, KKK=k))
+    filename <- file.path(path, paste0('runPartitionsN', 2^k, 'rho', rho, '.R'))
+    cat(codeToText(preCode), file=filename)
+    cat(codeToText(partitionsCode), file=filename, append=TRUE)
+}
 
 
 
 ## mixed, overlapping, rhos
-mixedRhosCode <- ({
-    N <- 100   ## multiple of 10
-    tag <- paste0('N', N, 'mixedRhos')
-    blockSize <- N/10
-    numberOfBlocks <- 9
-    indList <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
-    rhoVector <- seq(from=0.9, to=0.1, by=0.1)
-    control$niter <- 400000
-    runList <- list('all', 'auto')
-    codeAndConstants <- createCodeAndConstants(N, indList, rhoVector)
-    code <- codeAndConstants$code
-    constants <- codeAndConstants$constants
-    data <- list()
-    inits <- list(x=rep(0,N))
-    ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-    ab$run(runList)
-    abList <- list(mixedRhos=ab)
-    dfText <- paste0('df', tag)
-    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
-    filename <- file.path(path, paste0(dfText, '.RData'))
-    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
-    eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
-    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
-})
-filename <- file.path(path, 'runMixedRhos100.R')
-cat(codeToText(preCode), file=filename)
-cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
+Nvalues <- c(30, 100)   ## multiples of 10
+for(Nval in Nvalues) {
+    mixedRhosCode <- substitute({
+        N <- NNN
+        tag <- paste0('mixedRhosN', N)
+        blockSize <- N/10
+        numberOfBlocks <- 9
+        indList <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
+        rhoVector <- seq(from=0.9, to=0.1, by=-0.1)
+        control$niter <- 400000
+        runList <- list('all', 'auto')
+        codeAndConstants <- createCodeAndConstants(N, indList, rhoVector)
+        code <- codeAndConstants$code
+        constants <- codeAndConstants$constants
+        data <- list()
+        inits <- list(x=rep(0,N))
+        ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
+        ab$run(runList)
+        abList <- list(mixedRhos=ab)
+        dfText <- paste0('df', tag)
+        eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
+        filename <- file.path(path, paste0(dfText, '.RData'))
+        eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
+        if(control$verbose) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+        eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
+    }, list(NNN=Nval))
+    filename <- file.path(path, paste0('runMixedRhosN', Nval, '.R'))
+    cat(codeToText(preCode), file=filename)
+    cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
+}
+
+
+
 
 
 
