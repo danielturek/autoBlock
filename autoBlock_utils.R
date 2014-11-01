@@ -88,6 +88,7 @@ autoBlockParamDefaults <- function() {
         adaptIntervalBlock = 200,
         cutree_heights = seq(0, 1, by=0.1),
         niter = 200000,
+        saveSamples = FALSE,
         setSeed0 = FALSE,
         verbose = TRUE
         )
@@ -108,6 +109,7 @@ autoBlock <- setRefClass(
         adaptIntervalBlock = 'numeric',
         cutree_heights = 'numeric',
         niter = 'numeric',
+        saveSamples = 'logical',
         setSeed0 = 'logical',
         verbose = 'logical',
 
@@ -194,7 +196,7 @@ autoBlock <- setRefClass(
             names(groupSizes) <<- naming
             names(Cmcmcs) <<- naming
             names(timing) <<- naming
-            names(samples) <<- naming
+            if(saveSamples) names(samples) <<- naming
             names(means) <<- naming
             names(sds) <<- naming
             names(ess) <<- naming
@@ -215,7 +217,7 @@ autoBlock <- setRefClass(
         },
         
         runSpecListAndSaveBest = function(Rmodel, specList, name, auto=FALSE) {
-            RmcmcList <- timingList <- samplesList <- essList <- essPTList <- essPTminList <- list()
+            RmcmcList <- timingList <- samplesList <- meansList <- sdsList <- essList <- essPTList <- essPTminList <- list()
             for(i in seq_along(specList)) {
                 checkOverMCMCspec(specList[[i]])
                 specList[[i]]$addMonitors(abModel$monitorsVector, print=FALSE)
@@ -230,13 +232,18 @@ autoBlock <- setRefClass(
                 if(setSeed0) set.seed(0)
                 timingList[[i]] <- as.numeric(system.time(CmcmcList[[i]](niter))[3])
                 samplesList[[i]] <- as.matrix(nfVar(CmcmcList[[i]], 'mvSamples'))
-                essList[[i]] <- apply(samplesList[[i]], 2, effectiveSize)
+                meansList[[i]] <- apply(samplesList[[i]], 2, mean)
+                sdsList[[i]]   <- apply(samplesList[[i]], 2, sd)
+                essList[[i]]   <- apply(samplesList[[i]], 2, effectiveSize)
+                
+                if(!saveSamples) samplesList[[i]] <- NA
+                
                 essPTList[[i]] <- essList[[i]] / timingList[[i]]
                 essPTminList[[i]] <- sort(essPTList[[i]])[1]
             }
             bestInd <- as.numeric(which(unlist(essPTminList) == max(unlist(essPTminList))))
             if(!is.null(names(specList))) name <- paste0(name, '-', names(specList)[bestInd])
-
+            
             it <<- it + 1
             naming[[it]] <<- name
             candidateGroups[[it]] <<- lapply(specList, function(spec) determineGroupsFromSpec(spec))
@@ -245,8 +252,8 @@ autoBlock <- setRefClass(
             Cmcmcs[[it]] <<- CmcmcList[[bestInd]]
             timing[[it]] <<- round(timingList[[bestInd]], 1)
             samples[[it]] <<- samplesList[[bestInd]]
-            means[[it]] <<- round(apply(samples[[it]], 2, mean), 2)
-            sds[[it]] <<- round(apply(samples[[it]], 2, sd), 2)
+            means[[it]] <<- round(meansList[[bestInd]], 2)
+            sds[[it]] <<- round(sdsList[[bestInd]], 2)
             ess[[it]] <<- round(essList[[bestInd]], 0)
             essPT[[it]] <<- sort(round(essPTList[[bestInd]], 1))
             
