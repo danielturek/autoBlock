@@ -14,7 +14,7 @@ littersCode <- quote({
     runList <- list('all',
                     blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')),
                     crossLevel = quote({
-                        spnec <- MCMCspec(Rmodel, nodes=NULL)
+                        spec <- MCMCspec(Rmodel, nodes=NULL)
                         spec$addSampler('crossLevel', list(topNodes = c('a[1]', 'b[1]')), print=FALSE)
                         spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
                         spec
