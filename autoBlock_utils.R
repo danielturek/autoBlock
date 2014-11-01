@@ -217,6 +217,7 @@ autoBlock <- setRefClass(
         runSpecListAndSaveBest = function(Rmodel, specList, name, auto=FALSE) {
             RmcmcList <- timingList <- samplesList <- essList <- essPTList <- essPTminList <- list()
             for(i in seq_along(specList)) {
+                checkOverMCMCspec(specList[[i]])
                 specList[[i]]$addMonitors(abModel$monitorsVector, print=FALSE)
                 RmcmcList[[i]] <- buildMCMC(specList[[i]])
             }
@@ -259,7 +260,7 @@ autoBlock <- setRefClass(
             
             if(verbose) printCurrent(name, specList[[bestInd]], auto)
         },
-        
+
         determineGroupsFromSpec = function(spec) {
             groups <- list()
             for(ss in spec$samplerSpecs) {
@@ -311,6 +312,19 @@ autoBlock <- setRefClass(
                 spec$addSampler(type = 'RW_block', control = list(targetNodes=nodeGroup, adaptInterval=adaptIntervalBlock), print = FALSE); return()
             }
             spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup), print = FALSE); return()
+        },
+
+        checkOverMCMCspec = function(spec) {
+            for(ss in spec$samplerSpecs) {
+                if(ss$type == 'end') {
+                    msg <- 'using \'end\' sampler may lead to results we don\'t want'
+                    cat(paste0('\nWARNING: ', msg, '\n')); warning(msg)
+                }
+                if(grepl('^conjugate_', ss$type) && nimble:::nimbleOptions$verifyConjugatePosterior) {
+                    msg <- 'conjugate sampler running slow due to checking the posterior'
+                    cat(paste0('\nWARNING: ', msg, '\n')); warning(msg)
+                }
+            }
         },
 
         printCurrent = function(name, spec, auto) {
