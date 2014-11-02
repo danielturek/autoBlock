@@ -87,6 +87,7 @@ autoBlockParamDefaults <- function() {
     list(
         adaptIntervalBlock = 200,
         cutree_heights = seq(0, 1, by=0.1),
+        makePlots = TRUE,
         niter = 200000,
         saveSamples = FALSE,
         setSeed0 = FALSE,
@@ -108,6 +109,7 @@ autoBlock <- setRefClass(
         ## overall control
         adaptIntervalBlock = 'numeric',
         cutree_heights = 'numeric',
+        makePlots = 'logical',
         niter = 'numeric',
         saveSamples = 'logical',
         setSeed0 = 'logical',
@@ -258,14 +260,18 @@ autoBlock <- setRefClass(
             essPT[[it]] <<- sort(round(essPTList[[bestInd]], 1))
             
             if(auto) {
-                burnedSamples[[it]] <<- samples[[it]][(floor(niter/2)+1):niter, ]
+                samp <- as.matrix(nfVar(CmcmcList[[bestInd]], 'mvSamples'))
+                burnedSamples[[it]] <<- samp[(floor(niter/2)+1):niter, ]
                 empCov[[it]] <<- cov(burnedSamples[[it]])
                 empCor[[it]] <<- cov2cor(empCov[[it]])
                 distMatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
                 hTree[[it]] <<- hclust(distMatrix[[it]])
             }
             
-            if(verbose) printCurrent(name, specList[[bestInd]], auto)
+            if(!saveSamples) burnedSamples[[it]] <<- NA
+            
+            if(verbose) printCurrent(name, specList[[bestInd]])
+            if(makePlots && auto) makeCurrentPlots(name)
         },
 
         determineGroupsFromSpec = function(spec) {
@@ -334,16 +340,20 @@ autoBlock <- setRefClass(
             }
         },
 
-        printCurrent = function(name, spec, auto) {
+        printCurrent = function(name, spec) {
             cat(paste0('\n################################\nBEGIN ITERATION ', it, ': ', name, '\n################################\n'))
             if(length(candidateGroups[[it]]) > 1) { cat('\ncandidate groups:\n'); cg<-candidateGroups[[it]]; for(i in seq_along(cg)) { cat(paste0('\n',names(cg)[i],':\n')); printGrouping(cg[[i]]) } }
             cat('\ngroups:\n'); printGrouping(grouping[[it]])
-            if(auto) { dev.new(); if(inherits(try(plot(as.dendrogram(hTree[[it]]), ylim=c(0,1), main=name), silent=TRUE), 'try-error')) dev.off() }
             cat('\nsamplers:\n'); spec$getSamplers()
             cat(paste0('\nMCMC runtime: ', round(timing[[it]], 2), ' seconds\n'))
             cat('\nESS:\n'); print(ess[[it]])
             cat('\nESS/time:\n'); print(essPT[[it]])
             cat(paste0('\n################################\nEND ITERATION ', it, ': ', name, '\n################################\n\n'))
+        },
+
+        makeCurrentPlots = function(name) {
+            dev.new()
+            if(inherits(try(plot(as.dendrogram(hTree[[it]]), ylim=c(0,1), main=name), silent=TRUE), 'try-error')) dev.off()
         },
 
         printGrouping = function(g) {
