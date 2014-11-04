@@ -112,7 +112,7 @@ for(rho in rhoVector) {
 
 
 ## mixed, overlapping, rhos
-Nvalues <- c(30, 100)   ## multiples of 10
+Nvalues <- c(60)   ## multiples of 10
 for(Nval in Nvalues) {
     mixedRhosCode <- substitute({
         N <- NNN
