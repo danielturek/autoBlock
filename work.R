@@ -112,16 +112,16 @@ for(rho in rhoVector) {
 
 
 ## mixed, overlapping, rhos
-Nvalues <- c(60)   ## multiples of 10
-for(Nval in Nvalues) {
-    mixedRhosCode <- substitute({
-        N <- NNN
+mixedRhosCode <- substitute({
+    control$niter <- 400000
+    abList <- list()
+    Nvalues <- c(30, 50, 70, 100, 150)   ## multiples of 10
+    for(N in Nvalues) {
         tag <- paste0('mixedRhosN', N)
         blockSize <- N/10
         numberOfBlocks <- 9
         indList <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
         rhoVector <- seq(from=0.9, to=0.1, by=-0.1)
-        control$niter <- 400000
         runList <- list('all', 'auto')
         codeAndConstants <- createCodeAndConstants(N, indList, rhoVector)
         code <- codeAndConstants$code
@@ -130,18 +130,19 @@ for(Nval in Nvalues) {
         inits <- list(x=rep(0,N))
         ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
         ab$run(runList)
-        abList <- list(mixedRhos=ab)
-        dfText <- paste0('df', tag)
-        eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
-        filename <- file.path(path, paste0(dfText, '.RData'))
-        eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
-        if(control$makePlots) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
-        eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
-    }, list(NNN=Nval))
-    filename <- file.path(path, paste0('runMixedRhosN', Nval, '.R'))
-    cat(codeToText(preCode), file=filename)
-    cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
-}
+        abList[[tag]] <- ab
+    }
+    dfText <- 'dfmixedRhos'
+    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
+    filename <- file.path(path, paste0(dfText, '.RData'))
+    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
+    if(control$makePlots) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
+})
+filename <- file.path(path, 'runmixedRhos.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
+
 
 
 
