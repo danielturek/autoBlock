@@ -624,7 +624,43 @@ abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab
 rm(list = c('t','Rmodel'))
 
 
+################
+### scallops
+################
 
+library(Imap)
+myscallops <- read.table("http://www.biostat.umn.edu/~brad/data/myscallops.txt", header = TRUE)
+N <- dim(myscallops)[1]
+lat <- myscallops$lat
+long <- myscallops$long
+dist <- array(NA, c(N,N))
+for(i in 1:N) for(j in 1:N) dist[i,j] <- gdist(long[i], lat[i], long[j], lat[j])
+
+
+code_scallops<- modelCode({
+    
+    mu ~ dunif(0, 100)
+    sigma ~ dgamma(0.001, 0.001)
+    r ~ dgamma(0.001, 0.001)
+
+    for(i in 1:N) {
+        muVec[i] <- mu
+        for(j in 1:N) {
+            Cov[i,j] <- sigma^2 * exp(-dist[i,j] / r)
+        }
+    }
+    
+    g[1:N] ~ dmnorm(muVec[1:N], cov = Cov[1:N,1:N])
+    
+    for(i in 1:N) {
+        y[i] ~ dpois(exp(g[i]))
+    }
+    
+})
+
+constants_scallops <- list(N = N)
+data_scallops <- list(mu0 = rep(0,N), y = myscallops$catch)
+inits_scallops <- list(sigma = 1, r = 1, g = rep(0,N))
 
 
 
