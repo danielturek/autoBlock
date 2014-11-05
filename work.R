@@ -60,6 +60,26 @@ cat(codeToText(SSMCode), file=filename, append=TRUE)
 
 
 
+## scallops
+scallopsCode <- quote({
+    control$niter <- 400000
+    runList <- list('all', 'default', 'auto')
+    abscallops <- autoBlock(code=code_scallops, constants=constants_scallops, data=data_scallops, inits=inits_scallops, control=control)
+    abscallops$run(runList)
+    abList <- list(scallops=abscallops)
+    dfscallops <- createDFfromABlist(abList)
+    filename <- file.path(path, 'dfscallops.RData')
+    save(dfscallops, file = filename)
+    if(abscallops$makePlots) plotABS(dfscallops, xlimToMin=FALSE)
+    if(abscallops$makePlots) plotABS(dfscallops, xlimToMin=TRUE)
+    printMinTimeABS(dfscallops)
+})
+filename <- file.path(path, 'runscallops.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(scallopsCode), file=filename, append=TRUE)
+
+
+
 ## partitions of N = 2^k
 ## constant rho
 k <- 4

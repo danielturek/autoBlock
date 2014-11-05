@@ -512,7 +512,7 @@ constants_tester <- list(mu=rep(0,5), Q=diag(5))
 data_tester <- list(y = c(1,2,3,0,0))
 inits_tester <- list(x=rep(0,5), z1=0)
 
-abtester <- autoBlock(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester, control=control)
+##abtester <- autoBlock(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester, control=control)
 
 ################
 ### litters
@@ -547,7 +547,7 @@ code_litters <- modelCode({
      }
 })
 
-ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
+##ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
 
 rm(list = c('G','N','n','r','p','a','b'))
 
@@ -583,7 +583,7 @@ simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
 data_SSMmub <- list(y = Rmodel$y)
 inits_SSMmub <- list(mu = Rmodel$mu, b = Rmodel$b, sigPN = Rmodel$sigPN, sigOE = Rmodel$sigOE, x = Rmodel$x)
 
-abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
+##abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
 
 rm(list = c('t','Rmodel'))
 
@@ -619,7 +619,7 @@ simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
 data_SSMab <- list(y = Rmodel$y)
 inits_SSMab <- list(a = Rmodel$a, b = Rmodel$b, sigPN = Rmodel$sigPN, sigOE = Rmodel$sigOE, x = Rmodel$x)
 
-abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
+##abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
 
 rm(list = c('t','Rmodel'))
 
@@ -630,40 +630,33 @@ rm(list = c('t','Rmodel'))
 
 library(Imap)
 myscallops <- read.table("http://www.biostat.umn.edu/~brad/data/myscallops.txt", header = TRUE)
+#####myscallops <- myscallops[1:25,]
 N <- dim(myscallops)[1]
+catch <- myscallops$tcatch
 lat <- myscallops$lat
 long <- myscallops$long
 dist <- array(NA, c(N,N))
 for(i in 1:N) for(j in 1:N) dist[i,j] <- gdist(long[i], lat[i], long[j], lat[j])
 
-
 code_scallops<- modelCode({
-    
     mu ~ dunif(0, 100)
-    sigma ~ dgamma(0.001, 0.001)
-    r ~ dgamma(0.001, 0.001)
-
-    for(i in 1:N) {
-        muVec[i] <- mu
-        for(j in 1:N) {
-            Cov[i,j] <- sigma^2 * exp(-dist[i,j] / r)
-        }
-    }
-    
+    sigma ~ dunif(0, 100)
+    rho ~ dunif(20, 100)
+    muVec[1:N] <- mu * onesVector[1:N]
+    Cov[1:N,1:N] <- sigma^2 * exp(-dist[1:N,1:N] / rho)
     g[1:N] ~ dmnorm(muVec[1:N], cov = Cov[1:N,1:N])
-    
     for(i in 1:N) {
         y[i] ~ dpois(exp(g[i]))
     }
-    
 })
 
-constants_scallops <- list(N = N)
-data_scallops <- list(mu0 = rep(0,N), y = myscallops$catch)
-inits_scallops <- list(sigma = 1, r = 1, g = rep(0,N))
+constants_scallops <- list(N=N, onesVector=rep(1,N), dist=dist)
+data_scallops <- list(y=catch)
+inits_scallops <- list(mu=5, sigma=1, rho=30, g=rep(0,N))
 
+##abscallops <- autoBlock(code=code_scallops, constants=constants_scallops, data=data_scallops, inits=inits_scallops)
 
-
+rm(list = c('myscallops', 'N', 'catch', 'lat', 'long', 'dist'))
 
 
 
