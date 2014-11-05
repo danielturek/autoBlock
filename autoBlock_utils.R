@@ -656,7 +656,7 @@ inits_scallops <- list(mu=5, sigma=1, rho=30, g=rep(0,N))
 
 ##abscallops <- autoBlock(code=code_scallops, constants=constants_scallops, data=data_scallops, inits=inits_scallops)
 
-rm(list = c('myscallops', 'N', 'catch', 'lat', 'long', 'dist'))
+rm(list = c('myscallops', 'N', 'catch', 'lat', 'long', 'dist', 'i', 'j'))
 
 
 
