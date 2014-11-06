@@ -120,6 +120,8 @@ autoBlock <- setRefClass(
         candidateGroups = 'list',
         grouping = 'list',
         groupSizes = 'list',
+        groupIDs = 'list',
+        samplers = 'list',
         Cmcmcs = 'list',
         timing = 'list',
         samples = 'list',
@@ -196,6 +198,8 @@ autoBlock <- setRefClass(
             names(candidateGroups) <<- naming
             names(grouping) <<- naming
             names(groupSizes) <<- naming
+            names(groupIDs) <<- naming
+            names(samplers) <<- naming
             names(Cmcmcs) <<- naming
             names(timing) <<- naming
             if(saveSamples) names(samples) <<- naming
@@ -251,13 +255,15 @@ autoBlock <- setRefClass(
             candidateGroups[[it]] <<- lapply(specList, function(spec) determineGroupsFromSpec(spec))
             grouping[[it]] <<- candidateGroups[[it]][[bestInd]]
             groupSizes[[it]] <<- determineNodeGroupSizesFromGroups(grouping[[it]])
+            groupIDs[[it]] <<- determineNodeGroupIDsFromGroups(grouping[[it]])
+            samplers[[it]] <<- determineSamplersFromGroupsAndSpec(grouping[[it]], specList[[bestInd]])
             Cmcmcs[[it]] <<- CmcmcList[[bestInd]]
-            timing[[it]] <<- round(timingList[[bestInd]], 1)
+            timing[[it]] <<- timingList[[bestInd]]
             samples[[it]] <<- samplesList[[bestInd]]
-            means[[it]] <<- round(meansList[[bestInd]], 2)
-            sds[[it]] <<- round(sdsList[[bestInd]], 2)
-            ess[[it]] <<- round(essList[[bestInd]], 0)
-            essPT[[it]] <<- sort(round(essPTList[[bestInd]], 1))
+            means[[it]] <<- meansList[[bestInd]]
+            sds[[it]] <<- sdsList[[bestInd]]
+            ess[[it]] <<- essList[[bestInd]]
+            essPT[[it]] <<- sort(essPTList[[bestInd]])
             
             if(auto) {
                 samp <- as.matrix(nfVar(CmcmcList[[bestInd]], 'mvSamples'))
@@ -295,6 +301,20 @@ autoBlock <- setRefClass(
             groupSizeVector <- numeric(0)
             for(gp in groups) for(node in gp) groupSizeVector[[node]] <- length(gp)
             return(groupSizeVector)
+        },
+
+        determineNodeGroupIDsFromGroups = function(groups) {
+            groupIDvector <- numeric(0)
+            for(i in seq_along(groups)) for(node in groups[[i]]) groupIDvector[[node]] <- i
+            return(groupIDvector)
+        },
+
+        determineSamplersFromGroupsAndSpec = function(groups, spec) {
+            samplerSpecs <- spec$samplerSpecs
+            if(length(groups) != length(samplerSpecs)) stop('something wrong')
+            samplerVector <- character(0)
+            for(i in seq_along(groups)) for(node in groups[[i]]) samplerVector[[node]] <- samplerSpecs[[i]]$type
+            return(samplerVector)
         },
         
         createSpecFromGroups = function(Rmodel, groups, conjOveride=FALSE) {
@@ -341,14 +361,14 @@ autoBlock <- setRefClass(
         },
 
         printCurrent = function(name, spec) {
-            cat(paste0('\n################################\nBEGIN ITERATION ', it, ': ', name, '\n################################\n'))
+            cat(paste0('\n################################\nbegin iteration ', it, ': ', name, '\n################################\n'))
             if(length(candidateGroups[[it]]) > 1) { cat('\ncandidate groups:\n'); cg<-candidateGroups[[it]]; for(i in seq_along(cg)) { cat(paste0('\n',names(cg)[i],':\n')); printGrouping(cg[[i]]) } }
             cat('\ngroups:\n'); printGrouping(grouping[[it]])
             cat('\nsamplers:\n'); spec$getSamplers()
-            cat(paste0('\nMCMC runtime: ', round(timing[[it]], 2), ' seconds\n'))
-            cat('\nESS:\n'); print(ess[[it]])
-            cat('\nESS/time:\n'); print(essPT[[it]])
-            cat(paste0('\n################################\nEND ITERATION ', it, ': ', name, '\n################################\n\n'))
+            cat(paste0('\nMCMC runtime: ', round(timing[[it]], 1), ' seconds\n'))
+            cat('\nESS:\n'); print(round(ess[[it]], 0))
+            cat('\nESS/time:\n'); print(round(essPT[[it]], 1))
+            cat(paste0('\n################################\nend iteration ', it, ': ', name, '\n################################\n\n'))
         },
 
         makeCurrentPlots = function(name) {
@@ -383,7 +403,7 @@ autoBlock <- setRefClass(
 
 
 createDFfromABlist <- function(lst) {
-    df <- data.frame(model=character(), blocking=character(), timing=numeric(), node=character(), groupSize=numeric(), mean=numeric(), sd=numeric(), ess=numeric(), essPT=numeric(), stringsAsFactors=FALSE)
+    df <- data.frame(model=character(), blocking=character(), timing=numeric(), node=character(), groupSize = numeric(), groupID = numeric(), sampler = character(), mean=numeric(), sd=numeric(), ess=numeric(), essPT=numeric(), stringsAsFactors=FALSE)
     for(iAB in seq_along(lst)) {
         ab <- lst[[iAB]]
         abName <- names(lst)[iAB]
@@ -396,6 +416,8 @@ createDFfromABlist <- function(lst) {
             sds <- ab$sds[[iBlock]][nodes]                ##
             essPT <- ab$essPT[[iBlock]][nodes]            ##
             groupSizes <- ab$groupSizes[[iBlock]][nodes]  ##
+            groupIDs <- ab$groupIDs[[iBlock]][nodes]      ##
+            samplers <- ab$samplers[[iBlock]][nodes]      ##
             newIndDF <- (1:length(nodes)) + dim(df)[1]
             df[newIndDF,] <- NA
             df[newIndDF,]$model <- abName
@@ -403,6 +425,8 @@ createDFfromABlist <- function(lst) {
             df[newIndDF,]$timing <- timing
             df[newIndDF,]$node <- nodes
             df[newIndDF,]$groupSize <- groupSizes
+            df[newIndDF,]$groupID <- groupIDs
+            df[newIndDF,]$sampler <- samplers
             df[newIndDF,]$mean <- means
             df[newIndDF,]$sd <- sds
             df[newIndDF,]$ess <- ess
@@ -456,7 +480,7 @@ plotABS <- function(df, xlimToMin=FALSE, together) {
 
 
 printMinTimeABS <- function(df) {
-    namesToRemove <- c('mean', 'sd')
+    namesToRemove <- c('groupID', 'sampler', 'mean', 'sd')
     for(name in namesToRemove) { ind <- which(names(df)==name); df <- df[, -ind] }
     models <- unique(df$model)
     cat('\n')
@@ -471,6 +495,9 @@ printMinTimeABS <- function(df) {
         }
         dfOut <- dfOut[sort(dfOut$essPT,index.return=TRUE)$ix, ]
         dimnames(dfOut)[[1]] <- 1:(dim(dfOut)[1])
+        dfOut$timing <- round(dfOut$timing, 1)
+        dfOut$ess    <- round(dfOut$ess, 0)
+        dfOut$essPT  <- round(dfOut$essPT, 1)
         print(dfOut)
         cat('\n')
     }
@@ -503,14 +530,14 @@ if(!exists('control')) control <- list()
 ################
 
 code_tester <- modelCode({
-    x[1:5] ~ dmnorm(mu[1:5], Q[1:5,1:5])
-    y[1:5] ~ dmnorm(x[1:5], Q[1:5, 1:5])
-    z1 ~ dnorm(y[1], 1)
+    x[1:3] ~ dmnorm(mu[1:3], Q[1:3,1:3])
+    y[1:3] ~ dmnorm(x[1:3], Q[1:3, 1:3])
+    z1 ~ dnorm(y[1], 100)
 })
 
-constants_tester <- list(mu=rep(0,5), Q=diag(5))
-data_tester <- list(y = c(1,2,3,0,0))
-inits_tester <- list(x=rep(0,5), z1=0)
+constants_tester <- list(mu=rep(0,3), Q=diag(3))
+data_tester <- list(y = c(1,2,3))
+inits_tester <- list(x=rep(0,3), z1=0)
 
 ##abtester <- autoBlock(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester, control=control)
 

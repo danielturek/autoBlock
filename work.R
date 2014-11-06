@@ -238,7 +238,30 @@ if(FALSE) {
 
 
 
+path <- '~/GitHub/autoBlock'
+control <- list(setSeed0 = TRUE, makePlots = FALSE, niter = 2000)
+source(file.path(path, 'autoBlock_utils.R'))
+abtester <- autoBlock(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester, control=control)
+runList <- list('all', 'auto', blockX=list('x'), blockX1Z1=list(c('x[1]','z1')))
+abtester$run(runList)
+abList <- list(tester = abtester)
+df <- createDFfromABlist(abList)
+df
+printMinTimeABS(df)
 
 
+
+
+Rmodel <- nimbleModel(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester)
+spec <- MCMCspec(Rmodel)
+spec$getSamplers()
+spec$setSamplers(1)
+spec$addSampler('RW', list(targetNode='z1'))
+spec$getSamplers()
+Rmcmc <- buildMCMC(spec)
+Cmodel <- compileNimble(Rmodel)
+Cmcmc <- compileNimble(Rmcmc, project=Rmodel)
+
+environment(nfVar(Rmcmc, 'samplerFunctions')$contentsList[[1]])$nfRefClassObject$targetNode
 
 
