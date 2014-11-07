@@ -12,7 +12,7 @@ autoBlockModel <- setRefClass(
         scalarNodeVector = 'character',
         nodeGroupScalars = 'list',
         nodeGroupAllBlocked = 'list',
-        nodeGroupStochNodes = 'list',
+        ###########################nodeGroupStochNodes = 'list',
         monitorsVector = 'character'
         ),
     methods = list(
@@ -28,7 +28,7 @@ autoBlockModel <- setRefClass(
             nodeGroupScalars <<- lapply(scalarNodeVector, function(x) x)
             nodeGroupAllBlocked <<- list(scalarNodeVector)
             stochNodeVector <- Rmodel$getNodeNames(stochOnly=TRUE, includeData=FALSE, returnScalarComponents=FALSE)
-            nodeGroupStochNodes <<- lapply(stochNodeVector, function(x) x)
+            #######################nodeGroupStochNodes <<- lapply(stochNodeVector, function(x) x)
             monitorsVector <<- Rmodel$getNodeNames(stochOnly=TRUE, includeData=FALSE)
         },
         createGroups = function(listOfBlocks = list()) {
@@ -172,7 +172,7 @@ autoBlock <- setRefClass(
                        all =     { specList <- list(createSpecFromGroups(Rmodel, abModel$nodeGroupAllBlocked))
                                    runSpecListAndSaveBest(Rmodel, specList, 'all') },
 
-                       default = { specList <- list(createSpecFromGroups(Rmodel, abModel$nodeGroupStochNodes, conjOveride=TRUE))
+                       default = { specList <- list(MCMCspec(Rmodel))
                                    runSpecListAndSaveBest(Rmodel, specList, 'default') },
 
                        blocks =  { specList <- list(createSpecFromGroups(Rmodel, abModel$createGroups(runListElement)))
@@ -317,27 +317,27 @@ autoBlock <- setRefClass(
             return(samplerVector)
         },
         
-        createSpecFromGroups = function(Rmodel, groups, conjOveride=FALSE) {
+        createSpecFromGroups = function(Rmodel, groups) {
             spec <- MCMCspec(Rmodel, nodes=NULL, monitors=character(0))
-            for(nodeGroup in groups) addSamplerToSpec(Rmodel, spec, nodeGroup, conjOveride)
+            for(nodeGroup in groups) addSamplerToSpec(Rmodel, spec, nodeGroup)
             return(spec)
         },
         
-        addSamplerToSpec = function(Rmodel, spec, nodeGroup, conjOveride) {
+        addSamplerToSpec = function(Rmodel, spec, nodeGroup) {
             if(length(nodeGroup) > 1) {
                 spec$addSampler(type = 'RW_block', control = list(targetNodes=nodeGroup, adaptInterval=adaptIntervalBlock), print = FALSE); return()
             }
             if(!(nodeGroup %in% Rmodel$getNodeNames())) {
                 spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup), print = FALSE); return()
             }
-            ## if(nodeGroup %in% Rmodel$getMaps('nodeNamesEnd')) {
-            ##     cat(paste0('warning: using \'end\' sampler for node ', nodeGroup, ' may lead to results we don\'t want\n\n'))
-            ##     spec$addSampler(type = 'end', control = list(targetNode=nodeGroup), print = FALSE); return()
-            ## }
-            conjugacyResult <- Rmodel$checkConjugacy(nodeGroup)
-            if((!is.null(conjugacyResult)) && conjOveride) {
-                spec$addSampler(type = conjugacyResult$samplerType, control = conjugacyResult$control, print = FALSE); return()
+            if(nodeGroup %in% Rmodel$getMaps('nodeNamesEnd')) {
+                ## cat(paste0('warning: using \'end\' sampler for node ', nodeGroup, ' may lead to results we don\'t want\n\n'))
+                spec$addSampler(type = 'end', control = list(targetNode=nodeGroup), print = FALSE); return()
             }
+            ## conjugacyResult <- Rmodel$checkConjugacy(nodeGroup)
+            ## if((!is.null(conjugacyResult)) && conjOveride) {
+            ##     spec$addSampler(type = conjugacyResult$samplerType, control = conjugacyResult$control, print = FALSE); return()
+            ## }
             if(Rmodel$getNodeInfo()[[nodeGroup]]$isDiscrete()) {
                 spec$addSampler(type = 'slice', control = list(targetNode=nodeGroup), print = FALSE); return()
             }
@@ -349,13 +349,13 @@ autoBlock <- setRefClass(
 
         checkOverMCMCspec = function(spec) {
             for(ss in spec$samplerSpecs) {
-                if(ss$type == 'end') {
-                    msg <- 'using \'end\' sampler may lead to results we don\'t want'
-                    cat(paste0('\nWARNING: ', msg, '\n')); warning(msg)
-                }
+                ## if(ss$type == 'end') {
+                ##     msg <- 'using \'end\' sampler may lead to results we don\'t want'
+                ##     cat(paste0('\nWARNING: ', msg, '\n\n')); warning(msg)
+                ## }
                 if(grepl('^conjugate_', ss$type) && nimble:::nimbleOptions$verifyConjugatePosterior) {
                     msg <- 'conjugate sampler running slow due to checking the posterior'
-                    cat(paste0('\nWARNING: ', msg, '\n')); warning(msg)
+                    cat(paste0('\nWARNING: ', msg, '\n\n')); warning(msg)
                 }
             }
         },
@@ -480,7 +480,7 @@ plotABS <- function(df, xlimToMin=FALSE, together) {
 
 
 printMinTimeABS <- function(df) {
-    namesToRemove <- c('groupID', 'sampler', 'mean', 'sd')
+    namesToRemove <- intersect(c('groupID', 'sampler', 'mean', 'sd'), names(df))
     for(name in namesToRemove) { ind <- which(names(df)==name); df <- df[, -ind] }
     models <- unique(df$model)
     cat('\n')
@@ -652,7 +652,7 @@ rm(list = c('t','Rmodel'))
 
 
 ################
-### scallops
+### spatial
 ################
 
 library(Imap)
@@ -665,7 +665,7 @@ long <- myscallops$long
 dist <- array(NA, c(N,N))
 for(i in 1:N) for(j in 1:N) dist[i,j] <- gdist(long[i], lat[i], long[j], lat[j])
 
-code_scallops<- modelCode({
+code_spatial<- modelCode({
     mu ~ dunif(0, 100)
     sigma ~ dunif(0, 100)
     rho ~ dunif(20, 100)
@@ -677,11 +677,11 @@ code_scallops<- modelCode({
     }
 })
 
-constants_scallops <- list(N=N, onesVector=rep(1,N), dist=dist)
-data_scallops <- list(y=catch)
-inits_scallops <- list(mu=5, sigma=1, rho=30, g=rep(0,N))
+constants_spatial <- list(N=N, onesVector=rep(1,N), dist=dist)
+data_spatial <- list(y=catch)
+inits_spatial <- list(mu=5, sigma=1, rho=30, g=rep(0,N))
 
-##abscallops <- autoBlock(code=code_scallops, constants=constants_scallops, data=data_scallops, inits=inits_scallops)
+##abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial)
 
 rm(list = c('myscallops', 'N', 'catch', 'lat', 'long', 'dist', 'i', 'j'))
 

@@ -60,23 +60,23 @@ cat(codeToText(SSMCode), file=filename, append=TRUE)
 
 
 
-## scallops
-scallopsCode <- quote({
-    control$niter <- 400000
+## spatial
+spatialCode <- quote({
+    control$niter <- 200000
     runList <- list('all', 'default', 'auto')
-    abscallops <- autoBlock(code=code_scallops, constants=constants_scallops, data=data_scallops, inits=inits_scallops, control=control)
-    abscallops$run(runList)
-    abList <- list(scallops=abscallops)
-    dfscallops <- createDFfromABlist(abList)
-    filename <- file.path(path, 'dfscallops.RData')
-    save(dfscallops, file = filename)
-    if(abscallops$makePlots) plotABS(dfscallops, xlimToMin=FALSE)
-    if(abscallops$makePlots) plotABS(dfscallops, xlimToMin=TRUE)
-    printMinTimeABS(dfscallops)
+    abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial, control=control)
+    abspatial$run(runList)
+    abList <- list(spatial=abspatial)
+    dfspatial <- createDFfromABlist(abList)
+    filename <- file.path(path, 'dfspatial.RData')
+    save(dfspatial, file = filename)
+    if(abspatial$makePlots) plotABS(dfspatial, xlimToMin=FALSE)
+    if(abspatial$makePlots) plotABS(dfspatial, xlimToMin=TRUE)
+    printMinTimeABS(dfspatial)
 })
-filename <- file.path(path, 'runscallops.R')
+filename <- file.path(path, 'runspatial.R')
 cat(codeToText(preCode), file=filename)
-cat(codeToText(scallopsCode), file=filename, append=TRUE)
+cat(codeToText(spatialCode), file=filename, append=TRUE)
 
 
 
@@ -135,7 +135,7 @@ for(rho in rhoVector) {
 mixedRhosCode <- substitute({
     control$niter <- 400000
     abList <- list()
-    Nvalues <- c(30, 50, 70, 100, 150)   ## multiples of 10
+    Nvalues <- c(20, 30, 40, 50, 100)   ## multiples of 10
     for(N in Nvalues) {
         tag <- paste0('mixedRhosN', N)
         blockSize <- N/10
@@ -238,30 +238,17 @@ if(FALSE) {
 
 
 
-path <- '~/GitHub/autoBlock'
-control <- list(setSeed0 = TRUE, makePlots = FALSE, niter = 2000)
-source(file.path(path, 'autoBlock_utils.R'))
-abtester <- autoBlock(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester, control=control)
-runList <- list('all', 'auto', blockX=list('x'), blockX1Z1=list(c('x[1]','z1')))
-abtester$run(runList)
-abList <- list(tester = abtester)
-df <- createDFfromABlist(abList)
-df
-printMinTimeABS(df)
+## path <- '~/GitHub/autoBlock'
+## control <- list(setSeed0 = TRUE, makePlots = FALSE, niter = 2000)
+## source(file.path(path, 'autoBlock_utils.R'))
+## abtester <- autoBlock(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester, control=control)
+## runList <- list('all', 'auto', 'default')
+## abtester$run(runList)
+## abList <- list(tester = abtester)
+## df <- createDFfromABlist(abList)
+## df
+## printMinTimeABS(df)
 
 
-
-
-Rmodel <- nimbleModel(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester)
-spec <- MCMCspec(Rmodel)
-spec$getSamplers()
-spec$setSamplers(1)
-spec$addSampler('RW', list(targetNode='z1'))
-spec$getSamplers()
-Rmcmc <- buildMCMC(spec)
-Cmodel <- compileNimble(Rmodel)
-Cmcmc <- compileNimble(Rmcmc, project=Rmodel)
-
-environment(nfVar(Rmcmc, 'samplerFunctions')$contentsList[[1]])$nfRefClassObject$targetNode
 
 
