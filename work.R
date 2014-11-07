@@ -62,7 +62,7 @@ cat(codeToText(SSMCode), file=filename, append=TRUE)
 
 ## spatial
 spatialCode <- quote({
-    control$niter <- 200000
+    control$niter <- 100000
     runList <- list('all', 'default', 'auto')
     abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial, control=control)
     abspatial$run(runList)
@@ -249,6 +249,55 @@ if(FALSE) {
 ## df
 ## printMinTimeABS(df)
 
+
+
+
+
+## setwd('~/GitHub/autoBlock/')
+## source('autoBlock_utils.R')
+## library(Imap)
+## myscallops <- read.table("http://www.biostat.umn.edu/~brad/data/myscallops.txt", header = TRUE)
+## myscallops <- myscallops[1:10,]
+## N <- dim(myscallops)[1]
+## catch <- myscallops$tcatch
+## lat <- myscallops$lat
+## long <- myscallops$long
+## dist <- array(NA, c(N,N))
+## for(i in 1:N) for(j in 1:N) dist[i,j] <- gdist(long[i], lat[i], long[j], lat[j])
+## code_spatial<- modelCode({
+##     mu ~ dunif(-100, 100)
+##     sigma ~ dunif(0, 100)
+##     rho ~ dunif(10, 500)
+##     muVec[1:N] <- mu * onesVector[1:N]
+##     Cov[1:N,1:N] <- sigma^2 * exp(-dist[1:N,1:N] / rho)
+##     g[1:N] ~ dmnorm(muVec[1:N], cov = Cov[1:N,1:N])
+##     for(i in 1:N) {
+##         y[i] ~ dpois(exp(g[i]))
+##     }
+## })
+## constants_spatial <- list(N=N, onesVector=rep(1,N), dist=dist)
+## data_spatial <- list(y=catch)
+## inits_spatial <- list(mu=2, sigma=5, rho=60, g=rep(0,N))
+
+## suite <- MCMCsuite(
+##     model = code_spatial,
+##     constants = constants_spatial,
+##     data = data_spatial,
+##     inits = inits_spatial,
+##     niter = 50000,
+##     MCMCs = c('custom'),
+##     MCMCdefs = list(
+##         custom = quote({
+##             spec <- MCMCspec(Rmodel, nodes=NULL)
+##             spec$addSampler('RW_block', list(targetNodes = c('rho', 'sigma')), print=FALSE)
+##             spec$addSampler('RW', list(targetNode = 'mu'), print=FALSE)
+##             for(kk in 1:N) { spec$addSampler('RW', list(targetNode = paste0('g[',kk,']')), print=FALSE) }
+##             spec$getSamplers()
+##             spec
+##         })),
+##     savePlot = FALSE
+## )
+## suite$output$summary
 
 
 

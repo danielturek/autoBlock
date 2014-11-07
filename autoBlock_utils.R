@@ -666,7 +666,7 @@ dist <- array(NA, c(N,N))
 for(i in 1:N) for(j in 1:N) dist[i,j] <- gdist(long[i], lat[i], long[j], lat[j])
 
 code_spatial<- modelCode({
-    mu ~ dunif(0, 100)
+    mu ~ dunif(-100, 100)
     sigma ~ dunif(0, 100)
     rho ~ dunif(20, 100)
     muVec[1:N] <- mu * onesVector[1:N]
@@ -679,7 +679,7 @@ code_spatial<- modelCode({
 
 constants_spatial <- list(N=N, onesVector=rep(1,N), dist=dist)
 data_spatial <- list(y=catch)
-inits_spatial <- list(mu=5, sigma=1, rho=30, g=rep(0,N))
+inits_spatial <- list(mu=0, sigma=5, rho=60, g=rep(0,N))
 
 ##abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial)
 
