@@ -62,7 +62,7 @@ cat(codeToText(SSMCode), file=filename, append=TRUE)
 
 ## spatial
 spatialCode <- quote({
-    control$niter <- 100000
+    control$niter <- 400000
     runList <- list('all', 'default', 'auto')
     abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial, control=control)
     abspatial$run(runList)
