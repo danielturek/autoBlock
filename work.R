@@ -1,4 +1,4 @@
-preCode <- quote({
+preCode <- Quote({
     path <- '~/GitHub/autoBlock'
     control <- list(setSeed0 = TRUE)
     source(file.path(path, 'autoBlock_utils.R'))
