@@ -172,7 +172,7 @@ scalarOrBlockCode <- substitute({
     abList <- list()
     ## Nvalues <- c(2, 3, 4, 5, 10, 20, 50)         # 10 minutes
     ## Nvalues <- c(100, 150, 200, 250, 300, 350)   # 5 hours
-    Nvalues <- c(400, 450, 500)
+    Nvalues <- c(400, 450, 500, 600)
     for(N in Nvalues) {
         tag <- paste0('scalarOrBlockN', N)
         code <- createCodeAndConstants(N)$code
