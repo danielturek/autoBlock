@@ -170,8 +170,9 @@ cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
 scalarOrBlockCode <- substitute({
     control$niter <- 400000
     abList <- list()
-    ## Nvalues <- c(2, 3, 4, 5, 10, 20, 50)
-    Nvalues <- c(100, 200, 500)
+    ## Nvalues <- c(2, 3, 4, 5, 10, 20, 50)         # 10 minutes
+    ## Nvalues <- c(100, 150, 200, 250, 300, 350)   # 5 hours
+    Nvalues <- c(400, 450, 500)
     for(N in Nvalues) {
         tag <- paste0('scalarOrBlockN', N)
         code <- createCodeAndConstants(N)$code
@@ -198,7 +199,7 @@ scalarOrBlockCode <- substitute({
         ab$run(runList)
         abList[[tag]] <- ab
     }
-    dfText <- 'dfscalarOrBlock'     # optionally: 'dfscalarOrBlockTEMP'
+    dfText <- 'dfscalarOrBlockTEMP'     # optionally: 'dfscalarOrBlockTEMP'
     eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
     filename <- file.path(path, paste0(dfText, '.RData'))
     eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
@@ -209,28 +210,28 @@ filename <- file.path(path, 'runscalarOrBlock.R')
 cat(codeToText(preCode), file=filename)
 cat(codeToText(scalarOrBlockCode), file=filename, append=TRUE)
 
-## load('dfscalarOrBlock.RData')
-## head(dfscalarOrBlock)
-## dim(dfscalarOrBlock)
-## unique(dfscalarOrBlock$model)
-## printMinTimeABS(dfscalarOrBlock)
-## load('dfscalarOrBlockTEMP.RData')
-## head(dfscalarOrBlockTEMP)
-## dim(dfscalarOrBlockTEMP)
-## unique(dfscalarOrBlockTEMP$model)
-## printMinTimeABS(dfscalarOrBlockTEMP)
-## dfscalarOrBlock <- rbind(dfscalarOrBlock, dfscalarOrBlockTEMP)
-## head(dfscalarOrBlock)
-## dim(dfscalarOrBlock)
-## unique(dfscalarOrBlock$model)
-## save(dfscalarOrBlock, file = 'dfscalarOrBlock.RData')
-## rm(list=ls())
-## load('dfscalarOrBlock.RData')
-## head(dfscalarOrBlock)
-## dim(dfscalarOrBlock)
-## unique(dfscalarOrBlock$model)
-## printMinTimeABS(dfscalarOrBlock)
-## plotABS(dfscalarOrBlock)
+load('dfscalarOrBlock.RData')
+head(dfscalarOrBlock)
+dim(dfscalarOrBlock)
+unique(dfscalarOrBlock$model)
+printMinTimeABS(dfscalarOrBlock)
+load('dfscalarOrBlockTEMP.RData')
+head(dfscalarOrBlockTEMP)
+dim(dfscalarOrBlockTEMP)
+unique(dfscalarOrBlockTEMP$model)
+printMinTimeABS(dfscalarOrBlockTEMP)
+dfscalarOrBlock <- rbind(dfscalarOrBlock, dfscalarOrBlockTEMP)
+head(dfscalarOrBlock)
+dim(dfscalarOrBlock)
+unique(dfscalarOrBlock$model)
+save(dfscalarOrBlock, file = 'dfscalarOrBlock.RData')
+rm(list=ls())
+load('dfscalarOrBlock.RData')
+head(dfscalarOrBlock)
+dim(dfscalarOrBlock)
+unique(dfscalarOrBlock$model)
+printMinTimeABS(dfscalarOrBlock)
+plotABS(dfscalarOrBlock)
 
 testBlockSamplerPerformance <- function(N, niter) {
     code <- createCodeAndConstants(N)$code
