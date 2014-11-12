@@ -7,6 +7,111 @@ eval(preCode)
 preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 
 
+## assesses the adapted scale, acceptance rates, ESS, and timing
+## achieved by scalar/block samplers of various sizes, and underlying
+## univariate or multivariate distributions
+runFileTag <- 'A'
+blockTestingCode <- substitute({
+    Nvalues <- c(2, 3, 4, 5, 10, 20, 50)         # 10 minutes
+    ## Nvalues <- c(100, 150, 200, 250, 300)        # 
+    ## Nvalues <- c(350, 400, 450, 500)             # 
+    ## Nvalues <- c(600, 700, 800)                  #
+    ## Nvalues <- c(900, 1000)                      # 
+    ## niter <- 500000
+    niter <- 5000   ## TEMP
+    keepInd <- (niter/2+1):niter
+    optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
+    dfblockTesting <- data.frame()
+    for(N in Nvalues) {
+        cat(paste0('\nN = ', N, '\n'))
+        for(dist in c('uni', 'multi')) {
+            cat(paste0('\ndist = ', dist, '\n\n'))
+            candc <- if(dist == 'uni') createCodeAndConstants(N) else createCodeAndConstants(N, list(1:N), 0)
+            code <- candc$code
+            constants <- candc$constants
+            data <- list()
+            inits <- list(x = rep(0,N))
+            Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
+            nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
+            specList <- list()  # ordering: scalar, blockNoAdapt, blockAdapt
+            for(i in 1:3) specList[[i]] <- MCMCspec(Rmodel, nodes = NULL)
+            for(node in nodeNames) specList[[1]]$addSampler('RW', list(targetNode=node), print=FALSE)
+            specList[[2]]$addSampler('RW_block', list(targetNodes=nodeNames, adaptScaleOnly=TRUE), print=FALSE)
+            specList[[3]]$addSampler('RW_block', list(targetNodes=nodeNames), print=FALSE)
+            toCompileList <- list(Rmodel)
+            for(i in 1:3) toCompileList[[i+1]] <- buildMCMC(specList[[i]])
+            compiledList <- compileNimble(toCompileList)
+            Cmodel <- compiledList[[1]]
+            Cmcmcs <- compiledList[2:4]  # ordering: scalar, blockNoAdapt, blockAdapt
+            timing <- adaptedScale <- adaptedPropSD <- acceptRate <- essPerN <- numeric(0)
+            for(i in 1:3) {
+                Cmodel$setInits(inits)
+                set.seed(0)
+                timing[i] <- as.numeric(system.time(Cmcmcs[[i]](niter))[1])
+                sampler1 <- nfVar(Cmcmcs[[i]], 'samplerFunctions')$contentsList[[1]]
+                adaptedScale[i] <- sampler1$scale
+                adaptedPropSD[i] <- if(i==1) as.numeric(NA) else sqrt(mean(diag(sampler1$propCov)))
+                aRateHistory <- sampler1$acceptanceRateHistory
+                acceptRate[i] <- aRateHistory[length(aRateHistory)]
+                samples <- as.matrix(nfVar(Cmcmcs[[i]], 'mvSamples'))
+                burnedSamples <- samples[keepInd, , drop = FALSE]
+                ess <- apply(burnedSamples, 2, effectiveSize)
+                meanESS <- mean(ess)
+                essPerN[i] <- meanESS / length(keepInd)
+            }
+            thisDF <- data.frame(
+                N = rep(N, 3),
+                dist = rep(dist, 3),
+                blocking = c('scalar', 'blockNoAdapt', 'blockAdapt'),
+                timing = timing,
+                adaptedScale = adaptedScale,
+                adaptedPropSD = adaptedPropSD,
+                derivedScale = c(adaptedScale[1], adaptedScale[2:3] * adaptedPropSD[2:3]),
+                acceptRate = acceptRate,
+                optRate = c(0.44, rep(optimalRates[if(N>5) 5 else N], 2)),
+                essPerN = essPerN
+            )
+            dfblockTesting <- rbind(dfblockTesting, thisDF)
+            print(dfblockTesting)
+        }
+    }
+    save(dfblockTesting, file = paste0('dfblockTesting', Nvalues[1], '.RData'))
+})
+filename <- file.path(path, paste0('runblockTesting', runFileTag, '.R'))
+cat(codeToText(preCode), file=filename)
+cat(codeToText(blockTestingCode), file=filename, append=TRUE)
+
+y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
+y <- df$meanESS * df$N
+
+rm(list=ls())
+load('dfscalarOrBlock.RData')
+head(dfscalarOrBlock)
+dim(dfscalarOrBlock)
+unique(dfscalarOrBlock$model)
+load('dfscalarOrBlockTEMP.RData')
+head(dfscalarOrBlockTEMP)
+dim(dfscalarOrBlockTEMP)
+unique(dfscalarOrBlockTEMP$model)
+dfscalarOrBlock <- rbind(dfscalarOrBlock, dfscalarOrBlockTEMP)
+head(dfscalarOrBlock)
+dim(dfscalarOrBlock)
+unique(dfscalarOrBlock$model)
+save(dfscalarOrBlock, file = 'dfscalarOrBlock.RData')
+rm(list=ls())
+load('dfscalarOrBlock.RData')
+head(dfscalarOrBlock)
+dim(dfscalarOrBlock)
+unique(dfscalarOrBlock$model)
+
+load('dfscalarOrBlock.RData')
+df <- dfscalarOrBlock
+df <- df[df$node=='x[1]', c('model', 'blocking', 'timing')]
+df$N <- as.numeric(gsub('^.*N', '', df$model))
+qplot(data=df, x=N, y=timing, color=blocking, geom='line')
+
+
+
 
 ## litters
 littersCode <- quote({
@@ -162,122 +267,6 @@ mixedRhosCode <- substitute({
 filename <- file.path(path, 'runmixedRhos.R')
 cat(codeToText(preCode), file=filename)
 cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
-
-
-
-
-## scalar or block samplers, for various N
-scalarOrBlockCode <- substitute({
-    control$niter <- 400000
-    abList <- list()
-    ## Nvalues <- c(2, 3, 4, 5, 10, 20, 50)         # 10 minutes
-    ## Nvalues <- c(100, 150, 200, 250, 300, 350)   # 5 hours
-    Nvalues <- c(400, 450, 500, 600)
-    for(N in Nvalues) {
-        tag <- paste0('scalarOrBlockN', N)
-        code <- createCodeAndConstants(N)$code
-        constants <- list()
-        data <- list()
-        inits <- list(x=rep(0,N))
-        runList <- list(
-            scalar = quote({
-                spec <- MCMCspec(Rmodel, nodes=NULL)
-                for(node in Rmodel$expandNodeNames('x')) spec$addSampler('RW', list(targetNode=node), print=FALSE)
-                spec
-            }),
-            blockNoAdapt = quote({
-                spec <- MCMCspec(Rmodel, nodes=NULL)
-                spec$addSampler('RW_block', list(targetNodes=Rmodel$expandNodeNames('x'), adaptScaleOnly=TRUE), print=FALSE)
-                spec
-            }),
-            blockAdaptive = quote({
-                spec <- MCMCspec(Rmodel, nodes=NULL)
-                spec$addSampler('RW_block', list(targetNodes=Rmodel$expandNodeNames('x')), print=FALSE)
-                spec
-            }))
-        ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-        ab$run(runList)
-        abList[[tag]] <- ab
-    }
-    dfText <- 'dfscalarOrBlockTEMP'     # optionally: 'dfscalarOrBlockTEMP'
-    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
-    filename <- file.path(path, paste0(dfText, '.RData'))
-    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
-    if(control$makePlots) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
-    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
-    })
-filename <- file.path(path, 'runscalarOrBlock.R')
-cat(codeToText(preCode), file=filename)
-cat(codeToText(scalarOrBlockCode), file=filename, append=TRUE)
-
-rm(list=ls())
-load('dfscalarOrBlock.RData')
-head(dfscalarOrBlock)
-dim(dfscalarOrBlock)
-unique(dfscalarOrBlock$model)
-load('dfscalarOrBlockTEMP.RData')
-head(dfscalarOrBlockTEMP)
-dim(dfscalarOrBlockTEMP)
-unique(dfscalarOrBlockTEMP$model)
-dfscalarOrBlock <- rbind(dfscalarOrBlock, dfscalarOrBlockTEMP)
-head(dfscalarOrBlock)
-dim(dfscalarOrBlock)
-unique(dfscalarOrBlock$model)
-save(dfscalarOrBlock, file = 'dfscalarOrBlock.RData')
-rm(list=ls())
-load('dfscalarOrBlock.RData')
-head(dfscalarOrBlock)
-dim(dfscalarOrBlock)
-unique(dfscalarOrBlock$model)
-
-testBlockSamplerPerformance <- function(N, niter) {
-    code <- createCodeAndConstants(N)$code
-    constants <- list()
-    data <- list()
-    inits <- list(x=rep(0,N))
-    Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
-    spec <- MCMCspec(Rmodel, NULL)
-    spec$addSampler('RW_block', list(targetNodes='x', adaptScaleOnly=TRUE), print=FALSE)
-    Rmcmc <- buildMCMC(spec)
-    Cmodel <- compileNimble(Rmodel)
-    Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
-    set.seed(0); Cmcmc(niter)
-    samples <- as.matrix(nfVar(Cmcmc, 'mvSamples'))
-    burnedSamples <- samples[(niter/2+1):niter, , drop = FALSE]
-    ess <- apply(burnedSamples, 2, effectiveSize)
-    meanESS <- mean(ess)
-    eff <- meanESS / (niter/2)
-    adaptedScale <- nfVar(Cmcmc, 'samplerFunctions')$contentsList[[1]]$scale
-    acceptanceRateHistory <- nfVar(Cmcmc, 'samplerFunctions')$contentsList[[1]]$acceptanceRateHistory
-    aRate <- acceptanceRateHistory[length(acceptanceRateHistory)]
-    optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
-    optRate <- optimalRates[if(N>5) 5 else N]
-    retDF <- data.frame(
-        N = N,
-        eff = eff,
-        adaptedScale = adaptedScale,
-        aRate = aRate,
-        optRate = optRate
-    )
-    return(retDF)
-}
-
-Nvalues <- 1:10
-niter <- 1000000
-dfblockSamplerPerformance <- data.frame()
-for(i in Nvalues) {
-    dfout <- testBlockSamplerPerformance(N = i, niter = niter)
-    dfblockSamplerPerformance <- rbind(dfblockSamplerPerformance, dfout)
-}
-save(dfblockSamplerPerformance, file = 'dfblockSamplerPerformance.RData')
-df <- dfblockSamplerPerformance
-df
-y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
-y
-plot(y, ylim=c(2,3))
-y <- df$meanESS * df$N
-plot(y)
-
 
 
 

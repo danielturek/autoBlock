@@ -515,6 +515,37 @@ codeToText <- function(code) {
 }
 
 
+## testBlockSamplerPerformance <- function(N, niter) {
+##     code <- createCodeAndConstants(N)$code
+##     constants <- list()
+##     data <- list()
+##     inits <- list(x=rep(0,N))
+##     Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
+##     spec <- MCMCspec(Rmodel, NULL)
+##     spec$addSampler('RW_block', list(targetNodes='x', adaptScaleOnly=TRUE), print=FALSE)
+##     Rmcmc <- buildMCMC(spec)
+##     Cmodel <- compileNimble(Rmodel)
+##     Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
+##     set.seed(0); Cmcmc(niter)
+##     samples <- as.matrix(nfVar(Cmcmc, 'mvSamples'))
+##     burnedSamples <- samples[(niter/2+1):niter, , drop = FALSE]
+##     ess <- apply(burnedSamples, 2, effectiveSize)
+##     meanESS <- mean(ess)
+##     eff <- meanESS / (niter/2)
+##     adaptedScale <- nfVar(Cmcmc, 'samplerFunctions')$contentsList[[1]]$scale
+##     acceptanceRateHistory <- nfVar(Cmcmc, 'samplerFunctions')$contentsList[[1]]$acceptanceRateHistory
+##     aRate <- acceptanceRateHistory[length(acceptanceRateHistory)]
+##     optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
+##     optRate <- optimalRates[if(N>5) 5 else N]
+##     retDF <- data.frame(
+##         N = N,
+##         eff = eff,
+##         adaptedScale = adaptedScale,
+##         aRate = aRate,
+##         optRate = optRate
+##     )
+##     return(retDF)
+## }
 
 
 
@@ -524,6 +555,7 @@ codeToText <- function(code) {
 
 library(nimble)
 library(coda)
+library(ggplot2)
 if(!exists('control')) control <- list()
 
 ################
