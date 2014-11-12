@@ -46,7 +46,7 @@ autoBlockModel <- setRefClass(
         )
     )
 
-createCodeAndConstants <- function(N, listOfBlockIndexes, rhoVector) {
+createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numeric()) {
     code <- quote({})
     constants <- list()
     if(length(listOfBlockIndexes) != length(rhoVector)) stop()
@@ -331,7 +331,7 @@ autoBlock <- setRefClass(
                 spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup), print = FALSE); return()
             }
             if(nodeGroup %in% Rmodel$getMaps('nodeNamesEnd')) {
-                ## cat(paste0('warning: using \'end\' sampler for node ', nodeGroup, ' may lead to results we don\'t want\n\n'))
+                cat(paste0('warning: using \'end\' sampler for node ', nodeGroup, ' may lead to results we don\'t want\n\n'))
                 spec$addSampler(type = 'end', control = list(targetNode=nodeGroup), print = FALSE); return()
             }
             ## conjugacyResult <- Rmodel$checkConjugacy(nodeGroup)
@@ -349,10 +349,10 @@ autoBlock <- setRefClass(
 
         checkOverMCMCspec = function(spec) {
             for(ss in spec$samplerSpecs) {
-                ## if(ss$type == 'end') {
-                ##     msg <- 'using \'end\' sampler may lead to results we don\'t want'
-                ##     cat(paste0('\nWARNING: ', msg, '\n\n')); warning(msg)
-                ## }
+                if(ss$type == 'end') {
+                    msg <- 'using \'end\' sampler may lead to results we don\'t want'
+                    cat(paste0('\nWARNING: ', msg, '\n\n')); warning(msg)
+                }
                 if(grepl('^conjugate_', ss$type) && nimble:::nimbleOptions$verifyConjugatePosterior) {
                     msg <- 'conjugate sampler running slow due to checking the posterior'
                     cat(paste0('\nWARNING: ', msg, '\n\n')); warning(msg)
@@ -523,6 +523,7 @@ codeToText <- function(code) {
 #######################################
 
 library(nimble)
+library(coda)
 if(!exists('control')) control <- list()
 
 ################

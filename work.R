@@ -166,6 +166,121 @@ cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
 
 
 
+## scalar or block samplers, for various N
+scalarOrBlockCode <- substitute({
+    control$niter <- 400000
+    abList <- list()
+    ## Nvalues <- c(2, 3, 4, 5, 10, 20, 50)
+    Nvalues <- c(100, 200, 500)
+    for(N in Nvalues) {
+        tag <- paste0('scalarOrBlockN', N)
+        code <- createCodeAndConstants(N)$code
+        constants <- list()
+        data <- list()
+        inits <- list(x=rep(0,N))
+        runList <- list(
+            scalar = quote({
+                spec <- MCMCspec(Rmodel, nodes=NULL)
+                for(node in Rmodel$expandNodeNames('x')) spec$addSampler('RW', list(targetNode=node), print=FALSE)
+                spec
+            }),
+            blockNoAdapt = quote({
+                spec <- MCMCspec(Rmodel, nodes=NULL)
+                spec$addSampler('RW_block', list(targetNodes=Rmodel$expandNodeNames('x'), adaptScaleOnly=TRUE), print=FALSE)
+                spec
+            }),
+            blockAdaptive = quote({
+                spec <- MCMCspec(Rmodel, nodes=NULL)
+                spec$addSampler('RW_block', list(targetNodes=Rmodel$expandNodeNames('x')), print=FALSE)
+                spec
+            }))
+        ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
+        ab$run(runList)
+        abList[[tag]] <- ab
+    }
+    dfText <- 'dfscalarOrBlock'     # optionally: 'dfscalarOrBlockTEMP'
+    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
+    filename <- file.path(path, paste0(dfText, '.RData'))
+    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
+    if(control$makePlots) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
+    })
+filename <- file.path(path, 'runscalarOrBlock.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(scalarOrBlockCode), file=filename, append=TRUE)
+
+## load('dfscalarOrBlock.RData')
+## head(dfscalarOrBlock)
+## dim(dfscalarOrBlock)
+## unique(dfscalarOrBlock$model)
+## printMinTimeABS(dfscalarOrBlock)
+## load('dfscalarOrBlockTEMP.RData')
+## head(dfscalarOrBlockTEMP)
+## dim(dfscalarOrBlockTEMP)
+## unique(dfscalarOrBlockTEMP$model)
+## printMinTimeABS(dfscalarOrBlockTEMP)
+## dfscalarOrBlock <- rbind(dfscalarOrBlock, dfscalarOrBlockTEMP)
+## head(dfscalarOrBlock)
+## dim(dfscalarOrBlock)
+## unique(dfscalarOrBlock$model)
+## save(dfscalarOrBlock, file = 'dfscalarOrBlock.RData')
+## rm(list=ls())
+## load('dfscalarOrBlock.RData')
+## head(dfscalarOrBlock)
+## dim(dfscalarOrBlock)
+## unique(dfscalarOrBlock$model)
+## printMinTimeABS(dfscalarOrBlock)
+## plotABS(dfscalarOrBlock)
+
+testBlockSamplerPerformance <- function(N, niter) {
+    code <- createCodeAndConstants(N)$code
+    constants <- list()
+    data <- list()
+    inits <- list(x=rep(0,N))
+    Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
+    spec <- MCMCspec(Rmodel, NULL)
+    spec$addSampler('RW_block', list(targetNodes='x', adaptScaleOnly=TRUE), print=FALSE)
+    Rmcmc <- buildMCMC(spec)
+    Cmodel <- compileNimble(Rmodel)
+    Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
+    set.seed(0); Cmcmc(niter)
+    samples <- as.matrix(nfVar(Cmcmc, 'mvSamples'))
+    burnedSamples <- samples[(niter/2+1):niter, , drop = FALSE]
+    ess <- apply(burnedSamples, 2, effectiveSize)
+    meanESS <- mean(ess)
+    eff <- meanESS / (niter/2)
+    adaptedScale <- nfVar(Cmcmc, 'samplerFunctions')$contentsList[[1]]$scale
+    acceptanceRateHistory <- nfVar(Cmcmc, 'samplerFunctions')$contentsList[[1]]$acceptanceRateHistory
+    aRate <- acceptanceRateHistory[length(acceptanceRateHistory)]
+    optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
+    optRate <- optimalRates[if(N>5) 5 else N]
+    retDF <- data.frame(
+        N = N,
+        eff = eff,
+        adaptedScale = adaptedScale,
+        aRate = aRate,
+        optRate = optRate
+    )
+    return(retDF)
+}
+
+Nvalues <- 1:10
+niter <- 1000000
+dfblockSamplerPerformance <- data.frame()
+for(i in Nvalues) {
+    dfout <- testBlockSamplerPerformance(N = i, niter = niter)
+    dfblockSamplerPerformance <- rbind(dfblockSamplerPerformance, dfout)
+}
+save(dfblockSamplerPerformance, file = 'dfblockSamplerPerformance.RData')
+df <- dfblockSamplerPerformance
+df
+y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
+y
+plot(y, ylim=c(2,3))
+y <- df$meanESS * df$N
+plot(y)
+
+
 
 
 
