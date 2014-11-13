@@ -18,20 +18,20 @@ for(tag in tagValues) {
         switch(tag,
                ##X = { dist <- 'uni';   Nvalues <- c(2,3,4) },
                ##Y = { dist <- 'multi'; Nvalues <- c(2,3) },
-               A = { dist <- 'uni';   Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) },
-               B = { dist <- 'uni';   Nvalues <- c(100, 150, 200, 250, 300) },
-               C = { dist <- 'uni';   Nvalues <- c(350, 400, 450, 500) },
-               D = { dist <- 'uni';   Nvalues <- c(600) },
-               E = { dist <- 'uni';   Nvalues <- c(700) },
-               F = { dist <- 'uni';   Nvalues <- c(800) },
-               G = { dist <- 'uni';   Nvalues <- c(900) },
-               H = { dist <- 'uni';   Nvalues <- c(1000) },
-               I = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) },
-               J = { dist <- 'multi';   Nvalues <- c(100, 150) },
-               K = { dist <- 'multi';   Nvalues <- c(200, 250) },
-               L = { dist <- 'multi';   Nvalues <- c(300, 350) },
-               M = { dist <- 'multi';   Nvalues <- c(400, 450) },
-               N = { dist <- 'multi';   Nvalues <- c(500) }
+               A = { dist <- 'uni';   Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 8 minutes
+               B = { dist <- 'uni';   Nvalues <- c(100, 150, 200, 250, 300) }, # 49 minutes
+               C = { dist <- 'uni';   Nvalues <- c(350, 400, 450, 500) }, # 
+               D = { dist <- 'uni';   Nvalues <- c(600) }, # 
+               E = { dist <- 'uni';   Nvalues <- c(700) }, # 
+               F = { dist <- 'uni';   Nvalues <- c(800) }, # 
+               G = { dist <- 'uni';   Nvalues <- c(900) }, # 
+               H = { dist <- 'uni';   Nvalues <- c(1000) }, # 
+               I = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 
+               J = { dist <- 'multi';   Nvalues <- c(100, 150) }, # 
+               K = { dist <- 'multi';   Nvalues <- c(200, 250) }, # 
+               L = { dist <- 'multi';   Nvalues <- c(300, 350) }, # 
+               M = { dist <- 'multi';   Nvalues <- c(400, 450) }, # 
+               N = { dist <- 'multi';   Nvalues <- c(500) } # 
                )
         niter <- 400000
         keepInd <- (niter/2+1):niter
@@ -45,6 +45,7 @@ for(tag in tagValues) {
             constants <- candc$constants
             data <- list()
             inits <- list(x = rep(0,N))
+            cat('\ncreating R model.....\n\n')
             Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
             nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
             specList <- list()  # ordering: scalar, blockNoAdapt, blockAdapt
