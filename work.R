@@ -94,7 +94,7 @@ for(tag in tagValues) {
     cat(codeToText(blockTestingCode), file=filename, append=TRUE)
 }
 filename <- 'runblockTesting.sh'
-cat('!#/bin/bash\n\n', file=filename)
+cat('#!/bin/bash\n\n', file=filename)
 for(tag in tagValues) {
     cat(paste0('R CMD BATCH --vanilla runblockTesting', tag, '.R\n'), file=filename, append=TRUE)
     cat('git add --all\n', file=filename, append=TRUE)
