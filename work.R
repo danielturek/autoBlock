@@ -10,23 +10,24 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-for(tag in c('A', 'B', 'C', 'D', 'E')) {
+tagValues <- c('A', 'B', 'C', 'D', 'E')
+for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
         Nvalues <- switch(tag,
-                          A = c(2, 3, 4, 5, 10, 20, 30, 40, 50),  # 
+                          A = c(2, 3, 4, 5, 10, 20, 30, 40, 50),  # 40 minutes
                           B = c(100, 150, 200, 250, 300),         # 
                           C = c(350, 400, 450, 500),              # 
                           D = c(600, 700, 800),                   #
                           E = c(900, 1000))                       #
-        niter <- 1000000
+        niter <- 400000
         keepInd <- (niter/2+1):niter
-        optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
+        ##optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
         dfblockTesting <- data.frame()
         for(N in Nvalues) {
             cat(paste0('\nN = ', N, '\n'))
             for(dist in c('uni', 'multi')) {
-                cat(paste0('\ndist = ', dist, '\n\n'))
+                cat(paste0('\ndist = ', dist, '\n'))
                 candc <- if(dist == 'uni') createCodeAndConstants(N) else createCodeAndConstants(N, list(1:N), 0)
                 code <- candc$code
                 constants <- candc$constants
@@ -41,42 +42,50 @@ for(tag in c('A', 'B', 'C', 'D', 'E')) {
                 specList[[3]]$addSampler('RW_block', list(targetNodes=nodeNames), print=FALSE)
                 toCompileList <- list(Rmodel)
                 for(i in 1:3) toCompileList[[i+1]] <- buildMCMC(specList[[i]])
+		cat('\ncompiling.....\n\n')
                 compiledList <- compileNimble(toCompileList)
+		cat('\ndone compiling!\n\n')
                 Cmodel <- compiledList[[1]]
                 Cmcmcs <- compiledList[2:4]  # ordering: scalar, blockNoAdapt, blockAdapt
-                timing <- adaptedScale <- adaptedPropSD <- acceptRate <- essPerN <- numeric(0)
+                timePer10kN <- adaptedScale <- adaptedPropSD <- essPerN <- numeric(0)
                 for(i in 1:3) {
+		    cat(paste0('running ', i, '\n'))
                     Cmodel$setInits(inits)
                     set.seed(0)
-                    timing[i] <- as.numeric(system.time(Cmcmcs[[i]](niter))[1])
+                    timing <- as.numeric(system.time(Cmcmcs[[i]](niter))[1])
+                    timePer10kN[i] <- timing / (niter/10000)
                     sampler1 <- nfVar(Cmcmcs[[i]], 'samplerFunctions')$contentsList[[1]]
                     adaptedScale[i] <- sampler1$scale
                     adaptedPropSD[i] <- if(i==1) as.numeric(NA) else sqrt(mean(diag(sampler1$propCov)))
-                    aRateHistory <- sampler1$acceptanceRateHistory
-                    acceptRate[i] <- aRateHistory[length(aRateHistory)]
+                    ##aRateHistory <- sampler1$acceptanceRateHistory
+                    ##acceptRate[i] <- aRateHistory[length(aRateHistory)]
                     samples <- as.matrix(nfVar(Cmcmcs[[i]], 'mvSamples'))
-                    burnedSamples <- samples[keepInd, , drop = FALSE]
-                    ess <- apply(burnedSamples, 2, effectiveSize)
+                    samples <- samples[keepInd, , drop = FALSE]
+                    ess <- apply(samples, 2, effectiveSize)
                     meanESS <- mean(ess)
                     essPerN[i] <- meanESS / length(keepInd)
+                    samples <- NULL
+                    sampler1 <- NULL
+                    Cmcmcs[[i]] <- NA
+                    gc()
                 }
                 thisDF <- data.frame(
                     N = rep(N, 3),
                     dist = rep(dist, 3),
                     blocking = c('scalar', 'blockNoAdapt', 'blockAdapt'),
-                    timing = timing,
-                    adaptedScale = adaptedScale,
-                    adaptedPropSD = adaptedPropSD,
+                    timePer10kN = timePer10kN,
+                    ##adaptedScale = adaptedScale,
+                    ##adaptedPropSD = adaptedPropSD,
                     derivedScale = c(adaptedScale[1], adaptedScale[2:3] * adaptedPropSD[2:3]),
-                    acceptRate = acceptRate,
-                    optRate = c(0.44, rep(optimalRates[if(N>5) 5 else N], 2)),
+                    ##acceptRate = acceptRate,
+                    ##optRate = c(0.44, rep(optimalRates[if(N>5) 5 else N], 2)),
                     essPerN = essPerN
                 )
                 dfblockTesting <- rbind(dfblockTesting, thisDF)
-                print(dfblockTesting)
+		save(dfblockTesting, file = paste0('dfblockTesting', TAG, '.RData'))
+                cat('\n'); print(dfblockTesting)
             }
         }
-        save(dfblockTesting, file = paste0('dfblockTesting', TAG, '.RData'))
     },list(TAG = tag))
     filename <- file.path(path, paste0('runblockTesting', tag, '.R'))
     cat(codeToText(preCode), file=filename)
@@ -86,7 +95,9 @@ for(tag in c('A', 'B', 'C', 'D', 'E')) {
 ## combining the 'A', ..., 'E' dataframes from blockTesting
 rm(list=ls())
 dfCombined <- data.frame()
-for(tag in c('A', 'B', 'C', 'D', 'E')) {
+tagValues <- c('A', 'B', 'C', 'D', 'E')
+tagValues <- 'A'
+for(tag in tagValues) {
     load(paste0('dfblockTesting', tag, '.RData'))
     dfCombined <- rbind(dfCombined, dfblockTesting)
 }
@@ -95,7 +106,7 @@ save(dfblockTesting, file = 'dfblockTesting.RData')
 
 ## make a plot of timing from blockTesting
 load('dfblockTesting.RData')
-qplot(data=dfscalarOrBlock, x=N, y=timing, color=blocking, geom='line')
+qplot(data=dfblockTesting, x=N, y=timing, color=blocking, geom='line')
 
 ## interesting relationships I noticed from blockTesting
 y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
