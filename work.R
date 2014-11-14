@@ -10,28 +10,34 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-tagValues <- LETTERS[1:14]
-##tagValues <- c('X', 'Y')
+tagValues <- c('XX', LETTERS[13:20])
 for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
         switch(tag,
-               ##X = { dist <- 'uni';   Nvalues <- c(2,3,4) },
-               ##Y = { dist <- 'multi'; Nvalues <- c(2,3) },
                A = { dist <- 'uni';   Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 8 mins
                B = { dist <- 'uni';   Nvalues <- c(100, 150, 200, 250, 300) }, # 49 mins
                C = { dist <- 'uni';   Nvalues <- c(350, 400, 450, 500) }, # 105 mins
                D = { dist <- 'uni';   Nvalues <- c(600) }, # 34 mins
                E = { dist <- 'uni';   Nvalues <- c(700) }, # 47 mins
                F = { dist <- 'uni';   Nvalues <- c(800) }, # 62 mins
-               G = { dist <- 'uni';   Nvalues <- c(900) }, # 
-               H = { dist <- 'uni';   Nvalues <- c(1000) }, # 
-               I = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 
-               J = { dist <- 'multi';   Nvalues <- c(100, 150) }, # 
-               K = { dist <- 'multi';   Nvalues <- c(200, 250) }, # 
-               L = { dist <- 'multi';   Nvalues <- c(300, 350) }, # 
-               M = { dist <- 'multi';   Nvalues <- c(400, 450) }, # 
-               N = { dist <- 'multi';   Nvalues <- c(500) } # 
+               G = { dist <- 'uni';   Nvalues <- c(900) }, # 72 mins
+               H = { dist <- 'uni';   Nvalues <- c(1000) }, # 86 mins
+               I = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 10 mins
+               J = { dist <- 'multi'; Nvalues <- c(100, 150) }, # 51 mins
+               K = { dist <- 'multi'; Nvalues <- c(200, 250) }, # 4 hours
+               L = { dist <- 'multi'; Nvalues <- c(300, 350) }, #
+               
+               ## different after here!  start here
+               XX= { dist <- 'uni';   Nvalues <- c(450) }, #
+               M = { dist <- 'multi'; Nvalues <- c(400) }, #
+               N = { dist <- 'multi'; Nvalues <- c(450) }, #
+               O = { dist <- 'multi'; Nvalues <- c(500) }, #
+               P = { dist <- 'multi'; Nvalues <- c(600) }, #
+               Q = { dist <- 'multi'; Nvalues <- c(700) }, #
+               R = { dist <- 'multi'; Nvalues <- c(800) }, #
+               S = { dist <- 'multi'; Nvalues <- c(900) }, #
+               T = { dist <- 'multi'; Nvalues <- c(1000) } # 
                )
         niter <- 400000
         keepInd <- (niter/2+1):niter
@@ -114,11 +120,10 @@ for(tag in tagValues) {
 }
 system(paste0('chmod 777 ', filename))
 
-## combining the 'A', ..., 'E' dataframes from blockTesting
+## combining the A, B, C, ...  dataframes from blockTesting
 rm(list=ls())
 dfCombined <- data.frame()
-tagValues <- LETTERS[1:14]
-##tagValues <- c('X', 'Y')
+tagValues <- LETTERS[1:12]
 for(tag in tagValues) {
     load(paste0('dfblockTesting', tag, '.RData'))
     dfCombined <- rbind(dfCombined, dfblockTesting)
@@ -129,7 +134,7 @@ save(dfblockTesting, file = 'dfblockTesting.RData')
 ## make a plot of timing from blockTesting
 rm(list=ls())
 load('dfblockTesting.RData')
-qplot(data=dfblockTesting, x=N, y=timing, color=blocking, geom='line')
+qplot(data=dfblockTesting, x=N, y=timePer10kN, color=blocking, geom='line', facet=dist)
 
 ## interesting relationships I noticed from blockTesting
 y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
