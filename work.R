@@ -23,7 +23,7 @@ for(tag in tagValues) {
                C = { dist <- 'uni';   Nvalues <- c(350, 400, 450, 500) }, # 105 mins
                D = { dist <- 'uni';   Nvalues <- c(600) }, # 34 mins
                E = { dist <- 'uni';   Nvalues <- c(700) }, # 47 mins
-               F = { dist <- 'uni';   Nvalues <- c(800) }, # 
+               F = { dist <- 'uni';   Nvalues <- c(800) }, # 62 mins
                G = { dist <- 'uni';   Nvalues <- c(900) }, # 
                H = { dist <- 'uni';   Nvalues <- c(1000) }, # 
                I = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 
