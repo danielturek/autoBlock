@@ -20,8 +20,8 @@ for(tag in tagValues) {
                ##Y = { dist <- 'multi'; Nvalues <- c(2,3) },
                A = { dist <- 'uni';   Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 8 minutes
                B = { dist <- 'uni';   Nvalues <- c(100, 150, 200, 250, 300) }, # 49 minutes
-               C = { dist <- 'uni';   Nvalues <- c(350, 400, 450, 500) }, # 
-               D = { dist <- 'uni';   Nvalues <- c(600) }, # 
+               C = { dist <- 'uni';   Nvalues <- c(350, 400, 450, 500) }, # 105 minutes
+               D = { dist <- 'uni';   Nvalues <- c(600) }, # 34 minutes
                E = { dist <- 'uni';   Nvalues <- c(700) }, # 
                F = { dist <- 'uni';   Nvalues <- c(800) }, # 
                G = { dist <- 'uni';   Nvalues <- c(900) }, # 
