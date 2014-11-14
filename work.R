@@ -10,7 +10,7 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-tagValues <- c('XX', LETTERS[13:20])
+tagValues <- c(LETTERS[13:21])
 for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
@@ -26,18 +26,17 @@ for(tag in tagValues) {
                I = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 10 mins
                J = { dist <- 'multi'; Nvalues <- c(100, 150) }, # 51 mins
                K = { dist <- 'multi'; Nvalues <- c(200, 250) }, # 4 hours
-               L = { dist <- 'multi'; Nvalues <- c(300, 350) }, #
-               
+               L = { dist <- 'multi'; Nvalues <- c(300) }, # ??
                ## different after here!  start here
-               XX= { dist <- 'uni';   Nvalues <- c(450) }, #
-               M = { dist <- 'multi'; Nvalues <- c(400) }, #
-               N = { dist <- 'multi'; Nvalues <- c(450) }, #
-               O = { dist <- 'multi'; Nvalues <- c(500) }, #
-               P = { dist <- 'multi'; Nvalues <- c(600) }, #
-               Q = { dist <- 'multi'; Nvalues <- c(700) }, #
-               R = { dist <- 'multi'; Nvalues <- c(800) }, #
-               S = { dist <- 'multi'; Nvalues <- c(900) }, #
-               T = { dist <- 'multi'; Nvalues <- c(1000) } # 
+               M = { dist <- 'multi'; Nvalues <- c(350) }, #
+               N = { dist <- 'multi'; Nvalues <- c(400) }, #
+               O = { dist <- 'multi'; Nvalues <- c(450) }, #
+               P = { dist <- 'multi'; Nvalues <- c(500) }, #
+               Q = { dist <- 'multi'; Nvalues <- c(600) }, #
+               R = { dist <- 'multi'; Nvalues <- c(700) }, #
+               S = { dist <- 'multi'; Nvalues <- c(800) }, #
+               T = { dist <- 'multi'; Nvalues <- c(900) }, #
+               U = { dist <- 'multi'; Nvalues <- c(1000) } # 
                )
         niter <- 400000
         keepInd <- (niter/2+1):niter
@@ -51,7 +50,7 @@ for(tag in tagValues) {
             constants <- candc$constants
             data <- list()
             inits <- list(x = rep(0,N))
-            cat('\ncreating R model.....\n\n')
+            cat('\ncreating R model.....\n')
             Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
             nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
             specList <- list()  # ordering: scalar, blockNoAdapt, blockAdapt
