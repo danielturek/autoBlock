@@ -122,7 +122,7 @@ system(paste0('chmod 777 ', filename))
 ## combining the A, B, C, ...  dataframes from blockTesting
 rm(list=ls())
 dfCombined <- data.frame()
-tagValues <- LETTERS[1:12]
+tagValues <- LETTERS[1:8]
 for(tag in tagValues) {
     load(paste0('dfblockTesting', tag, '.RData'))
     dfCombined <- rbind(dfCombined, dfblockTesting)
@@ -133,7 +133,7 @@ save(dfblockTesting, file = 'dfblockTesting.RData')
 ## make a plot of timing from blockTesting
 rm(list=ls())
 load('dfblockTesting.RData')
-qplot(data=dfblockTesting, x=N, y=timePer10kN, color=blocking, geom='line', facet=dist)
+qplot(data=dfblockTesting, x=N, y=timePer10kN, color=blocking, geom='line')
 
 ## interesting relationships I noticed from blockTesting
 y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
