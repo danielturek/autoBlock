@@ -38,7 +38,7 @@ for(tag in tagValues) {
                T = { dist <- 'multi'; Nvalues <- c(900) }, #
                U = { dist <- 'multi'; Nvalues <- c(1000) } # 
                )
-        niter <- 400000
+        niter <- 50000
         keepInd <- (niter/2+1):niter
         ##optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
         dfblockTesting <- data.frame()
