@@ -133,7 +133,10 @@ save(dfblockTesting, file = 'dfblockTesting.RData')
 ## make a plot of timing from blockTesting
 rm(list=ls())
 load('dfblockTesting.RData')
+dfBlockOnly <- dfblockTesting[dfblockTesting$blocking!='scalar',]
 qplot(data=dfblockTesting, x=N, y=timePer10kN, color=blocking, geom='line')
+qplot(data=dfBlockOnly, x=N, y=derivedScale, color=blocking, geom='line')
+qplot(data=dfBlockOnly, x=N, y=essPerN, color=blocking, geom='line', ylim=c(0,0.003))
 
 ## interesting relationships I noticed from blockTesting
 y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
