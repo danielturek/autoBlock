@@ -10,7 +10,8 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-tagValues <- c(LETTERS[13:21])
+tagValues <- c(LETTERS[16:21])
+tagValues <- c('P', 'Q')
 for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
@@ -39,6 +40,7 @@ for(tag in tagValues) {
                U = { dist <- 'multi'; Nvalues <- c(1000) } # 
                )
         niter <- 50000
+        niter <- 100
         keepInd <- (niter/2+1):niter
         ##optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
         dfblockTesting <- data.frame()
