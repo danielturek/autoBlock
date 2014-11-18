@@ -10,8 +10,8 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-tagValues <- c(LETTERS[16:21])
-tagValues <- c('P', 'Q')
+##tagValues <- c(LETTERS[16:21])
+tagValues <- c('P')
 for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
@@ -124,7 +124,7 @@ system(paste0('chmod 777 ', filename))
 ## combining the A, B, C, ...  dataframes from blockTesting
 rm(list=ls())
 dfCombined <- data.frame()
-tagValues <- LETTERS[1:8]
+tagValues <- LETTERS[1:15]
 for(tag in tagValues) {
     load(paste0('dfblockTesting', tag, '.RData'))
     dfCombined <- rbind(dfCombined, dfblockTesting)
@@ -136,9 +136,13 @@ save(dfblockTesting, file = 'dfblockTesting.RData')
 rm(list=ls())
 load('dfblockTesting.RData')
 dfBlockOnly <- dfblockTesting[dfblockTesting$blocking!='scalar',]
+dfMulti <- dfblockTesting[dfblockTesting$dist == 'multi',]
 qplot(data=dfblockTesting, x=N, y=timePer10kN, color=blocking, geom='line')
+qplot(data=dfblockTesting, x=N, y=essPerN, color=blocking, geom='line')
+qplot(data=dfblockTesting, x=N, y=essPerN/timePer10kN, color=blocking, geom='line')
 qplot(data=dfBlockOnly, x=N, y=derivedScale, color=blocking, geom='line')
 qplot(data=dfBlockOnly, x=N, y=essPerN, color=blocking, geom='line', ylim=c(0,0.003))
+qplot(data=dfMulti, x=N, y=essPerN/timePer10kN, color=blocking, geom='line', ylim=c(0,0.003))
 
 ## interesting relationships I noticed from blockTesting
 y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
