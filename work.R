@@ -16,31 +16,21 @@ for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
         switch(tag,
-               A = { dist <- 'uni';   Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 8 mins
-               B = { dist <- 'uni';   Nvalues <- c(100, 150, 200, 250, 300) }, # 49 mins
-               C = { dist <- 'uni';   Nvalues <- c(350, 400, 450, 500) }, # 105 mins
-               D = { dist <- 'uni';   Nvalues <- c(600) }, # 34 mins
-               E = { dist <- 'uni';   Nvalues <- c(700) }, # 47 mins
-               F = { dist <- 'uni';   Nvalues <- c(800) }, # 62 mins
-               G = { dist <- 'uni';   Nvalues <- c(900) }, # 72 mins
-               H = { dist <- 'uni';   Nvalues <- c(1000) }, # 86 mins
-               I = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 10 mins
-               J = { dist <- 'multi'; Nvalues <- c(100, 150) }, # 51 mins
-               K = { dist <- 'multi'; Nvalues <- c(200, 250) }, # 4 hours
-               L = { dist <- 'multi'; Nvalues <- c(300) }, # ??
-               ## different after here!  start here
-               M = { dist <- 'multi'; Nvalues <- c(350) }, #
-               N = { dist <- 'multi'; Nvalues <- c(400) }, #
-               O = { dist <- 'multi'; Nvalues <- c(450) }, #
-               P = { dist <- 'multi'; Nvalues <- c(500) }, #
-               Q = { dist <- 'multi'; Nvalues <- c(600) }, #
-               R = { dist <- 'multi'; Nvalues <- c(700) }, #
-               S = { dist <- 'multi'; Nvalues <- c(800) }, #
-               T = { dist <- 'multi'; Nvalues <- c(900) }, #
-               U = { dist <- 'multi'; Nvalues <- c(1000) } # 
+               A = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 10 mins
+               B = { dist <- 'multi'; Nvalues <- c(100) }, # 
+               C = { dist <- 'multi'; Nvalues <- c(200) }, # 
+               D = { dist <- 'multi'; Nvalues <- c(300) }, # 
+               E = { dist <- 'multi'; Nvalues <- c(350) }, #
+               F = { dist <- 'multi'; Nvalues <- c(400) }, #
+               G = { dist <- 'multi'; Nvalues <- c(450) }, #
+               H = { dist <- 'multi'; Nvalues <- c(500) }, #
+               I = { dist <- 'multi'; Nvalues <- c(600) }, #
+               J = { dist <- 'multi'; Nvalues <- c(700) }, #
+               K = { dist <- 'multi'; Nvalues <- c(800) }, #
+               L = { dist <- 'multi'; Nvalues <- c(900) }, #
+               M = { dist <- 'multi'; Nvalues <- c(1000) } # 
                )
         niter <- 50000
-        niter <- 100
         keepInd <- (niter/2+1):niter
         ##optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
         dfblockTesting <- data.frame()
@@ -124,13 +114,13 @@ system(paste0('chmod 777 ', filename))
 ## combining the A, B, C, ...  dataframes from blockTesting
 rm(list=ls())
 dfCombined <- data.frame()
-tagValues <- LETTERS[1:15]
+tagValues <- LETTERS[1:8]
 for(tag in tagValues) {
     load(paste0('dfblockTesting', tag, '.RData'))
     dfCombined <- rbind(dfCombined, dfblockTesting)
 }
-dfblockTesting <- dfCombined
-save(dfblockTesting, file = 'dfblockTesting.RData')
+dfblockTestingUni <- dfCombined
+save(dfblockTestingUni, file = 'dfblockTestingUni.RData')
 
 ## make a plot of timing from blockTesting
 rm(list=ls())
