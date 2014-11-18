@@ -10,8 +10,7 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-##tagValues <- c(LETTERS[16:21])
-tagValues <- c('P')
+tagValues <- LETTERS[1:13]
 for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
