@@ -45,6 +45,7 @@ for(k in kValues) {
     }
 }
 
+load('dfsampEff.RData')
 qplot(data=dfsampEff, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line')
 dev.copy2pdf(file='dfsampEff.pdf')
 system('cp dfsampEff.pdf ~/GitHub/nimblePapers/autoBlock/')
@@ -56,24 +57,25 @@ system('cp dfsampEff.pdf ~/GitHub/nimblePapers/autoBlock/')
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
+
 tagValues <- LETTERS[10:13]
 for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
         switch(tag,
-               A = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) }, # 10 mins
-               B = { dist <- 'multi'; Nvalues <- c(100) }, # 
-               C = { dist <- 'multi'; Nvalues <- c(200) }, # 
-               D = { dist <- 'multi'; Nvalues <- c(300) }, # 
-               E = { dist <- 'multi'; Nvalues <- c(350) }, #
-               F = { dist <- 'multi'; Nvalues <- c(400) }, #
-               G = { dist <- 'multi'; Nvalues <- c(450) }, #
-               H = { dist <- 'multi'; Nvalues <- c(500) }, #
-               I = { dist <- 'multi'; Nvalues <- c(600) }, #
-               J = { dist <- 'multi'; Nvalues <- c(700) }, #
-               K = { dist <- 'multi'; Nvalues <- c(800) }, #
-               L = { dist <- 'multi'; Nvalues <- c(900) }, #
-               M = { dist <- 'multi'; Nvalues <- c(1000) } # 
+               A = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) },
+               B = { dist <- 'multi'; Nvalues <- c(100) },
+               C = { dist <- 'multi'; Nvalues <- c(200) },
+               D = { dist <- 'multi'; Nvalues <- c(300) },
+               E = { dist <- 'multi'; Nvalues <- c(350) },
+               F = { dist <- 'multi'; Nvalues <- c(400) },
+               G = { dist <- 'multi'; Nvalues <- c(450) },
+               H = { dist <- 'multi'; Nvalues <- c(500) },
+               I = { dist <- 'multi'; Nvalues <- c(600) },
+               J = { dist <- 'multi'; Nvalues <- c(700) },
+               K = { dist <- 'multi'; Nvalues <- c(800) },
+               L = { dist <- 'multi'; Nvalues <- c(900) },
+               M = { dist <- 'multi'; Nvalues <- c(1000) }
                )
         niter <- 1000
         keepInd <- (niter/2+1):niter
@@ -159,13 +161,14 @@ system(paste0('chmod 777 ', filename))
 ## combining the A, B, C, ...  dataframes from blockTesting
 rm(list=ls())
 dfCombined <- data.frame()
-tagValues <- LETTERS[1:8]
+tagValues <- LETTERS[1:10]
 for(tag in tagValues) {
     load(paste0('dfblockTesting', tag, '.RData'))
     dfCombined <- rbind(dfCombined, dfblockTesting)
 }
-dfblockTestingUni <- dfCombined
-save(dfblockTestingUni, file = 'dfblockTestingUni.RData')
+dfblockTestingMulti <- dfCombined
+load('dfblockTestingUni.RData')
+save(dfblockTestingUni, dfblockTestingMulti, file = 'dfblockTesting.RData')
 
 ## make a plot of timing from blockTesting
 rm(list=ls())
