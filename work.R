@@ -7,6 +7,52 @@ eval(preCode)
 preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 
 
+## shows how bad sampling efficiency can be, as correlation increases
+kValues <- 0:3
+Nvalues <- c(2, 4, 8, 16)
+niter <- 4000000
+keepInd <- (niter/2+1):niter
+dfsampEff <- data.frame()
+for(k in kValues) {
+    for(N in Nvalues) {
+        rho <- 1 - (0.1)^k
+        cat(paste0('\nk = ', k, '\nrho = ', rho, '\nN = ', N, '\n\n'))
+        candc <- createCodeAndConstants(N, list(1:N), rho)
+        code <- candc$code
+        constants <- candc$constants
+        data <- list()
+        inits <- list(x = rep(0,N))
+        Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
+        nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
+        spec <- MCMCspec(Rmodel, nodes = NULL)
+        for(node in nodeNames) spec$addSampler('RW', list(targetNode=node), print=FALSE)
+        Rmcmc <- buildMCMC(spec)
+        compiledList <- compileNimble(list(Rmodel, Rmcmc))
+        Cmodel <- compiledList[[1]]; Cmcmc <- compiledList[[2]]
+        Cmodel$setInits(inits)
+        set.seed(0)
+        timing <- as.numeric(system.time(Cmcmc(niter))[1])
+        timePer10kN <- timing / (niter/10000)
+        samples <- as.matrix(nfVar(Cmcmc, 'mvSamples'))
+        samples <- samples[keepInd, , drop = FALSE]
+        ess <- apply(samples, 2, effectiveSize)
+        meanESS <- mean(ess)
+        essPerN <- meanESS / length(keepInd)
+        samples <- NULL; Cmcmcs <- NA; gc()
+        thisDF <- data.frame(k=k, rho=rho, N=N, timePer10kN=timePer10kN, essPerN=essPerN)
+        dfsampEff <- rbind(dfsampEff, thisDF)
+        save(dfsampEff, file = paste0('dfsampEff.RData'))
+    }
+}
+
+qplot(data=dfsampEff, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line')
+dev.copy2pdf(file='dfsampEff.pdf')
+system('cp dfsampEff.pdf ~/GitHub/nimblePapers/autoBlock/')
+
+
+
+
+
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
@@ -123,7 +169,12 @@ save(dfblockTestingUni, file = 'dfblockTestingUni.RData')
 
 ## make a plot of timing from blockTesting
 rm(list=ls())
-load('dfblockTesting.RData')
+load('dfblockTestingUni.RData')
+dfu <- dfblockTestingUni
+
+l <- dfu[dfu$blocking!='scalar',]
+qplot(data=l, x=N, y=essPerN, color=blocking, geom='line', xlim=c(250,1000), ylim=c(0,0.01))
+
 dfBlockOnly <- dfblockTesting[dfblockTesting$blocking!='scalar',]
 dfMulti <- dfblockTesting[dfblockTesting$dist == 'multi',]
 qplot(data=dfblockTesting, x=N, y=timePer10kN, color=blocking, geom='line')
