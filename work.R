@@ -10,7 +10,7 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 ## shows how bad sampling efficiency can be, as correlation increases
 sampEffCode <- quote({
     kValues <- 0:3
-    Nvalues <- c(2, 4, 8, 16)
+    Nvalues <- c(2, 4, 8, 16, 32)
     sampOption <- 1
     expDecay <- TRUE
     niter <- 4000000
@@ -52,6 +52,7 @@ sampEffCode <- quote({
             samples <- NULL; Cmcmcs <- NA; gc()
             thisDF <- data.frame(k=k, rho=rho, N=N, timePer10kN=timePer10kN, essPerN=essPerN)
             dfsampEff <- rbind(dfsampEff, thisDF)
+            ##save(dfsampEff, file = paste0('dfsampEff.RData'))
             save(dfsampEff, file = paste0('dfsampEffExpDecay.RData'))
         }
     }
@@ -61,24 +62,45 @@ cat(codeToText(preCode), file=filename)
 cat(codeToText(sampEffCode), file=filename, append=TRUE)
 
 load('dfsampEff.RData')
-load('dfsampEffMostlyBlocked.RData')
-qplot(data=dfsampEff, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line')
+df <- dfsampEff
+#load('dfsampEffMostlyBlocked.RData')
+load('dfsampEffExpDecay.RData')
+dfExpDecay <- dfsampEff
+p1 <- qplot(data=df, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line', ylab='log(tau inverse)')
+p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line', ylab='log(tau inverse)')
+multiplot(p1, p2, cols=2)
+
 dev.copy2pdf(file='dfsampEff.pdf')
 system('cp dfsampEff.pdf ~/GitHub/nimblePapers/autoBlock/')
 
 load('dfsampEff.RData')
-load('dfsampEffMostlyBlocked.RData')
+#load('dfsampEffMostlyBlocked.RData')
+load('dfsampEffExpDecay.RData')
 df <- dfsampEff[dfsampEff$k!=0,] # remove k=0, rho=0, where lines converge
 qplot(data=df, x=log(1-rho), y=log(essPerN), color=factor(N), geom='line')
 logESS <- log(df$essPerN)
 logN <- log(df$N)
+loglogN <- log(logN)
 logRho <- log(1-df$rho)
+## from dfsampEff
 m <- lm(logESS ~ logN + logRho)
+summary(m)
 m$coeff
 ## eff = exp(intercept) * N^Bn * (1-rho)^Br
 ##                    (Bn)        (Br)
-## (Intercept)        logN      logRho
-##  -0.5088995  -1.2949814   1.0187752    ## from runs with alpha 0.1, rhos 0.9 0.99
+## (Intercept)        logN      logRho     ## from dfsampEff, with expDecay=FALSE,
+##  -0.4346747  -1.1768437   1.0921665      ## alpha 0.2, rhos 0.8 0.96 ...
+##
+## from dfsampEffExpDecay
+m <- lm(logESS ~ loglogN + logRho)
+summary(m)
+m$coeff
+## eff = exp(intercept) * (logN)^Bn * (1-rho)^Br
+##                    (Bn)        (Br)
+## (Intercept)     loglogN      logRho     ## from dfsampEffExpDecay, with expDecay=TRUE,
+##   -1.261946   -1.222333    1.211014      ## alpha 0.2, rhos 0.8 0.96 ...
+
+
 
 
 
