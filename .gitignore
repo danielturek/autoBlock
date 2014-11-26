@@ -4,3 +4,6 @@ TEMP*
 out
 .control.RData
 run*
+gitcommit.sh
+*~
+

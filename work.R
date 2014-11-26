@@ -8,47 +8,75 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 
 
 ## shows how bad sampling efficiency can be, as correlation increases
-kValues <- 0:3
-Nvalues <- c(2, 4, 8, 16)
-niter <- 4000000
-keepInd <- (niter/2+1):niter
-dfsampEff <- data.frame()
-for(k in kValues) {
-    for(N in Nvalues) {
-        rho <- 1 - (0.1)^k
-        cat(paste0('\nk = ', k, '\nrho = ', rho, '\nN = ', N, '\n\n'))
-        candc <- createCodeAndConstants(N, list(1:N), rho)
-        code <- candc$code
-        constants <- candc$constants
-        data <- list()
-        inits <- list(x = rep(0,N))
-        Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
-        nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
-        spec <- MCMCspec(Rmodel, nodes = NULL)
-        for(node in nodeNames) spec$addSampler('RW', list(targetNode=node), print=FALSE)
-        Rmcmc <- buildMCMC(spec)
-        compiledList <- compileNimble(list(Rmodel, Rmcmc))
-        Cmodel <- compiledList[[1]]; Cmcmc <- compiledList[[2]]
-        Cmodel$setInits(inits)
-        set.seed(0)
-        timing <- as.numeric(system.time(Cmcmc(niter))[1])
-        timePer10kN <- timing / (niter/10000)
-        samples <- as.matrix(nfVar(Cmcmc, 'mvSamples'))
-        samples <- samples[keepInd, , drop = FALSE]
-        ess <- apply(samples, 2, effectiveSize)
-        meanESS <- mean(ess)
-        essPerN <- meanESS / length(keepInd)
-        samples <- NULL; Cmcmcs <- NA; gc()
-        thisDF <- data.frame(k=k, rho=rho, N=N, timePer10kN=timePer10kN, essPerN=essPerN)
-        dfsampEff <- rbind(dfsampEff, thisDF)
-        save(dfsampEff, file = paste0('dfsampEff.RData'))
+sampEffCode <- quote({
+    kValues <- 0:3
+    Nvalues <- c(2, 4, 8, 16)
+    sampOption <- 2
+    niter <- 4000000
+    keepInd <- (niter/2+1):niter
+    dfsampEff <- data.frame()
+    for(k in kValues) {
+        for(N in Nvalues) {
+            rho <- 1 - (1-0.8)^k
+            cat(paste0('\nk = ', k, '\nrho = ', rho, '\nN = ', N, '\n\n'))
+            candc <- createCodeAndConstants(N, list(1:N), rho)
+            code <- candc$code
+            constants <- candc$constants
+            data <- list()
+            inits <- list(x = rep(0,N))
+            Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
+            nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
+            spec <- MCMCspec(Rmodel, nodes = NULL)
+            if(sampOption==1) { # scalar RW samplers on all nodes
+                for(node in nodeNames) spec$addSampler('RW', list(targetNode=node), print=FALSE)
+                spec$getSamplers() }
+            if(sampOption==2) { # scalar RW sampler on x[1]; block sampler on x[2:N]
+                spec$addSampler('RW', list(targetNode='x[1]'), print=FALSE)
+                spec$addSampler('RW_block', list(targetNodes=nodeNames[-1]), print=FALSE)
+                spec$getSamplers() }
+            Rmcmc <- buildMCMC(spec)
+            compiledList <- compileNimble(list(Rmodel, Rmcmc))
+            Cmodel <- compiledList[[1]]; Cmcmc <- compiledList[[2]]
+            Cmodel$setInits(inits)
+            set.seed(0)
+            timing <- as.numeric(system.time(Cmcmc(niter))[1])
+            timePer10kN <- timing / (niter/10000)
+            samples <- as.matrix(nfVar(Cmcmc, 'mvSamples'))
+            samples <- samples[keepInd, , drop = FALSE]
+            ess <- apply(samples, 2, effectiveSize)
+            if(sampOption==1) meanESS <- mean(ess)
+            if(sampOption==2) meanESS <- as.numeric(ess[1])
+            essPerN <- meanESS / length(keepInd)
+            samples <- NULL; Cmcmcs <- NA; gc()
+            thisDF <- data.frame(k=k, rho=rho, N=N, timePer10kN=timePer10kN, essPerN=essPerN)
+            dfsampEff <- rbind(dfsampEff, thisDF)
+            save(dfsampEff, file = paste0('dfsampEffMostlyBlocked.RData'))
+        }
     }
-}
+})
+filename <- file.path(path, paste0('runsampEff.R'))
+cat(codeToText(preCode), file=filename)
+cat(codeToText(sampEffCode), file=filename, append=TRUE)
 
 load('dfsampEff.RData')
+load('dfsampEffMostlyBlocked.RData')
 qplot(data=dfsampEff, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line')
 dev.copy2pdf(file='dfsampEff.pdf')
 system('cp dfsampEff.pdf ~/GitHub/nimblePapers/autoBlock/')
+
+load('dfsampEff.RData')
+load('dfsampEffMostlyBlocked.RData')
+df <- dfsampEff[dfsampEff$k!=0,] # remove k=0, rho=0, where lines converge
+qplot(data=df, x=log(1-rho), y=log(essPerN), color=factor(N), geom='line')
+logESS <- log(df$essPerN)
+logN <- log(df$N)
+logRho <- log(1-df$rho)
+m <- lm(logESS ~ logN + logRho)
+m$coeff
+## eff = exp(intercept) * N^Bn * (1-rho)^Br
+##                    (Bn)        (Br)
+## (Intercept)        logN      logRho
+##  -0.5088995  -1.2949814   1.0187752    ## from runs with alpha 0.1, rhos 0.9 0.99
 
 
 
