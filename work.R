@@ -11,7 +11,8 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 sampEffCode <- quote({
     kValues <- 0:3
     Nvalues <- c(2, 4, 8, 16)
-    sampOption <- 2
+    sampOption <- 1
+    expDecay <- TRUE
     niter <- 4000000
     keepInd <- (niter/2+1):niter
     dfsampEff <- data.frame()
@@ -19,7 +20,8 @@ sampEffCode <- quote({
         for(N in Nvalues) {
             rho <- 1 - (1-0.8)^k
             cat(paste0('\nk = ', k, '\nrho = ', rho, '\nN = ', N, '\n\n'))
-            candc <- createCodeAndConstants(N, list(1:N), rho)
+            candc <- createCodeAndConstants(N, list(1:N), rho, expDecay=expDecay)
+            print(candc)
             code <- candc$code
             constants <- candc$constants
             data <- list()
@@ -50,11 +52,11 @@ sampEffCode <- quote({
             samples <- NULL; Cmcmcs <- NA; gc()
             thisDF <- data.frame(k=k, rho=rho, N=N, timePer10kN=timePer10kN, essPerN=essPerN)
             dfsampEff <- rbind(dfsampEff, thisDF)
-            save(dfsampEff, file = paste0('dfsampEffMostlyBlocked.RData'))
+            save(dfsampEff, file = paste0('dfsampEffExpDecay.RData'))
         }
     }
 })
-filename <- file.path(path, paste0('runsampEff.R'))
+filename <- file.path(path, paste0('runsampEffExpDecay.R'))
 cat(codeToText(preCode), file=filename)
 cat(codeToText(sampEffCode), file=filename, append=TRUE)
 

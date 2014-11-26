@@ -46,7 +46,7 @@ autoBlockModel <- setRefClass(
         )
     )
 
-createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numeric()) {
+createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numeric(), expDecay=FALSE) {
     code <- quote({})
     constants <- list()
     if(length(listOfBlockIndexes) != length(rhoVector)) stop()
@@ -63,7 +63,7 @@ createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numer
             indMax <- as.numeric(max(blockIndexes))
             code[[length(code)+1]] <- substitute(x[MIN:MAX] ~ dmnorm(MU[1:NUM], cov = SIGMA[1:NUM,1:NUM]), list(MIN=indMin, MAX=indMax, NUM=numNodes, MU=as.name(muText), SIGMA=as.name(sigmaText)))
             constants[[muText]] <- rep(0, numNodes)
-            constants[[sigmaText]] <- createCov(N=numNodes, rho=rho)
+            constants[[sigmaText]] <- createCov(N=numNodes, rho=rho, expDecay=expDecay)
         }
     }
     allInd <- 1:N
@@ -73,11 +73,11 @@ createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numer
     return(codeAndConstantsList)
 }
 
-createCov <- function(N, indList=list(1:N), rho=0.8, indList2=list(), rho2=0.3, indList3=list(), rho3=0.5) {
+createCov <- function(N, indList=list(1:N), rho=0.8, indList2=list(), rho2=0.3, indList3=list(), rho3=0.5, expDecay=FALSE) {
     Sigma <- diag(N)
-    for(gp in indList)  { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- rho  }
-    for(gp in indList2) { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- rho2 }
-    for(gp in indList3) { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- rho3 }
+    for(gp in indList)  { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- if(expDecay) rho^ abs(i1-i2) else rho  }
+    for(gp in indList2) { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- if(expDecay) rho2^abs(i1-i2) else rho2 }
+    for(gp in indList3) { for(i1 in gp) for(i2 in gp) Sigma[i1,i2] <- Sigma[i2,i1] <- if(expDecay) rho2^abs(i1-i2) else rho3 }
     diag(Sigma) <- 1
     Sigma
 }
