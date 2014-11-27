@@ -69,7 +69,6 @@ dfExpDecay <- dfsampEff
 p1 <- qplot(data=df, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line', ylab='log(tau inverse)')
 p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line', ylab='log(tau inverse)')
 multiplot(p1, p2, cols=2)
-
 dev.copy2pdf(file='dfsampEff.pdf')
 system('cp dfsampEff.pdf ~/GitHub/nimblePapers/autoBlock/')
 
@@ -109,7 +108,6 @@ m$coeff
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-
 tagValues <- LETTERS[10:13]
 for(tag in tagValues) {
     blockTestingCode <- substitute({
@@ -224,24 +222,11 @@ save(dfblockTestingUni, dfblockTestingMulti, file = 'dfblockTesting.RData')
 
 ## make a plot of timing from blockTesting
 rm(list=ls())
-load('dfblockTestingUni.RData')
-dfu <- dfblockTestingUni
+load('dfblockTesting.RData')
+qplot(data=dfblockTesting, x=N, y=timePer10kN, geom='line', linetype=dist, color=blocking, xlab='d', ylim=c(0,16), xlim=c(0,500), ylab='time per 10k samples (seconds)')
+dev.copy2pdf(file='blockTiming.pdf')
+system('cp blockTiming.pdf ~/GitHub/nimblePapers/autoBlock/')
 
-l <- dfu[dfu$blocking!='scalar',]
-qplot(data=l, x=N, y=essPerN, color=blocking, geom='line', xlim=c(250,1000), ylim=c(0,0.01))
-
-dfBlockOnly <- dfblockTesting[dfblockTesting$blocking!='scalar',]
-dfMulti <- dfblockTesting[dfblockTesting$dist == 'multi',]
-qplot(data=dfblockTesting, x=N, y=timePer10kN, color=blocking, geom='line')
-qplot(data=dfblockTesting, x=N, y=essPerN, color=blocking, geom='line')
-qplot(data=dfblockTesting, x=N, y=essPerN/timePer10kN, color=blocking, geom='line')
-qplot(data=dfBlockOnly, x=N, y=derivedScale, color=blocking, geom='line')
-qplot(data=dfBlockOnly, x=N, y=essPerN, color=blocking, geom='line', ylim=c(0,0.003))
-qplot(data=dfMulti, x=N, y=essPerN/timePer10kN, color=blocking, geom='line', ylim=c(0,0.003))
-
-## interesting relationships I noticed from blockTesting
-y <- sqrt(df$N) * df$adaptedScale  ###### Interesting ! ! !
-y <- df$meanESS * df$N
 
 
 
