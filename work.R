@@ -108,17 +108,14 @@ m$coeff
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-tagValues <- LETTERS[1:3]
+tagValues <- LETTERS[1:13]
 for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
         switch(tag,
-               A = { dist <- 'gamma'; Nvalues <- c(2, 3) },
-               B = { dist <- 'gamma'; Nvalues <- c(4, 5) },
-               C = { dist <- 'gamma'; Nvalues <- c(6) },
-               #A = { dist <- 'gamma'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) },
-               #B = { dist <- 'gamma'; Nvalues <- c(100) },
-               #C = { dist <- 'gamma'; Nvalues <- c(200) },
+               A = { dist <- 'gamma'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) },
+               B = { dist <- 'gamma'; Nvalues <- c(100, 150) },
+               C = { dist <- 'gamma'; Nvalues <- c(200, 250) },
                D = { dist <- 'gamma'; Nvalues <- c(300) },
                E = { dist <- 'gamma'; Nvalues <- c(350) },
                F = { dist <- 'gamma'; Nvalues <- c(400) },
