@@ -70,7 +70,11 @@ createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numer
     }
     allInd <- 1:N
     leftoverInd <- setdiff(allInd, unlist(listOfBlockIndexes))
-    for(ind in leftoverInd) code[[length(code)+1]] <- substitute(x[IND] ~ dnorm(0, 1), list(IND=as.numeric(ind)))
+    for(ind in leftoverInd) {
+        code[[length(code)+1]] <-
+            if(gammaScalars) substitute(x[IND] ~ dgamma(1.1, 1.1), list(IND=as.numeric(ind)))
+            else             substitute(x[IND] ~ dnorm(0, 1),      list(IND=as.numeric(ind)))
+    }
     codeAndConstantsList <- list(code=code, constants=constants)
     return(codeAndConstantsList)
 }
