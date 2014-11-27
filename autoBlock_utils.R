@@ -46,7 +46,7 @@ autoBlockModel <- setRefClass(
         )
     )
 
-createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numeric(), expDecay=FALSE) {
+createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numeric(), expDecay=FALSE, gammaScalars=FALSE) {
     code <- quote({})
     constants <- list()
     if(length(listOfBlockIndexes) != length(rhoVector)) stop()
@@ -55,7 +55,9 @@ createCodeAndConstants <- function(N, listOfBlockIndexes=list(), rhoVector=numer
         rho <- rhoVector[i]
         numNodes <- as.numeric(length(blockIndexes))
         if(numNodes == 1) {
-            code[[length(code)+1]] <- substitute(x[IND] ~ dnorm(0, 1), list(IND=as.numeric(blockIndexes)))
+            code[[length(code)+1]] <-
+                if(gammaScalars) substitute(x[IND] ~ dgamma(1.1, 1.1), list(IND=as.numeric(blockIndexes)))
+                else             substitute(x[IND] ~ dnorm(0, 1),      list(IND=as.numeric(blockIndexes)))
         } else {
             muText <- paste0('mu', i)
             sigmaText <- paste0('Sigma', i)

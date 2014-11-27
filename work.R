@@ -108,35 +108,42 @@ m$coeff
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
-tagValues <- LETTERS[10:13]
+tagValues <- LETTERS[1:3]
 for(tag in tagValues) {
     blockTestingCode <- substitute({
         tag <- TAG
         switch(tag,
-               A = { dist <- 'multi'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) },
-               B = { dist <- 'multi'; Nvalues <- c(100) },
-               C = { dist <- 'multi'; Nvalues <- c(200) },
-               D = { dist <- 'multi'; Nvalues <- c(300) },
-               E = { dist <- 'multi'; Nvalues <- c(350) },
-               F = { dist <- 'multi'; Nvalues <- c(400) },
-               G = { dist <- 'multi'; Nvalues <- c(450) },
-               H = { dist <- 'multi'; Nvalues <- c(500) },
-               I = { dist <- 'multi'; Nvalues <- c(600) },
-               J = { dist <- 'multi'; Nvalues <- c(700) },
-               K = { dist <- 'multi'; Nvalues <- c(800) },
-               L = { dist <- 'multi'; Nvalues <- c(900) },
-               M = { dist <- 'multi'; Nvalues <- c(1000) }
+               A = { dist <- 'gamma'; Nvalues <- c(2, 3) },
+               B = { dist <- 'gamma'; Nvalues <- c(4, 5) },
+               C = { dist <- 'gamma'; Nvalues <- c(6) },
+               #A = { dist <- 'gamma'; Nvalues <- c(2, 3, 4, 5, 10, 20, 30, 40, 50) },
+               #B = { dist <- 'gamma'; Nvalues <- c(100) },
+               #C = { dist <- 'gamma'; Nvalues <- c(200) },
+               D = { dist <- 'gamma'; Nvalues <- c(300) },
+               E = { dist <- 'gamma'; Nvalues <- c(350) },
+               F = { dist <- 'gamma'; Nvalues <- c(400) },
+               G = { dist <- 'gamma'; Nvalues <- c(450) },
+               H = { dist <- 'gamma'; Nvalues <- c(500) },
+               I = { dist <- 'gamma'; Nvalues <- c(600) },
+               J = { dist <- 'gamma'; Nvalues <- c(700) },
+               K = { dist <- 'gamma'; Nvalues <- c(800) },
+               L = { dist <- 'gamma'; Nvalues <- c(900) },
+               M = { dist <- 'gamma'; Nvalues <- c(1000) }
                )
-        niter <- 1000
+        niter <- 50000
         keepInd <- (niter/2+1):niter
         ##optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
         dfblockTesting <- data.frame()
         for(N in Nvalues) {
             cat(paste0('\nN = ', N, '\n'))
             cat(paste0('\ndist = ', dist, '\n'))
-            candc <- if(dist == 'uni') createCodeAndConstants(N) else createCodeAndConstants(N, list(1:N), 0)
+            if(dist == 'uni')   canda <- createCodeAndConstants(N)
+            if(dist == 'multi') candc <- createCodeAndConstants(N, list(1:N), 0)
+            if(dist == 'gamma') candc <- createCodeAndConstants(N, gammaScalars = TRUE)
             code <- candc$code
             constants <- candc$constants
+            print(code)
+            print(constants)
             data <- list()
             inits <- list(x = rep(0,N))
             cat('\ncreating R model.....\n')
@@ -164,8 +171,6 @@ for(tag in tagValues) {
                 sampler1 <- nfVar(Cmcmcs[[i]], 'samplerFunctions')$contentsList[[1]]
                 adaptedScale[i] <- sampler1$scale
                 adaptedPropSD[i] <- if(i==1) as.numeric(NA) else sqrt(mean(diag(sampler1$propCov)))
-                ##aRateHistory <- sampler1$acceptanceRateHistory
-                ##acceptRate[i] <- aRateHistory[length(aRateHistory)]
                 samples <- as.matrix(nfVar(Cmcmcs[[i]], 'mvSamples'))
                 samples <- samples[keepInd, , drop = FALSE]
                 ess <- apply(samples, 2, effectiveSize)
@@ -181,11 +186,7 @@ for(tag in tagValues) {
                 dist = rep(dist, 3),
                 blocking = c('scalar', 'blockNoAdapt', 'blockAdapt'),
                 timePer10kN = timePer10kN,
-                ##adaptedScale = adaptedScale,
-                ##adaptedPropSD = adaptedPropSD,
                 derivedScale = c(adaptedScale[1], adaptedScale[2:3] * adaptedPropSD[2:3]),
-                ##acceptRate = acceptRate,
-                ##optRate = c(0.44, rep(optimalRates[if(N>5) 5 else N], 2)),
                 essPerN = essPerN
             )
             dfblockTesting <- rbind(dfblockTesting, thisDF)
