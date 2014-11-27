@@ -145,7 +145,7 @@ for(tag in tagValues) {
             print(code)
             print(constants)
             data <- list()
-            inits <- list(x = rep(0,N))
+            inits <- list(x = rep(1,N))
             cat('\ncreating R model.....\n')
             Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
             nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
