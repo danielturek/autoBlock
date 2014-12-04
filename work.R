@@ -7,6 +7,7 @@ eval(preCode)
 preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 
 
+
 ## shows how bad sampling efficiency can be, as correlation increases
 sampEffCode <- quote({
     kValues <- 0:3
@@ -209,19 +210,21 @@ system(paste0('chmod 777 ', filename))
 ## combining the A, B, C, ...  dataframes from blockTesting
 rm(list=ls())
 dfCombined <- data.frame()
-tagValues <- LETTERS[1:10]
+tagValues <- LETTERS[1:13]
 for(tag in tagValues) {
     load(paste0('dfblockTesting', tag, '.RData'))
     dfCombined <- rbind(dfCombined, dfblockTesting)
 }
-dfblockTestingMulti <- dfCombined
-load('dfblockTestingUni.RData')
-save(dfblockTestingUni, dfblockTestingMulti, file = 'dfblockTesting.RData')
+load('dfblockTesting.RData')
+dfblockTestingGamma <- dfCombined
+save(dfblockTesting, dfblockTestingUni, dfblockTestingMulti, dfblockTestingGamma,
+     file = 'dfblockTesting.RData')
 
 ## make a plot of timing from blockTesting
 rm(list=ls())
 load('dfblockTesting.RData')
-qplot(data=dfblockTesting, x=N, y=timePer10kN, geom='line', linetype=dist, color=blocking, xlab='d', ylim=c(0,16), xlim=c(0,500), ylab='time per 10k samples (seconds)')
+df <- dfblockTesting[dfblockTesting$blocking != 'blockNoAdapt', ]  ## remove non-adaptive blocking
+qplot(data=df, x=N, y=timePer10kN, geom='line', linetype=dist, color=blocking, xlab='d', ylim=c(0,16), xlim=c(0,500), ylab='time per 10k samples (seconds)')
 dev.copy2pdf(file='blockTiming.pdf')
 system('cp blockTiming.pdf ~/GitHub/nimblePapers/autoBlock/')
 
@@ -278,6 +281,8 @@ filename <- file.path(path, 'runSSM.R')
 cat(codeToText(preCode), file=filename)
 cat(codeToText(SSMCode), file=filename, append=TRUE)
 
+load('dfSSM.RData')
+printMinTimeABS(dfSSM)
 
 
 ## spatial
@@ -298,64 +303,70 @@ filename <- file.path(path, 'runspatial.R')
 cat(codeToText(preCode), file=filename)
 cat(codeToText(spatialCode), file=filename, append=TRUE)
 
+load('dfspatial.RData')
+printMinTimeABS(dfspatial)
+plotABS(dfspatial, TRUE)
 
 
 ## partitions of N = 2^k
 ## constant rho
-k <- 4
-rhoVector <- c(0.2, 0.5, 0.8)
-for(rho in rhoVector) {
-    partitionsCode <- substitute({
-        rho <- RHO
-        k <- KKK
-        N <- 2^k
+partitionsCode <- quote({
+    k <- 7
+    N <- 2^k
+    rhoVector <- c(0.2, 0.5, 0.8)
+    control$niter <- 200000
+    abList <- list()
+    for(rho in rhoVector) {
         tag <- paste0('N', N, 'rho', rho)
-        control$niter <- 100000
         runList <- list('all', 'auto')
-        blockSizes <- 2^(0:k)
+        blockLengths <- c(1, 2^(0:(k-1)))
+        indList <- list(); cur <- 1
+        for(len in blockLengths) { indList <- c(indList, list(cur:(cur+len-1))); cur <- cur+len }
         data <- list()
         inits <- list(x=rep(0,N))
-        abList <- list()
-        for(blockSize in blockSizes) {
-            numberOfBlocks <- N / blockSize
-            listOfBlockIndexes <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
-            codeAndConstants <- createCodeAndConstants(N, listOfBlockIndexes, rep(rho,numberOfBlocks))
-            code <- codeAndConstants$code
-            constants <- codeAndConstants$constants
-            ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-            ab$run(runList)
-            abList[[paste0('blockSz', blockSize)]] <- ab
-        }
-        if(k > 1) {
-            blockLengths <- c(1, 2^(0:(k-1)))
-            indList <- list(); cur <- 1
-            for(len in blockLengths) { indList <- c(indList, list(cur:(cur+len-1))); cur <- cur+len }
-            codeAndConstants <- createCodeAndConstants(N, indList, rep(rho,length(indList)))
-            code <- codeAndConstants$code
-            constants <- codeAndConstants$constants
-            ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-            ab$run(runList)
-            abList[['blockSzMixed']] <- ab
-        }
-        dfText <- paste0('df', tag)
-        eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
-        filename <- file.path(path, paste0(dfText, '.RData'))
-        eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
-        if(ab$makePlots) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
-        eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
-    }, list(RHO=rho, KKK=k))
-    filename <- file.path(path, paste0('runPartitionsN', 2^k, 'rho', rho, '.R'))
-    cat(codeToText(preCode), file=filename)
-    cat(codeToText(partitionsCode), file=filename, append=TRUE)
-}
+        codeAndConstants <- createCodeAndConstants(N, indList, rep(rho,length(indList)))
+        code <- codeAndConstants$code
+        constants <- codeAndConstants$constants
+        ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
+        ab$run(runList)
+        abList[[paste0('blockSzMixed',tag)]] <- ab
+    }
+    dfText <- paste0('dfPartitionsN', N)
+    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
+    filename <- file.path(path, paste0(dfText, '.RData'))
+    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
+    if(ab$makePlots) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
+})
+filename <- file.path(path, paste0('runPartitions.R'))
+cat(codeToText(preCode), file=filename)
+cat(codeToText(partitionsCode), file=filename, append=TRUE)
+
+
+
+load('dfpartitionsN64.RData')
+dfN64 <- printMinTimeABS(dfPartitionsN64, round=FALSE)
+niter <- 200000
+dfN64$timing <- dfN64$timing*10000/niter
+dfN64$ess <- dfN64$ess*10000/niter * 2
+dfN64$essPT <- dfN64$ess / dfN64$timing
+dfN64$timing <- round(dfN64$timing, 2)
+dfN64$ess <- round(dfN64$ess, 0)
+dfN64$essPT <- round(dfN64$essPT, 1)
+dfN64
+##plotABS(dfN16rho0.2)
+##plotABS(dfN16rho0.5)
+##plotABS(dfN16rho0.8)
+
+
 
 
 
 ## mixed, overlapping, rhos
 mixedRhosCode <- substitute({
-    control$niter <- 400000
+    control$niter <- 200000
     abList <- list()
-    Nvalues <- c(20, 30, 40, 50, 100)   ## multiples of 10
+    Nvalues <- c(20, 50, 100)   ## multiples of 10
     for(N in Nvalues) {
         tag <- paste0('mixedRhosN', N)
         blockSize <- N/10
@@ -383,6 +394,58 @@ filename <- file.path(path, 'runmixedRhos.R')
 cat(codeToText(preCode), file=filename)
 cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
 
+load('dfmixedRhos.RData')
+dfMix <- printMinTimeABS(dfmixedRhos, round=FALSE)
+niter <- 200000
+dfMix$timing <- dfMix$timing*10000/niter
+dfMix$ess <- dfMix$ess*10000/niter * 2
+dfMix$essPT <- dfMix$ess / dfMix$timing
+dfMix$timing <- round(dfMix$timing, 2)
+dfMix$ess <- round(dfMix$ess, 0)
+dfMix$essPT <- round(dfMix$essPT, 1)
+dfMix
+
+
+
+
+
+
+## making the plot of Overall Efficiency for contrived model structures
+## left pane: partitions
+## right pane: mixed rhos
+library(ggplot2)
+library(grid)
+library(gridExtra)
+## load('dfpartitionsN16.RData')
+## df2 <- printMinTimeABS(dfN16rho0.2, round=FALSE)
+## df5 <- printMinTimeABS(dfN16rho0.5, round=FALSE)
+## df8 <- printMinTimeABS(dfN16rho0.8, round=FALSE)
+## dfpartitions <- rbind(df2, df5, df8)
+## dfpartitions <- dfpartitions[dfpartitions$model=='blockSzMixed',]
+## dfpartitions$blocking <- gsub('-.+', '', dfpartitions$blocking)
+## dfpartitions$mcmc <- as.factor(dfpartitions$blocking)
+## dfpartitions$Overall_Efficiency <- dfpartitions$essPT * 2   ## ess was burned by factor of 2
+load('dfPartitionsN64.RData')
+dfpartitions <- printMinTimeABS(dfPartitionsN64, round=FALSE)
+dfpartitions$blocking <- gsub('-.+', '', dfpartitions$blocking)
+dfpartitions$rho <- gsub('.*rho(.*)', '\\1', dfpartitions$model)
+dfpartitions$rho <- as.numeric(dfpartitions$rho)
+dfpartitions$mcmc <- as.factor(dfpartitions$blocking)
+dfpartitions$Efficiency <- dfpartitions$essPT * 2   ## ess was burned by factor of 2
+p1 <- ggplot(dfpartitions, aes(as.factor(rho),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.8, .8))
+load('dfmixedRhos.RData')
+dfmix <- printMinTimeABS(dfmixedRhos, round=FALSE)
+dfmix$model <- gsub('mixedRhos', '', dfmix$model)
+dfmix$model <- gsub('([25])', '0\\1', dfmix$model)
+dfmix$blocking <- gsub('-.+', '', dfmix$blocking)
+dfmix$mcmc <- as.factor(dfmix$blocking)
+dfmix$Efficiency <- dfmix$essPT * 2   ## ess was burned by factor of 2
+p2 <- ggplot(dfmix, aes(as.factor(model),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.8, .8))
+##multiplot(p1, p2, cols=2)
+dev.new(width=5, height=4)
+grid.arrange(p1, p2, ncol = 2)
+dev.copy2pdf(file='contrivedMCMCefficiencyBars.pdf')
+system('cp contrivedMCMCefficiencyBars.pdf ~/GitHub/nimblePapers/autoBlock/')
 
 
 

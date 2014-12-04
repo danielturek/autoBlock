@@ -485,11 +485,12 @@ plotABS <- function(df, xlimToMin=FALSE, together) {
 }
 
 
-printMinTimeABS <- function(df) {
+printMinTimeABS <- function(df, round=TRUE) {
     namesToRemove <- intersect(c('groupID', 'sampler', 'mean', 'sd'), names(df))
     for(name in namesToRemove) { ind <- which(names(df)==name); df <- df[, -ind] }
     models <- unique(df$model)
     cat('\n')
+    dfReturn <- data.frame()
     for(mod in models) {
         dfMod <- df[df$model == mod, ]
         blockings <- unique(dfMod$blocking)
@@ -501,12 +502,16 @@ printMinTimeABS <- function(df) {
         }
         dfOut <- dfOut[sort(dfOut$essPT,index.return=TRUE)$ix, ]
         dimnames(dfOut)[[1]] <- 1:(dim(dfOut)[1])
-        dfOut$timing <- round(dfOut$timing, 1)
-        dfOut$ess    <- round(dfOut$ess, 0)
-        dfOut$essPT  <- round(dfOut$essPT, 1)
+        if(round) {
+            dfOut$timing <- round(dfOut$timing, 1)
+            dfOut$ess    <- round(dfOut$ess, 0)
+            dfOut$essPT  <- round(dfOut$essPT, 1)
+        }
         print(dfOut)
         cat('\n')
+        dfReturn <- rbind(dfReturn, dfOut)
     }
+    return(invisible(dfReturn))
 }
 
 
