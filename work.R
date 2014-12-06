@@ -9,6 +9,7 @@ preCode[[length(preCode)+1]] <- quote(control$makePlots <- FALSE)
 
 
 ## shows how bad sampling efficiency can be, as correlation increases
+## output used in Figure 'dfsampEff'
 sampEffCode <- quote({
     kValues <- 0:3
     Nvalues <- c(2, 4, 8, 16, 32)
@@ -62,53 +63,13 @@ filename <- file.path(path, paste0('runsampEffExpDecay.R'))
 cat(codeToText(preCode), file=filename)
 cat(codeToText(sampEffCode), file=filename, append=TRUE)
 
-load('dfsampEff.RData')
-df <- dfsampEff
-#load('dfsampEffMostlyBlocked.RData')
-load('dfsampEffExpDecay.RData')
-dfExpDecay <- dfsampEff
-p1 <- qplot(data=df, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line', ylab='log(tau inverse)')
-p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line', ylab='log(tau inverse)')
-multiplot(p1, p2, cols=2)
-dev.copy2pdf(file='dfsampEff.pdf')
-system('cp dfsampEff.pdf ~/GitHub/nimblePapers/autoBlock/')
-
-load('dfsampEff.RData')
-#load('dfsampEffMostlyBlocked.RData')
-load('dfsampEffExpDecay.RData')
-df <- dfsampEff[dfsampEff$k!=0,] # remove k=0, rho=0, where lines converge
-qplot(data=df, x=log(1-rho), y=log(essPerN), color=factor(N), geom='line')
-logESS <- log(df$essPerN)
-logN <- log(df$N)
-loglogN <- log(logN)
-logRho <- log(1-df$rho)
-## from dfsampEff
-m <- lm(logESS ~ logN + logRho)
-summary(m)
-m$coeff
-## eff = exp(intercept) * N^Bn * (1-rho)^Br
-##                    (Bn)        (Br)
-## (Intercept)        logN      logRho     ## from dfsampEff, with expDecay=FALSE,
-##  -0.4346747  -1.1768437   1.0921665      ## alpha 0.2, rhos 0.8 0.96 ...
-##
-## from dfsampEffExpDecay
-m <- lm(logESS ~ loglogN + logRho)
-summary(m)
-m$coeff
-## eff = exp(intercept) * (logN)^Bn * (1-rho)^Br
-##                    (Bn)        (Br)
-## (Intercept)     loglogN      logRho     ## from dfsampEffExpDecay, with expDecay=TRUE,
-##   -1.261946   -1.222333    1.211014      ## alpha 0.2, rhos 0.8 0.96 ...
-
-
-
-
 
 
 
 ## assesses the adapted scale, acceptance rates, ESS, and timing
 ## achieved by scalar/block samplers of various sizes, and underlying
 ## univariate or multivariate distributions
+## used in Figure: 'blockTiming'
 tagValues <- LETTERS[1:13]
 for(tag in tagValues) {
     blockTestingCode <- substitute({
@@ -130,7 +91,6 @@ for(tag in tagValues) {
                )
         niter <- 50000
         keepInd <- (niter/2+1):niter
-        ##optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
         dfblockTesting <- data.frame()
         for(N in Nvalues) {
             cat(paste0('\nN = ', N, '\n'))
@@ -220,96 +180,11 @@ dfblockTestingGamma <- dfCombined
 save(dfblockTesting, dfblockTestingUni, dfblockTestingMulti, dfblockTestingGamma,
      file = 'dfblockTesting.RData')
 
-## make a plot of timing from blockTesting
-rm(list=ls())
-load('dfblockTesting.RData')
-df <- dfblockTesting[dfblockTesting$blocking != 'blockNoAdapt', ]  ## remove non-adaptive blocking
-qplot(data=df, x=N, y=timePer10kN, geom='line', linetype=dist, color=blocking, xlab='d', ylim=c(0,16), xlim=c(0,500), ylab='time per 10k samples (seconds)')
-dev.copy2pdf(file='blockTiming.pdf')
-system('cp blockTiming.pdf ~/GitHub/nimblePapers/autoBlock/')
 
 
-
-
-## litters
-littersCode <- quote({
-    control$niter <- 400000
-    runList <- list('all',
-                    blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')),
-                    crossLevel = quote({
-                        spec <- MCMCspec(Rmodel, nodes=NULL)
-                        spec$addSampler('crossLevel', list(topNodes = c('a[1]', 'b[1]')), print=FALSE)
-                        spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
-                        spec
-                    }),
-                    'default',
-                    'auto')
-    ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
-    ablitters$run(runList)
-    abList <- list(litters=ablitters)
-    dflitters <- createDFfromABlist(abList)
-    filename <- file.path(path, 'dflittersGAMMA-UNIFprior.RData')
-    save(dflitters, file = filename)
-    if(ablitters$makePlots) plotABS(dflitters, xlimToMin=FALSE)
-    if(ablitters$makePlots) plotABS(dflitters, xlimToMin=TRUE)
-    printMinTimeABS(dflitters)
-})
-filename <- file.path(path, 'runLitters.R')
-cat(codeToText(preCode), file=filename)
-cat(codeToText(littersCode), file=filename, append=TRUE)
-
-
-
-## state space models
-SSMCode <- quote({
-    control$niter <- 400000
-    runListMUB <- list('all', blockMUB = list(c('mu','b')), 'default', 'auto')
-    runListAB  <- list('all', blockAB  = list(c('a', 'b')), 'default', 'auto')
-    abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
-    abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
-    abSSMmub$run(runListMUB)
-    abSSMab$run(runListAB)
-    abList <- list(independent=abSSMmub, correlated=abSSMab)
-    dfSSM <- createDFfromABlist(abList)
-    filename <- file.path(path, 'dfSSM.RData')
-    save(dfSSM, file = filename)
-    if(abSSMab$makePlots) plotABS(dfSSM, xlimToMin=FALSE)
-    if(abSSMab$makePlots) plotABS(dfSSM, xlimToMin=TRUE)
-    printMinTimeABS(dfSSM)
-})
-filename <- file.path(path, 'runSSM.R')
-cat(codeToText(preCode), file=filename)
-cat(codeToText(SSMCode), file=filename, append=TRUE)
-
-load('dfSSM.RData')
-printMinTimeABS(dfSSM)
-
-
-## spatial
-spatialCode <- quote({
-    control$niter <- 400000
-    runList <- list('all', 'default', 'auto')
-    abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial, control=control)
-    abspatial$run(runList)
-    abList <- list(spatial=abspatial)
-    dfspatial <- createDFfromABlist(abList)
-    filename <- file.path(path, 'dfspatial.RData')
-    save(dfspatial, file = filename)
-    if(abspatial$makePlots) plotABS(dfspatial, xlimToMin=FALSE)
-    if(abspatial$makePlots) plotABS(dfspatial, xlimToMin=TRUE)
-    printMinTimeABS(dfspatial)
-})
-filename <- file.path(path, 'runspatial.R')
-cat(codeToText(preCode), file=filename)
-cat(codeToText(spatialCode), file=filename, append=TRUE)
-
-load('dfspatial.RData')
-printMinTimeABS(dfspatial)
-plotABS(dfspatial, TRUE)
-
-
-## partitions of N = 2^k
-## constant rho
+## 'partitions' Simulated Data example
+## N = 2^k, constant values of rho
+## Used in a Figure of Simulated Data results, and probably a table
 partitionsCode <- quote({
     k <- 7
     N <- 2^k
@@ -342,31 +217,26 @@ filename <- file.path(path, paste0('runPartitions.R'))
 cat(codeToText(preCode), file=filename)
 cat(codeToText(partitionsCode), file=filename, append=TRUE)
 
-
-
 load('dfpartitionsN64.RData')
-dfN64 <- printMinTimeABS(dfPartitionsN64, round=FALSE)
 niter <- 200000
-dfN64$timing <- dfN64$timing*10000/niter
-dfN64$ess <- dfN64$ess*10000/niter * 2
-dfN64$essPT <- dfN64$ess / dfN64$timing
-dfN64$timing <- round(dfN64$timing, 2)
-dfN64$ess <- round(dfN64$ess, 0)
-dfN64$essPT <- round(dfN64$essPT, 1)
-dfN64
-##plotABS(dfN16rho0.2)
-##plotABS(dfN16rho0.5)
-##plotABS(dfN16rho0.8)
+dfPartitionsN64$timePer10k <- dfPartitionsN64$timing *10000/niter
+dfPartitionsN64$essPer10k  <- dfPartitionsN64$ess    *10000/niter * 2
+dfPartitionsN64$Efficiency <- dfPartitionsN64$essPer10k / dfPartitionsN64$timePer10k
+print(max(abs(dfPartitionsN64$Efficiency - dfPartitionsN64$essPT*2)))
+dfPartitionsN64$rho <- as.numeric(gsub('.*rho(.+)', '\\1', dfPartitionsN64$model))
+dfPartitionsN64$mcmc <- gsub('-.+', '', dfPartitionsN64$blocking)
+dfN64 <- printMinTimeABS(dfPartitionsN64, round=FALSE)
+save(dfPartitionsN64, dfN64, file='dfpartitionsN64.RData')
 
 
 
-
-
+## 'mixedRhos' Simualted Data example
 ## mixed, overlapping, rhos
+## used in a figure of simulated results, and also a table
 mixedRhosCode <- substitute({
     control$niter <- 200000
     abList <- list()
-    Nvalues <- c(20, 50, 100)   ## multiples of 10
+    Nvalues <- c(20, 30, 40, 50, 60, 70, 80, 90, 100)   ## multiples of 10
     for(N in Nvalues) {
         tag <- paste0('mixedRhosN', N)
         blockSize <- N/10
@@ -395,66 +265,142 @@ cat(codeToText(preCode), file=filename)
 cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
 
 load('dfmixedRhos.RData')
-dfMix <- printMinTimeABS(dfmixedRhos, round=FALSE)
 niter <- 200000
-dfMix$timing <- dfMix$timing*10000/niter
-dfMix$ess <- dfMix$ess*10000/niter * 2
-dfMix$essPT <- dfMix$ess / dfMix$timing
-dfMix$timing <- round(dfMix$timing, 2)
-dfMix$ess <- round(dfMix$ess, 0)
-dfMix$essPT <- round(dfMix$essPT, 1)
-dfMix
+dfmixedRhos$timePer10k <- dfmixedRhos$timing *10000/niter
+dfmixedRhos$essPer10k  <- dfmixedRhos$ess    *10000/niter * 2
+dfmixedRhos$Efficiency <- dfmixedRhos$essPer10k / dfmixedRhos$timePer10k
+print(max(abs(dfmixedRhos$Efficiency - dfmixedRhos$essPT*2)))
+dfmixedRhos$N <- as.numeric(gsub('mixedRhosN(.+)', '\\1', dfmixedRhos$model))
+dfmixedRhos$mcmc <- gsub('-.+', '', dfmixedRhos$blocking)
+dfmixedRhos$model <- gsub('mixedRhos', '', dfmixedRhos$model)
+dfmixedRhos$model <- gsub('([23456789]0)', '0\\1', dfmixedRhos$model)
+dfMix <- printMinTimeABS(dfmixedRhos, round=FALSE)
+save(dfmixedRhos, dfMix, file='dfmixedRhos.RData')
+
+
+
+
+## state space models
+SSMCode <- quote({
+    control$niter <- 400000
+    runListMUB <- list('all', blockMUB = list(c('mu','b')), 'default', 'auto')
+    runListAB  <- list('all', blockAB  = list(c('a', 'b')), 'default', 'auto')
+    abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
+    abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
+    abSSMmub$run(runListMUB)
+    abSSMab$run(runListAB)
+    abList <- list(independent=abSSMmub, correlated=abSSMab)
+    dfSSM <- createDFfromABlist(abList)
+    filename <- file.path(path, 'dfSSM.RData')
+    save(dfSSM, file = filename)
+    if(abSSMab$makePlots) plotABS(dfSSM, xlimToMin=FALSE)
+    if(abSSMab$makePlots) plotABS(dfSSM, xlimToMin=TRUE)
+    printMinTimeABS(dfSSM)
+})
+filename <- file.path(path, 'runSSM.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(SSMCode), file=filename, append=TRUE)
+
+load('dfSSM.RData')
+niter <- 400000
+dfSSM$timePer10k <- dfSSM$timing *10000/niter
+dfSSM$essPer10k  <- dfSSM$ess    *10000/niter * 2
+dfSSM$Efficiency <- dfSSM$essPer10k / dfSSM$timePer10k
+print(max(abs(dfSSM$Efficiency - dfSSM$essPT*2)))
+dfSSM$mcmc <- gsub('-.+', '', dfSSM$blocking)
+dfS <- printMinTimeABS(dfSSM, round=FALSE)
+save(dfSSM, dfS, file='dfSSM.RData')
 
 
 
 
 
 
-## making the plot of Overall Efficiency for contrived model structures
-## left pane: partitions
-## right pane: mixed rhos
-library(ggplot2)
-library(grid)
-library(gridExtra)
-## load('dfpartitionsN16.RData')
-## df2 <- printMinTimeABS(dfN16rho0.2, round=FALSE)
-## df5 <- printMinTimeABS(dfN16rho0.5, round=FALSE)
-## df8 <- printMinTimeABS(dfN16rho0.8, round=FALSE)
-## dfpartitions <- rbind(df2, df5, df8)
-## dfpartitions <- dfpartitions[dfpartitions$model=='blockSzMixed',]
-## dfpartitions$blocking <- gsub('-.+', '', dfpartitions$blocking)
-## dfpartitions$mcmc <- as.factor(dfpartitions$blocking)
-## dfpartitions$Overall_Efficiency <- dfpartitions$essPT * 2   ## ess was burned by factor of 2
-load('dfPartitionsN64.RData')
-dfpartitions <- printMinTimeABS(dfPartitionsN64, round=FALSE)
-dfpartitions$blocking <- gsub('-.+', '', dfpartitions$blocking)
-dfpartitions$rho <- gsub('.*rho(.*)', '\\1', dfpartitions$model)
-dfpartitions$rho <- as.numeric(dfpartitions$rho)
-dfpartitions$mcmc <- as.factor(dfpartitions$blocking)
-dfpartitions$Efficiency <- dfpartitions$essPT * 2   ## ess was burned by factor of 2
-p1 <- ggplot(dfpartitions, aes(as.factor(rho),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.8, .8))
-load('dfmixedRhos.RData')
-dfmix <- printMinTimeABS(dfmixedRhos, round=FALSE)
-dfmix$model <- gsub('mixedRhos', '', dfmix$model)
-dfmix$model <- gsub('([25])', '0\\1', dfmix$model)
-dfmix$blocking <- gsub('-.+', '', dfmix$blocking)
-dfmix$mcmc <- as.factor(dfmix$blocking)
-dfmix$Efficiency <- dfmix$essPT * 2   ## ess was burned by factor of 2
-p2 <- ggplot(dfmix, aes(as.factor(model),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.8, .8))
-##multiplot(p1, p2, cols=2)
-dev.new(width=5, height=4)
-grid.arrange(p1, p2, ncol = 2)
-dev.copy2pdf(file='contrivedMCMCefficiencyBars.pdf')
-system('cp contrivedMCMCefficiencyBars.pdf ~/GitHub/nimblePapers/autoBlock/')
+## litters
+littersCode <- quote({
+    control$niter <- 400000
+    runList <- list('all',
+                    blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')),
+                    crossLevel = quote({
+                        spec <- MCMCspec(Rmodel, nodes=NULL)
+                        spec$addSampler('crossLevel', list(topNodes = c('a[1]', 'b[1]')), print=FALSE)
+                        spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
+                        spec
+                    }),
+                    'default',
+                    'auto')
+    ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
+    ablitters$run(runList)
+    abList <- list(litters=ablitters)
+    dflitters <- createDFfromABlist(abList)
+    filename <- file.path(path, 'dflittersGAMMA-UNIFprior.RData')
+    save(dflitters, file = filename)
+    if(ablitters$makePlots) plotABS(dflitters, xlimToMin=FALSE)
+    if(ablitters$makePlots) plotABS(dflitters, xlimToMin=TRUE)
+    printMinTimeABS(dflitters)
+})
+filename <- file.path(path, 'runLitters.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(littersCode), file=filename, append=TRUE)
+
+load('dflittersGAMMA-UNIFprior.RData')
+niter <- 400000
+dflitters$timePer10k <- dflitters$timing *10000/niter
+dflitters$essPer10k  <- dflitters$ess    *10000/niter * 2
+dflitters$Efficiency <- dflitters$essPer10k / dflitters$timePer10k
+print(max(abs(dflitters$Efficiency - dflitters$essPT*2)))
+dflitters$mcmc <- gsub('-.+', '', dflitters$blocking)
+dfLit <- printMinTimeABS(dflitters, round=FALSE)
+save(dflitters, dfLit, file='dflittersGAMMA-UNIFprior.RData')
+
+
+
+
+
+
+
+
+## spatial
+spatialCode <- quote({
+    control$niter <- 400000
+    runList <- list('all', 'default', 'auto')
+    abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial, control=control)
+    abspatial$run(runList)
+    abList <- list(spatial=abspatial)
+    dfspatial <- createDFfromABlist(abList)
+    filename <- file.path(path, 'dfspatial.RData')
+    save(dfspatial, file = filename)
+    if(abspatial$makePlots) plotABS(dfspatial, xlimToMin=FALSE)
+    if(abspatial$makePlots) plotABS(dfspatial, xlimToMin=TRUE)
+    printMinTimeABS(dfspatial)
+})
+filename <- file.path(path, 'runspatial.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(spatialCode), file=filename, append=TRUE)
+
+load('dfspatial.RData')
+niter <- 400000
+dfspatial$timePer10k <- dfspatial$timing *10000/niter
+dfspatial$essPer10k  <- dfspatial$ess    *10000/niter * 2
+dfspatial$Efficiency <- dfspatial$essPer10k / dfspatial$timePer10k
+print(max(abs(dfspatial$Efficiency - dfspatial$essPT*2)))
+dfspatial$mcmc <- gsub('-.+', '', dfspatial$blocking)
+dfSpat <- printMinTimeABS(dfspatial, round=FALSE)
+save(dfspatial, dfSpat, file='dflittersGAMMA-UNIFprior.RData')
+
+
+
+
+
+
+
 
 
 
 ## testing of litters priors
 if(FALSE) {
-    
     library(nimble)
     library(coda)
-
     suite <- MCMCsuite(
         model = code_litters,
         constants = constants_litters,
@@ -494,9 +440,7 @@ if(FALSE) {
         makePlot = FALSE,
         savePlot = FALSE
         )
-
     suite$output$summary
-
     samples <- suite$output$samples
     
     littersTraceplots <- function(node, samples) {
@@ -514,20 +458,6 @@ if(FALSE) {
     littersTraceplots('b[2]', samples)   # 50 (100 to high)
 
 }
-
-
-
-
-## path <- '~/GitHub/autoBlock'
-## control <- list(setSeed0 = TRUE, makePlots = FALSE, niter = 2000)
-## source(file.path(path, 'autoBlock_utils.R'))
-## abtester <- autoBlock(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester, control=control)
-## runList <- list('all', 'auto', 'default')
-## abtester$run(runList)
-## abList <- list(tester = abtester)
-## df <- createDFfromABlist(abList)
-## df
-## printMinTimeABS(df)
 
 
 

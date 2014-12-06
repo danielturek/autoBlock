@@ -485,7 +485,7 @@ plotABS <- function(df, xlimToMin=FALSE, together) {
 }
 
 
-printMinTimeABS <- function(df, round=TRUE) {
+printMinTimeABS <- function(df, round=TRUE, addAutoMax=TRUE, sortOutput=FALSE) {
     namesToRemove <- intersect(c('groupID', 'sampler', 'mean', 'sd'), names(df))
     for(name in namesToRemove) { ind <- which(names(df)==name); df <- df[, -ind] }
     models <- unique(df$model)
@@ -500,12 +500,23 @@ printMinTimeABS <- function(df, round=TRUE) {
             ind <- which(dfModBlk$essPT == min(dfModBlk$essPT))[1]
             dfOut[dim(dfOut)[1] + 1, ] <- dfModBlk[ind, ]
         }
-        dfOut <- dfOut[sort(dfOut$essPT,index.return=TRUE)$ix, ]
+        if(sortOutput) dfOut <- dfOut[sort(dfOut$essPT,index.return=TRUE)$ix, ]
         dimnames(dfOut)[[1]] <- 1:(dim(dfOut)[1])
         if(round) {
-            dfOut$timing <- round(dfOut$timing, 1)
-            dfOut$ess    <- round(dfOut$ess, 0)
-            dfOut$essPT  <- round(dfOut$essPT, 1)
+            dfOut$timing     <- round(dfOut$timing, 2)
+            dfOut$timePer10k <- round(dfOut$timePer10k, 2)
+            dfOut$ess        <- round(dfOut$ess, 1)
+            dfOut$essPer10k  <- round(dfOut$essPer10k, 1)
+            dfOut$essPT      <- round(dfOut$essPT, 1)
+            dfOut$Efficiency <- round(dfOut$Efficiency, 1)
+        }
+        if(addAutoMax && ('auto0' %in% blockings)) {
+            autoBlockings <- blockings[grepl('^auto', blockings)]
+            dfAuto <- dfOut[dfOut$blocking %in% autoBlockings,]
+            maxEffInd <- which(dfAuto$Efficiency == max(dfAuto$Efficiency))
+            nextInd <- dim(dfOut)[1] + 1
+            dfOut[nextInd,] <- dfAuto[maxEffInd,]
+            dfOut[nextInd, 'blocking'] <- dfOut[nextInd, 'mcmc'] <- 'autoMax'
         }
         print(dfOut)
         cat('\n')
@@ -713,7 +724,6 @@ code_SSMab <- modelCode({
         y[i] ~ dnorm(x[i], sd = sigOE)
     }
 })
-
 t <- 30
 constants_SSMab <- list(t = t)
 Rmodel <- nimbleModel(code_SSMab, constants = constants_SSMab)
@@ -765,35 +775,6 @@ inits_spatial <- list(mu=0, sigma=5, rho=60, g=rep(0,N))
 ##abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial)
 
 rm(list = c('myscallops', 'N', 'catch', 'lat', 'long', 'dist', 'i', 'j'))
-
-
-
-################
-### dipper
-################
-## load('dipperData.RData')
-## ## optionally, truncate data
-## ind <- 1:3;   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE]
-## code_dipper <- modelCode({
-##     phi ~ dunif(0, 1)
-##     p ~ dunif(0, 1)
-##     for (i in 1:nind) {
-##         x[i, first[i]] <- 1
-##         for (t in (first[i] + 1):k) {
-##             mu.x[i, t] <- phi * x[i, t-1]
-##             mu.y[i, t] <- p * x[i, t]
-##             x[i, t] ~ dbin(mu.x[i, t], 1)
-##             y[i, t] ~ dbin(mu.y[i, t], 1)
-##         }
-##     }
-## })
-## 
-## constants_dipper <- list(k=k, nind=nind, first=first)
-## data_dipper      <- list(y=y)
-## inits_dipper     <- list(phi=0.6, p=0.9, x=x_init)
-## abdipper <- autoBlock(code=code_dipper, constants=constants_dipper, data=data_dipper, inits=inits_dipper, control=control)
-## if(exists('ind')) rm(list = 'ind')
-## rm(list = c('first', 'k', 'nind', 'x_init', 'y'))
 
 
 
