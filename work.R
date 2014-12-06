@@ -236,7 +236,7 @@ save(dfPartitionsN64, dfN64, file='dfpartitionsN64.RData')
 mixedRhosCode <- substitute({
     control$niter <- 200000
     abList <- list()
-    Nvalues <- c(20, 30, 40, 50, 60, 70, 80, 90, 100)   ## multiples of 10
+    Nvalues <- c(20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200)   ## multiples of 10
     for(N in Nvalues) {
         tag <- paste0('mixedRhosN', N)
         blockSize <- N/10
@@ -352,9 +352,6 @@ print(max(abs(dflitters$Efficiency - dflitters$essPT*2)))
 dflitters$mcmc <- gsub('-.+', '', dflitters$blocking)
 dfLit <- printMinTimeABS(dflitters, round=FALSE)
 save(dflitters, dfLit, file='dflittersGAMMA-UNIFprior.RData')
-
-
-
 
 
 
