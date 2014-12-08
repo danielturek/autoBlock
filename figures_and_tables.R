@@ -88,16 +88,46 @@ system('cp contrivedMCMCefficiencyBars.pdf ~/GitHub/nimblePapers/autoBlock/')
 
 
 
+
+## Figure 'SSMLittersSpatialEfficiency'
+## Line chart of Efficiency results for: SSM (both), Litters, and Spatial
+path <- '~/GitHub/autoBlock';     setwd(path)
+library(ggplot2); library(grid); library(gridExtra)
+load('dfSSM.RData')
+dfS <- dfS[c(1, 3:14), ]  ## remove the very-poor 'independent' model 'blockMUB' informed blocking
+load('dflittersGAMMA-UNIFprior.RData')
+load('dfspatial.RData')
+dfFig <- rbind(dfS, dfLit, dfSpat)
+dfFig[grepl('^block.*', dfFig$mcmc), ]$mcmc <- 'informed'  ## informed blockings to 'informed'
+dfFig[dfFig$model == 'independent', ]$model <- 'SSM Indep.'
+dfFig[dfFig$model == 'correlated', ]$model  <- 'SSM Corr.'
+dfFig[dfFig$model == 'litters', ]$model  <- 'Litters'
+dfFig[dfFig$model == 'spatial', ]$model  <- 'Spatial'
+dfFig <- dfFig[dfFig$mcmc %in% c('all','auto0','default','informed','autoMax'), ]
+dfFig$model <- factor(dfFig$model, levels = unique(dfFig$model))  ## makes 'model' factor ordered
+dev.new(width=6, height=4)
+ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=3)
+dev.copy2pdf(file='SSMLittersSpatialEfficiency.pdf')
+system('cp SSMLittersSpatialEfficiency.pdf ~/GitHub/nimblePapers/autoBlock/')
+
+
+
+
 ## Figure for grant proposal
 ## 'mixedRhos'
 ## line chart, model-size on x-axis,
 ## efficiency of all, auto, none, on y-axis
+## plot of efficiencies
 path <- '~/GitHub/autoBlock';     setwd(path)
 library(ggplot2)
 load('dfmixedRhos.RData')
 dfMix <- dfMix[dfMix$mcmc %in% c('all','auto0','autoMax'), ]  # only keep all blocked, no blocks (auto0), and best automatic performance
-qplot(data=dfMix, x=N, y=Efficiency, color=blocking, geom='line')
-
+qplot(data=dfMix, x=N, y=Efficiency, color=mcmc, geom='line')
+## this will give us the factor of improvement resulting from automatic blocking,
+## for each value of N.
+uniqueN <- unique(dfMix$N)
+improvementFactor <- dfMix[dfMix$mcmc=='autoMax',]$Efficiency / unlist(lapply(uniqueN, function(N) max(dfMix[dfMix$N==N & dfMix$mcmc %in% c('all','auto0'),]$Efficiency)))
+improvementFactor
 
 
 
@@ -143,14 +173,6 @@ dfSpat$essPer10k <- round(dfSpat$essPer10k, 1)
 dfSpat$timePer10k <- round(dfSpat$timePer10k, 2)
 dfSpat$Efficiency <- round(dfSpat$Efficiency, 1)
 dfSpat[, c(1, 2, 9, 8, 10)]
-
-
-
-
-
-Raymond
-Jess
-
 
 
 

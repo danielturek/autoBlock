@@ -233,39 +233,66 @@ save(dfPartitionsN64, dfN64, file='dfpartitionsN64.RData')
 ## 'mixedRhos' Simualted Data example
 ## mixed, overlapping, rhos
 ## used in a figure of simulated results, and also a table
-mixedRhosCode <- substitute({
-    control$niter <- 200000
-    abList <- list()
-    Nvalues <- c(20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200)   ## multiples of 10
-    for(N in Nvalues) {
-        tag <- paste0('mixedRhosN', N)
-        blockSize <- N/10
-        numberOfBlocks <- 9
-        indList <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
-        rhoVector <- seq(from=0.9, to=0.1, by=-0.1)
-        runList <- list('all', 'auto')
-        codeAndConstants <- createCodeAndConstants(N, indList, rhoVector)
-        code <- codeAndConstants$code
-        constants <- codeAndConstants$constants
-        data <- list()
-        inits <- list(x=rep(0,N))
-        ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-        ab$run(runList)
-        abList[[tag]] <- ab
-    }
-    dfText <- 'dfmixedRhos'
-    eval(substitute(DF <- createDFfromABlist(abList), list(DF=as.name(dfText))))
-    filename <- file.path(path, paste0(dfText, '.RData'))
-    eval(substitute(save(DF, file = filename), list(DF=as.name(dfText))))
-    if(control$makePlots) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
-    eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
-})
-filename <- file.path(path, 'runmixedRhos.R')
-cat(codeToText(preCode), file=filename)
-cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
+tagValues <- LETTERS[1:3]
+for(tag in tagValues) {
+    mixedRhosCode <- substitute({
+        tag <- TAG
+        switch(tag,   ## multiples of 10
+               A = { Nvalues <- c(20, 30, 40, 50, 60, 70, 80) },
+               B = { Nvalues <- c(90, 100, 110, 120, 130, 140, 150) },
+               C = { Nvalues <- c(160, 170, 180, 190, 200) },
+               )
+        control$niter <- 100000
+        abList <- list()
+        for(N in Nvalues) {
+            DFtag <- paste0('mixedRhosN', N)
+            blockSize <- N/10
+            numberOfBlocks <- 9
+            indList <- lapply(((1:numberOfBlocks)-1)*blockSize, function(x) x+(1:blockSize))
+            rhoVector <- seq(from=0.9, to=0.1, by=-0.1)
+            runList <- list('all', 'auto')
+            codeAndConstants <- createCodeAndConstants(N, indList, rhoVector)
+            code <- codeAndConstants$code
+            constants <- codeAndConstants$constants
+            data <- list()
+            inits <- list(x=rep(0,N))
+            ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
+            ab$run(runList)
+            abList[[DFtag]] <- ab
+        }
+        dfmixedRhos <- createDFfromABlist(abList)
+        filename <- file.path(path, paste0('dfmixedRhos', tag, '.RData'))
+        save(dfmixedRhos, file = filename)
+        ##if(control$makePlots) eval(substitute(plotABS(DF), list(DF=as.name(dfText))))
+        ##eval(substitute(printMinTimeABS(DF), list(DF=as.name(dfText))))
+    }, list(TAG=tag))
+    filename <- file.path(path, paste0('runmixedRhos', tag, '.R'))
+    cat(codeToText(preCode), file=filename)
+    cat(codeToText(mixedRhosCode), file=filename, append=TRUE)
+}
+filename <- 'runmixedRhos.sh'
+cat('#!/bin/bash\n\n', file=filename)
+for(tag in tagValues) {
+    cat(paste0('R CMD BATCH --vanilla runmixedRhos', tag, '.R\n'), file=filename, append=TRUE)
+    cat('git add --all\n', file=filename, append=TRUE)
+    cat(paste0('git commit -a -m\'ran runmixedRhos', tag, '.R\'\n'), file=filename, append=TRUE)
+    cat('git push\n\n', file=filename, append=TRUE)
+}
+system(paste0('chmod 777 ', filename))
+
+## combining the A, B, C, ...  dataframes from mixedRhos
+rm(list=ls())
+dfCombined <- data.frame()
+tagValues <- LETTERS[1:3]
+for(tag in tagValues) {
+    load(paste0('dfmixedRhos', tag, '.RData'))
+    dfCombined <- rbind(dfCombined, dfmixedRhos)
+}
+dfmixedRhos <- dfCombined
+save(dfmixedRhos, file = 'dfmixedRhos.RData')
 
 load('dfmixedRhos.RData')
-niter <- 200000
+niter <- 100000
 dfmixedRhos$timePer10k <- dfmixedRhos$timing *10000/niter
 dfmixedRhos$essPer10k  <- dfmixedRhos$ess    *10000/niter * 2
 dfmixedRhos$Efficiency <- dfmixedRhos$essPer10k / dfmixedRhos$timePer10k
@@ -273,7 +300,7 @@ print(max(abs(dfmixedRhos$Efficiency - dfmixedRhos$essPT*2)))
 dfmixedRhos$N <- as.numeric(gsub('mixedRhosN(.+)', '\\1', dfmixedRhos$model))
 dfmixedRhos$mcmc <- gsub('-.+', '', dfmixedRhos$blocking)
 dfmixedRhos$model <- gsub('mixedRhos', '', dfmixedRhos$model)
-dfmixedRhos$model <- gsub('([23456789]0)', '0\\1', dfmixedRhos$model)
+dfmixedRhos$model <- gsub('N([23456789]0)$', 'N0\\1', dfmixedRhos$model)
 dfMix <- printMinTimeABS(dfmixedRhos, round=FALSE)
 save(dfmixedRhos, dfMix, file='dfmixedRhos.RData')
 
@@ -383,7 +410,7 @@ dfspatial$Efficiency <- dfspatial$essPer10k / dfspatial$timePer10k
 print(max(abs(dfspatial$Efficiency - dfspatial$essPT*2)))
 dfspatial$mcmc <- gsub('-.+', '', dfspatial$blocking)
 dfSpat <- printMinTimeABS(dfspatial, round=FALSE)
-save(dfspatial, dfSpat, file='dflittersGAMMA-UNIFprior.RData')
+save(dfspatial, dfSpat, file='dfspatial.RData')
 
 
 
