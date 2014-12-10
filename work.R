@@ -186,7 +186,7 @@ save(dfblockTesting, dfblockTestingUni, dfblockTestingMulti, dfblockTestingGamma
 ## N = 2^k, constant values of rho
 ## Used in a Figure of Simulated Data results, and probably a table
 partitionsCode <- quote({
-    k <- 7
+    k <- 6
     N <- 2^k
     rhoVector <- c(0.2, 0.5, 0.8)
     control$niter <- 200000
@@ -387,16 +387,19 @@ save(dflitters, dfLit, file='dflittersGAMMA-UNIFprior.RData')
 ## spatial
 spatialCode <- quote({
     control$niter <- 400000
+    control$saveSamples <- TRUE   ##### changed #####
     runList <- list('all', 'default', 'auto')
     abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial, control=control)
     abspatial$run(runList)
     abList <- list(spatial=abspatial)
     dfspatial <- createDFfromABlist(abList)
-    filename <- file.path(path, 'dfspatial.RData')
-    save(dfspatial, file = filename)
+    filename <- file.path(path, 'dfspatialWithSamples.RData')   ##### changed #####
+    abspatial$abModel <- NULL
+    abspatial$Cmcmcs <- list()
+    save(dfspatial, abspatial, file = filename)   ##### changed #####
     if(abspatial$makePlots) plotABS(dfspatial, xlimToMin=FALSE)
     if(abspatial$makePlots) plotABS(dfspatial, xlimToMin=TRUE)
-    printMinTimeABS(dfspatial)
+    ##printMinTimeABS(dfspatial)
 })
 filename <- file.path(path, 'runspatial.R')
 cat(codeToText(preCode), file=filename)

@@ -41,6 +41,8 @@ m$coeff
 ## (Intercept)        logN      logRho     ## from dfsampEff, with expDecay=FALSE,
 ##  -0.4346747  -1.1768437   1.0921665      ## alpha 0.2, rhos 0.8 0.96 ...
 ##
+cbind(exp(-0.4346747) * dfsampEff$N^-1.1768437 * (1-dfsampEff$rho)^1.0921665, dfsampEff$essPerN)
+##
 ## from dfsampEffExpDecay
 m <- lm(logESS ~ loglogN + logRho)
 summary(m)
@@ -105,6 +107,11 @@ dfFig[dfFig$model == 'litters', ]$model  <- 'Litters'
 dfFig[dfFig$model == 'spatial', ]$model  <- 'Spatial'
 dfFig <- dfFig[dfFig$mcmc %in% c('all','auto0','default','informed','autoMax'), ]
 dfFig$model <- factor(dfFig$model, levels = unique(dfFig$model))  ## makes 'model' factor ordered
+## normalize all Efficiencies by that of 'auto0'
+## for(mod in unique(dfFig$model)) {
+##     norm <- dfFig[dfFig$model==mod & dfFig$mcmc=='all', ]$Efficiency
+##     dfFig[dfFig$model==mod, ]$Efficiency <- dfFig[dfFig$model==mod, ]$Efficiency / norm
+## }
 dev.new(width=6, height=4)
 ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=3)
 dev.copy2pdf(file='SSMLittersSpatialEfficiency.pdf')
