@@ -386,7 +386,7 @@ save(dflitters, dfLit, file='dflittersGAMMA-UNIFprior.RData')
 
 ## spatial
 spatialCode <- quote({
-    control$niter <- 400000
+    control$niter <- 200000
     control$saveSamples <- TRUE   ##### changed #####
     runList <- list('all', 'default', 'auto')
     abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial, control=control)
@@ -405,19 +405,33 @@ filename <- file.path(path, 'runspatial.R')
 cat(codeToText(preCode), file=filename)
 cat(codeToText(spatialCode), file=filename, append=TRUE)
 
-load('dfspatial.RData')
-niter <- 400000
+load('dfspatialWithSamples.RData')
+niter <- 200000
 dfspatial$timePer10k <- dfspatial$timing *10000/niter
 dfspatial$essPer10k  <- dfspatial$ess    *10000/niter * 2
 dfspatial$Efficiency <- dfspatial$essPer10k / dfspatial$timePer10k
 print(max(abs(dfspatial$Efficiency - dfspatial$essPT*2)))
 dfspatial$mcmc <- gsub('-.+', '', dfspatial$blocking)
 dfSpat <- printMinTimeABS(dfspatial, round=FALSE)
-save(dfspatial, dfSpat, file='dfspatial.RData')
-
-
-
-
+save(dfspatial, dfSpat, abspatial, file='dfspatialWithSamples.RData')
+## now, make a dataframe of samples, sorted better
+keepInd <- (dim(abspatial$samples[[1]])[1]/2+1):dim(abspatial$samples[[1]])[1]
+nKeep <- length(keepInd)
+params <- c('rho', 'sigma', 'mu', 'g[66]')
+mcmcs <- c('all', 'default', 'auto0', 'autoMax')
+mcmcInds <- c(1, 2, 3, 5)  ### CAREFUL ### need to set these manually to get them right
+mcmcCol <- paramCol <- character();   sampCol <- numeric()
+for(i in seq_along(mcmcs)) {
+    mcmc <- mcmcs[i]
+    mcmcInd <- mcmcInds[i]
+    for(param in params) {
+        mcmcCol  <- c(mcmcCol,  rep(mcmc,  nKeep))
+        paramCol <- c(paramCol, rep(param, nKeep))
+        sampCol  <- c(sampCol,  abspatial$samples[[mcmcInd]][keepInd, param])
+    }
+}
+dfSpatSamples <- data.frame(mcmc=mcmcCol, param=paramCol, samp=sampCol)
+save(dfspatial, dfSpat, abspatial, dfSpatSamples, file='dfspatialWithSamples.RData')
 
 
 

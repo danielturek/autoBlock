@@ -14,8 +14,10 @@ df <- dfsampEff
 #load('dfsampEffMostlyBlocked.RData')
 load('dfsampEffExpDecay.RData')
 dfExpDecay <- dfsampEff
-p1 <- qplot(data=df, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line', ylab='log(tau inverse)') + theme(legend.position=c(.8, .8))
-p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=log(essPerN), color=factor(N), geom='line', ylab='log(tau inverse)') + theme(legend.position=c(.8, .8))
+df$d <- as.factor(df$N)
+dfExpDecay$d <- as.factor(dfExpDecay$N)
+p1 <- qplot(data=df, x=-log(1-rho), y=log(essPerN), color=d, geom='line', ylab='log(sampling efficiency)') + theme(legend.position=c(.8, .8))
+p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=log(essPerN), color=d, geom='line', ylab='log(sampling efficiency)') + theme(legend.position=c(.8, .8))
 dev.new(width=6, height=5)
 ##multiplot(p1, p2, cols=2)
 grid.arrange(p1, p2, ncol = 2)
@@ -98,7 +100,7 @@ library(ggplot2); library(grid); library(gridExtra)
 load('dfSSM.RData')
 dfS <- dfS[c(1, 3:14), ]  ## remove the very-poor 'independent' model 'blockMUB' informed blocking
 load('dflittersGAMMA-UNIFprior.RData')
-load('dfspatial.RData')
+load('dfspatialWithSamples.RData')
 dfFig <- rbind(dfS, dfLit, dfSpat)
 dfFig[grepl('^block.*', dfFig$mcmc), ]$mcmc <- 'informed'  ## informed blockings to 'informed'
 dfFig[dfFig$model == 'independent', ]$model <- 'SSM Indep.'
@@ -117,6 +119,38 @@ ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + g
 dev.copy2pdf(file='SSMLittersSpatialEfficiency.pdf')
 system('cp SSMLittersSpatialEfficiency.pdf ~/GitHub/nimblePapers/autoBlock/')
 
+## efficiency improvement factors
+df <- dfFig
+df <- df[df$model != 'independent',]
+df <- df[df$mcmc %in% c('all', 'default', 'auto0', 'autoMax'), ]
+for(mod in unique(df$model)) df[df$model==mod,]$Efficiency <- df[df$model==mod & df$mcmc=='autoMax',]$Efficiency / df[df$model==mod,]$Efficiency
+df[, c('model', 'mcmc', 'Efficiency')]
+
+
+
+
+## Figure 'spatialBoxplots'
+## boxplots for some parameter distributions under the spatial model, various MCMCs
+path <- '~/GitHub/autoBlock';     setwd(path)
+library(ggplot2); library(grid); library(gridExtra)
+load('dfspatialWithSamples.RData')
+params <- c('mu', 'sigma', 'rho', 'g[66]')
+df <- dfSpatSamples[dfSpatSamples$param %in% params, ]
+figs <- list()
+for(i in seq_along(params)) {
+    param <- params[i]
+    dfTemp <- df[df$param == param, ]
+    figs[[i]] <- ggplot(dfTemp, aes(x=as.factor(param), y=samp, color=mcmc, ylab='', xlab=param)) + geom_boxplot() + theme(legend.position=c(.2, .8))
+}
+#dev.new(width=6, height=4)
+figs$ncol = length(params)
+do.call(grid.arrange, figs)
+
+dev.new(width=6, height=4)
+ggplot(df, aes(x=as.factor(param), y=samp, color=mcmc)) + geom_boxplot() + theme(legend.position=c(.2, .8))
+
+dev.copy2pdf(file=NO_SAVE_YET)
+system('cp ????? ~/GitHub/nimblePapers/autoBlock/')
 
 
 
@@ -175,7 +209,7 @@ dfLit$Efficiency <- round(dfLit$Efficiency, 1)
 dfLit[, c(1, 2, 9, 8, 10)]
 ## Table data for Spatial model
 path <- '~/GitHub/autoBlock';     setwd(path)
-load('dfspatial.RData')
+load('dfspatialWithSamples.RData')
 dfSpat$essPer10k <- round(dfSpat$essPer10k, 1)
 dfSpat$timePer10k <- round(dfSpat$timePer10k, 2)
 dfSpat$Efficiency <- round(dfSpat$Efficiency, 1)
