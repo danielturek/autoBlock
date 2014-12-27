@@ -16,10 +16,9 @@ load('dfsampEffExpDecay.RData')
 dfExpDecay <- dfsampEff
 df$d <- as.factor(df$N)
 dfExpDecay$d <- as.factor(dfExpDecay$N)
-p1 <- qplot(data=df, x=-log(1-rho), y=log(essPerN), color=d, geom='line', ylab='log(sampling efficiency)') + theme(legend.position=c(.8, .8))
-p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=log(essPerN), color=d, geom='line', ylab='log(sampling efficiency)') + theme(legend.position=c(.8, .8))
+p1 <- qplot(data=df, x=-log(1-rho), y=essPerN, color=d, geom='line', ylab=expression(S(Psi)), xlab=expression(-log(1-rho))) + theme(legend.position=c(.8, .8)) + scale_y_log10()
+p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=essPerN, color=d, geom='line', ylab=expression(S(Psi)), xlab=expression(-log(1-rho))) + theme(legend.position=c(.8, .8)) + scale_y_log10()
 dev.new(width=6, height=5)
-##multiplot(p1, p2, cols=2)
 grid.arrange(p1, p2, ncol = 2)
 dev.copy2pdf(file='dfsampEff.pdf')
 system('cp dfsampEff.pdf ~/GitHub/nimblePapers/autoBlock/')
@@ -63,8 +62,10 @@ path <- '~/GitHub/autoBlock';     setwd(path)
 library(ggplot2); library(grid); library(gridExtra)
 load('dfblockTesting.RData')
 df <- dfblockTesting[dfblockTesting$blocking != 'blockNoAdapt', ]  ## remove non-adaptive blocking
-dev.new(width=6, height=5)
-qplot(data=df, x=N, y=timePer10kN, geom='line', linetype=dist, color=blocking, xlab='d', ylim=c(0,16), xlim=c(0,500), ylab='time per 10k samples (seconds)')
+df$dist <- factor(df$dist, levels=c('uni','gamma','multi'), labels=c('Normal','Gamma','MV Normal'))  ## rename dist factor
+df$blocking <- factor(df$blocking, levels=c('scalar','blockAdapt'), labels=c('All Scalar', 'All Blocked'))  ## rename blocking factor
+dev.new(width=4, height=4.5)
+qplot(data=df, x=N, y=timePer10kN, geom='line', linetype=dist, color=blocking, ylim=c(0,16), xlim=c(0,500)) + theme(legend.position=c(.47, .7)) + labs(x='Model dimension (d)', y='Runtime (seconds per 10,000 MCMC samples)', color='MCMC\nAlgorithm', linetype='Model\nStructure')
 dev.copy2pdf(file='blockTiming.pdf')
 system('cp blockTiming.pdf ~/GitHub/nimblePapers/autoBlock/')
 
@@ -79,12 +80,14 @@ path <- '~/GitHub/autoBlock';     setwd(path)
 library(ggplot2); library(grid); library(gridExtra)
 load('dfPartitionsN64.RData')
 dfN64 <- dfN64[dfN64$mcmc != 'autoMax', ]  # don't include autoMax
-p1 <- ggplot(dfN64, aes(as.factor(rho),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.8, .8))
+dfN64$mcmc <- factor(dfN64$mcmc, levels=c('all','auto0','auto1','auto2'), labels=c('All Blocked','All Scalar','Auto 1','Auto 2'))
+p1 <- ggplot(dfN64, aes(as.factor(rho),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.68, .77)) + labs(y='Efficiency (effective samples / time)', x='Correlation', fill='MCMC\nAlgorithm')
 load('dfmixedRhos.RData')
 dfMix <- dfMix[dfMix$mcmc != 'autoMax', ]  # don't include autoMax
 dfMix <- dfMix[dfMix$N %in% c(20, 50, 100), ]  # remove everything BUT N = 20,50,100
-p2 <- ggplot(dfMix, aes(as.factor(model),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.8, .8))
-dev.new(width=5, height=4)
+dfMix$mcmc <- factor(dfMix$mcmc, levels=c('all','auto0','auto1','auto2'), labels=c('All Blocked','All Scalar','Auto 1','Auto 2'))
+p2 <- ggplot(dfMix, aes(as.factor(N),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.68, .77)) + labs(y='Efficiency (effective samples / time)', x='Model Size (N)', fill='MCMC\nAlgorithm')
+dev.new(width=5.5, height=4)
 ##multiplot(p1, p2, cols=2)
 grid.arrange(p1, p2, ncol = 2)
 dev.copy2pdf(file='contrivedMCMCefficiencyBars.pdf')
@@ -100,22 +103,19 @@ library(ggplot2); library(grid); library(gridExtra)
 load('dfSSM.RData')
 dfS <- dfS[c(1, 3:14), ]  ## remove the very-poor 'independent' model 'blockMUB' informed blocking
 load('dflittersGAMMA-UNIFprior.RData')
-load('dfspatialWithSamples.RData')
+load('dfspatial.RData')
 dfFig <- rbind(dfS, dfLit, dfSpat)
 dfFig[grepl('^block.*', dfFig$mcmc), ]$mcmc <- 'informed'  ## informed blockings to 'informed'
-dfFig[dfFig$model == 'independent', ]$model <- 'SSM Indep.'
-dfFig[dfFig$model == 'correlated', ]$model  <- 'SSM Corr.'
-dfFig[dfFig$model == 'litters', ]$model  <- 'Litters'
-dfFig[dfFig$model == 'spatial', ]$model  <- 'Spatial'
-dfFig <- dfFig[dfFig$mcmc %in% c('all','auto0','default','informed','autoMax'), ]
-dfFig$model <- factor(dfFig$model, levels = unique(dfFig$model))  ## makes 'model' factor ordered
+dfFig <- dfFig[dfFig$mcmc %in% c('all','auto0','default','autoMax'), ]  ## removed 'informed'
+dfFig$model <- factor(dfFig$model, levels=c('independent', 'correlated', 'litters', 'spatial'), labels=c('State Space\nIndependent', 'State Space\nCorrelated', 'Binomial\nResponse', 'Spatial'))
+dfFig$mcmc <- factor(dfFig$mcmc, levels=c('all', 'default', 'auto0', 'autoMax'), labels=c('All Blocked', 'Default', 'All Scalar', 'Auto Block'))
 ## normalize all Efficiencies by that of 'auto0'
 ## for(mod in unique(dfFig$model)) {
 ##     norm <- dfFig[dfFig$model==mod & dfFig$mcmc=='all', ]$Efficiency
 ##     dfFig[dfFig$model==mod, ]$Efficiency <- dfFig[dfFig$model==mod, ]$Efficiency / norm
 ## }
-dev.new(width=6, height=4)
-ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=3)
+dev.new(width=4.5, height=4)
+ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.76, .73)) + labs(y='Efficiency (effective samples / time)', x='', color='MCMC Algorithm')
 dev.copy2pdf(file='SSMLittersSpatialEfficiency.pdf')
 system('cp SSMLittersSpatialEfficiency.pdf ~/GitHub/nimblePapers/autoBlock/')
 
@@ -133,7 +133,7 @@ df[, c('model', 'mcmc', 'Efficiency')]
 ## boxplots for some parameter distributions under the spatial model, various MCMCs
 path <- '~/GitHub/autoBlock';     setwd(path)
 library(ggplot2); library(grid); library(gridExtra)
-load('dfspatialWithSamples.RData')
+load('dfspatialWithSamples.RData')   ## CURRENTLY, I DON'T HAVE THIS SAMPLES FILE
 params <- c('mu', 'sigma', 'rho', 'g[66]')
 df <- dfSpatSamples[dfSpatSamples$param %in% params, ]
 figs <- list()
@@ -209,7 +209,7 @@ dfLit$Efficiency <- round(dfLit$Efficiency, 1)
 dfLit[, c(1, 2, 9, 8, 10)]
 ## Table data for Spatial model
 path <- '~/GitHub/autoBlock';     setwd(path)
-load('dfspatialWithSamples.RData')
+load('dfspatial.RData')
 dfSpat$essPer10k <- round(dfSpat$essPer10k, 1)
 dfSpat$timePer10k <- round(dfSpat$timePer10k, 2)
 dfSpat$Efficiency <- round(dfSpat$Efficiency, 1)

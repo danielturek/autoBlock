@@ -242,8 +242,8 @@ autoBlock <- setRefClass(
             for(i in seq_along(CmcmcList)) {
                 Cmodel$setInits(abModel$inits)
                 if(setSeed0) set.seed(0)
-                timingList[[i]] <- as.numeric(system.time(CmcmcList[[i]](niter))[3])
-                samplesList[[i]] <- as.matrix(nfVar(CmcmcList[[i]], 'mvSamples'))
+                timingList[[i]] <- as.numeric(system.time(CmcmcList[[i]]$run(niter))[3])
+                samplesList[[i]] <- as.matrix(CmcmcList[[i]]$mvSamples)
                 meansList[[i]] <- apply(samplesList[[i]], 2, mean)
                 sdsList[[i]]   <- apply(samplesList[[i]], 2, sd)
                 essList[[i]]   <- apply(samplesList[[i]], 2, effectiveSize)
@@ -272,7 +272,7 @@ autoBlock <- setRefClass(
             essPT[[it]] <<- sort(essPTList[[bestInd]])
             
             if(auto) {
-                samp <- as.matrix(nfVar(CmcmcList[[bestInd]], 'mvSamples'))
+                samp <- as.matrix(CmcmcList[[bestInd]]$mvSamples)
                 burnedSamples[[it]] <<- samp[(floor(niter/2)+1):niter, ]
                 empCov[[it]] <<- cov(burnedSamples[[it]])
                 empCor[[it]] <<- cov2cor(empCov[[it]])
@@ -621,7 +621,7 @@ if(!exists('control')) control <- list()
 ### tester
 ################
 
-code_tester <- modelCode({
+code_tester <- nimbleCode({
     x[1:3] ~ dmnorm(mu[1:3], Q[1:3,1:3])
     y[1:3] ~ dmnorm(x[1:3], Q[1:3, 1:3])
     z1 ~ dnorm(y[1], 100)
@@ -649,7 +649,7 @@ constants_litters <- list(G=G, N=N, n=n)
 data_litters      <- list(r=r)
 inits_litters     <- list(a=a, b=b, p=p)
 
-code_litters <- modelCode({
+code_litters <- nimbleCode({
 #    a[1] ~ dunif(0, 80000)
 #    b[1] ~ dunif(0, 10000)
     a[1] ~ dgamma(1, 0.001)   # works well
@@ -675,7 +675,7 @@ rm(list = c('G','N','n','r','p','a','b'))
 ################
 
 ## better parameterization: mean and autocorrelation
-code_SSMmub<- modelCode({
+code_SSMmub<- nimbleCode({
     mu ~ dnorm(0, sd = 1000)
     b ~ dnorm(0, sd = 1000)
     sigPN ~ dunif(0.0001, 1)
@@ -712,7 +712,7 @@ rm(list = c('t','Rmodel'))
 
 ## parameterization in terms of slope (autocorelation) and intercept,
 ## which are highly correlated in mixing
-code_SSMab <- modelCode({
+code_SSMab <- nimbleCode({
     a ~ dunif(-0.9999, 0.9999)
     b ~ dnorm(0, sd = 1000)
     sigPN ~ dunif(0.0001, 1)
@@ -756,7 +756,7 @@ long <- myscallops$long
 dist <- array(NA, c(N,N))
 for(i in 1:N) for(j in 1:N) dist[i,j] <- gdist(long[i], lat[i], long[j], lat[j])
 
-code_spatial<- modelCode({
+code_spatial<- nimbleCode({
     mu ~ dunif(-100, 100)
     sigma ~ dunif(0, 100)
     rho ~ dunif(20, 100)
