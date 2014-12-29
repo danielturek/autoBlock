@@ -78,16 +78,17 @@ system('cp blockTiming.pdf ~/GitHub/nimblePapers/autoBlock/')
 ## right pane: 'mixedRhos'
 path <- '~/GitHub/autoBlock';     setwd(path)
 library(ggplot2); library(grid); library(gridExtra)
+red<-'#D55E00';   green<-'#009E73';   pink='#CC79A7';   blue<-'blue';   lightblue<-'#56B4E9'
 load('dfPartitionsN64.RData')
 dfN64 <- dfN64[dfN64$mcmc != 'autoMax', ]  # don't include autoMax
 dfN64$mcmc <- factor(dfN64$mcmc, levels=c('all','auto0','auto1','auto2'), labels=c('All Blocked','All Scalar','Auto 1','Auto 2'))
-p1 <- ggplot(dfN64, aes(as.factor(rho),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.68, .77)) + labs(y='Efficiency (effective samples / time)', x='Correlation', fill='MCMC\nAlgorithm')
+p1 <- ggplot(dfN64, aes(x=as.factor(rho),y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.71, .77)) + labs(y='Efficiency (effective samples / time)', x='Correlation', color='MCMC\nAlgorithm') + scale_color_manual(values=c(red,green,blue,lightblue))
 load('dfmixedRhos.RData')
 dfMix <- dfMix[dfMix$mcmc != 'autoMax', ]  # don't include autoMax
 dfMix <- dfMix[dfMix$N %in% c(20, 50, 100), ]  # remove everything BUT N = 20,50,100
 dfMix$mcmc <- factor(dfMix$mcmc, levels=c('all','auto0','auto1','auto2'), labels=c('All Blocked','All Scalar','Auto 1','Auto 2'))
-p2 <- ggplot(dfMix, aes(as.factor(N),Efficiency,fill=mcmc)) + geom_bar(position='dodge', stat='identity') + theme(legend.position=c(.68, .77)) + labs(y='Efficiency (effective samples / time)', x='Model Size (N)', fill='MCMC\nAlgorithm')
-dev.new(width=5.5, height=4)
+p2 <- ggplot(dfMix, aes(x=as.factor(N),y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.70, .77)) + labs(y='Efficiency (effective samples / time)', x='Model Size (N)', color='MCMC\nAlgorithm') + scale_color_manual(values=c(red,green,blue,lightblue))
+dev.new(width=6, height=4)
 ##multiplot(p1, p2, cols=2)
 grid.arrange(p1, p2, ncol = 2)
 dev.copy2pdf(file='contrivedMCMCefficiencyBars.pdf')
@@ -100,6 +101,7 @@ system('cp contrivedMCMCefficiencyBars.pdf ~/GitHub/nimblePapers/autoBlock/')
 ## Line chart of Efficiency results for: SSM (both), Litters, and Spatial
 path <- '~/GitHub/autoBlock';     setwd(path)
 library(ggplot2); library(grid); library(gridExtra)
+red<-'#D55E00';   green<-'#009E73';   black<-'black';   blue<-'blue';   lightblue<-'#56B4E9'
 load('dfSSM.RData')
 dfS <- dfS[c(1, 3:14), ]  ## remove the very-poor 'independent' model 'blockMUB' informed blocking
 load('dflittersGAMMA-UNIFprior.RData')
@@ -115,7 +117,7 @@ dfFig$mcmc <- factor(dfFig$mcmc, levels=c('all', 'default', 'auto0', 'autoMax'),
 ##     dfFig[dfFig$model==mod, ]$Efficiency <- dfFig[dfFig$model==mod, ]$Efficiency / norm
 ## }
 dev.new(width=4.5, height=4)
-ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.76, .73)) + labs(y='Efficiency (effective samples / time)', x='', color='MCMC Algorithm')
+ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.76, .73)) + labs(y='Efficiency (effective samples / time)', x='', color='MCMC Algorithm') + scale_color_manual(values=c(red,black,green,blue))
 dev.copy2pdf(file='SSMLittersSpatialEfficiency.pdf')
 system('cp SSMLittersSpatialEfficiency.pdf ~/GitHub/nimblePapers/autoBlock/')
 
