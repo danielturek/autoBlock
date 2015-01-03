@@ -178,7 +178,7 @@ autoBlock <- setRefClass(
                        all =     { specList <- list(createSpecFromGroups(Rmodel, abModel$nodeGroupAllBlocked))
                                    runSpecListAndSaveBest(Rmodel, specList, 'all') },
 
-                       default = { specList <- list(MCMCspec(Rmodel))
+                       default = { specList <- list(configureMCMC(Rmodel))
                                    runSpecListAndSaveBest(Rmodel, specList, 'default') },
 
                        blocks =  { specList <- list(createSpecFromGroups(Rmodel, abModel$createGroups(runListElement)))
@@ -324,7 +324,7 @@ autoBlock <- setRefClass(
         },
         
         createSpecFromGroups = function(Rmodel, groups) {
-            spec <- MCMCspec(Rmodel, nodes=NULL, monitors=character(0))
+            spec <- configureMCMC(Rmodel, nodes=NULL, monitors=character(0))
             for(nodeGroup in groups) addSamplerToSpec(Rmodel, spec, nodeGroup)
             return(spec)
         },
@@ -580,7 +580,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 ##     data <- list()
 ##     inits <- list(x=rep(0,N))
 ##     Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
-##     spec <- MCMCspec(Rmodel, NULL)
+##     spec <- configureMCMC(Rmodel, NULL)
 ##     spec$addSampler('RW_block', list(targetNodes='x', adaptScaleOnly=TRUE), print=FALSE)
 ##     Rmcmc <- buildMCMC(spec)
 ##     Cmodel <- compileNimble(Rmodel)
@@ -692,9 +692,11 @@ code_SSMmub<- nimbleCode({
 t <- 30
 constants_SSMmub <- list(t = t)
 Rmodel <- nimbleModel(code_SSMmub, constants = constants_SSMmub)
-Rmodel$mu <- 10/(1-.5)
+## Rmodel$mu <- 10/(1-.5)   ## original SSM
+Rmodel$mu <- 10/(1-.9)   ## next SSM attempt (v2)
 Rmodel$b <- 10
-Rmodel$sigPN <- .1
+## Rmodel$sigPN <- .1  ## original SSM
+Rmodel$sigPN <- .02  ## next SSM attempt (v2)
 Rmodel$sigOE <- .1
 set.seed(0)
 calculate(Rmodel, Rmodel$getDependencies(c('mu','b','sigPN','sigOE'), determOnly = TRUE))
@@ -727,9 +729,11 @@ code_SSMab <- nimbleCode({
 t <- 30
 constants_SSMab <- list(t = t)
 Rmodel <- nimbleModel(code_SSMab, constants = constants_SSMab)
-Rmodel$a <- .5
+## Rmodel$a <- .5  ## original SSM
+Rmodel$a <- .9  ## next SSM attempt (v2)
 Rmodel$b <- 10
-Rmodel$sigPN <- .1
+## Rmodel$sigPN <- .1  ## original SSM
+Rmodel$sigPN <- .02  ## next SSM attempt (v2)
 Rmodel$sigOE <- .1
 set.seed(0)
 calculate(Rmodel, Rmodel$getDependencies(c('a','b','sigPN','sigOE'), determOnly = TRUE))

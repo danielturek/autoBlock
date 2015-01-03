@@ -309,7 +309,7 @@ save(dfmixedRhos, dfMix, file='dfmixedRhos.RData')
 
 ## state space models
 SSMCode <- quote({
-    control$niter <- 400000
+    control$niter <- 200000
     runListMUB <- list('all', blockMUB = list(c('mu','b')), 'default', 'auto')
     runListAB  <- list('all', blockAB  = list(c('a', 'b')), 'default', 'auto')
     abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
@@ -318,18 +318,20 @@ SSMCode <- quote({
     abSSMab$run(runListAB)
     abList <- list(independent=abSSMmub, correlated=abSSMab)
     dfSSM <- createDFfromABlist(abList)
-    filename <- file.path(path, 'dfSSM.RData')
+    ## filename <- file.path(path, 'dfSSM.RData')  ## original SSM
+    filename <- file.path(path, 'dfSSM_v2.RData')  ## next SSM attempt (v2)
     save(dfSSM, file = filename)
     if(abSSMab$makePlots) plotABS(dfSSM, xlimToMin=FALSE)
     if(abSSMab$makePlots) plotABS(dfSSM, xlimToMin=TRUE)
-    printMinTimeABS(dfSSM)
+    ## printMinTimeABS(dfSSM)
 })
 filename <- file.path(path, 'runSSM.R')
 cat(codeToText(preCode), file=filename)
 cat(codeToText(SSMCode), file=filename, append=TRUE)
 
-load('dfSSM.RData')
-niter <- 400000
+## load('dfSSM.RData')  ## original SSM
+load('dfSSM_v2.RData')  ## next SSM attempt (v2)
+niter <- 200000
 dfSSM$timePer10k <- dfSSM$timing *10000/niter
 dfSSM$essPer10k  <- dfSSM$ess    *10000/niter * 2
 dfSSM$Efficiency <- dfSSM$essPer10k / dfSSM$timePer10k
