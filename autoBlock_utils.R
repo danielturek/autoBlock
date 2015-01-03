@@ -689,12 +689,12 @@ code_SSMmub<- nimbleCode({
     }
 })
 
-t <- 30
+t <- 100
 constants_SSMmub <- list(t = t)
 Rmodel <- nimbleModel(code_SSMmub, constants = constants_SSMmub)
 ## Rmodel$mu <- 10/(1-.5)   ## original SSM
-Rmodel$mu <- 10/(1-.9)   ## next SSM attempt (v2)
-Rmodel$b <- 10
+Rmodel$mu <- 1/(1-.9)   ## next SSM attempt (v2)
+Rmodel$b <- 1
 ## Rmodel$sigPN <- .1  ## original SSM
 Rmodel$sigPN <- .02  ## next SSM attempt (v2)
 Rmodel$sigOE <- .1
@@ -726,12 +726,12 @@ code_SSMab <- nimbleCode({
         y[i] ~ dnorm(x[i], sd = sigOE)
     }
 })
-t <- 30
+t <- 100
 constants_SSMab <- list(t = t)
 Rmodel <- nimbleModel(code_SSMab, constants = constants_SSMab)
 ## Rmodel$a <- .5  ## original SSM
 Rmodel$a <- .9  ## next SSM attempt (v2)
-Rmodel$b <- 10
+Rmodel$b <- 1
 ## Rmodel$sigPN <- .1  ## original SSM
 Rmodel$sigPN <- .02  ## next SSM attempt (v2)
 Rmodel$sigOE <- .1

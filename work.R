@@ -338,7 +338,8 @@ dfSSM$Efficiency <- dfSSM$essPer10k / dfSSM$timePer10k
 print(max(abs(dfSSM$Efficiency - dfSSM$essPT*2)))
 dfSSM$mcmc <- gsub('-.+', '', dfSSM$blocking)
 dfS <- printMinTimeABS(dfSSM, round=FALSE)
-save(dfSSM, dfS, file='dfSSM.RData')
+##save(dfSSM, dfS, file='dfSSM.RData')
+save(dfSSM, dfS, file='dfSSM.RData_v2')
 
 
 
