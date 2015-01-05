@@ -688,16 +688,15 @@ code_SSMmub<- nimbleCode({
         y[i] ~ dnorm(x[i], sd = sigOE)
     }
 })
-
 t <- 100
 constants_SSMmub <- list(t = t)
 Rmodel <- nimbleModel(code_SSMmub, constants = constants_SSMmub)
 ## Rmodel$mu <- 10/(1-.5)   ## original SSM
-Rmodel$mu <- 1/(1-.9)   ## next SSM attempt (v2)
+Rmodel$mu <- 1/(1-.95)   ## next SSM attempt (v2)
 Rmodel$b <- 1
 ## Rmodel$sigPN <- .1  ## original SSM
-Rmodel$sigPN <- .02  ## next SSM attempt (v2)
-Rmodel$sigOE <- .1
+Rmodel$sigPN <- .2  ## next SSM attempt (v2)
+Rmodel$sigOE <- .05
 set.seed(0)
 calculate(Rmodel, Rmodel$getDependencies(c('mu','b','sigPN','sigOE'), determOnly = TRUE))
 simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
@@ -730,11 +729,11 @@ t <- 100
 constants_SSMab <- list(t = t)
 Rmodel <- nimbleModel(code_SSMab, constants = constants_SSMab)
 ## Rmodel$a <- .5  ## original SSM
-Rmodel$a <- .9  ## next SSM attempt (v2)
+Rmodel$a <- .95  ## next SSM attempt (v2)
 Rmodel$b <- 1
 ## Rmodel$sigPN <- .1  ## original SSM
-Rmodel$sigPN <- .02  ## next SSM attempt (v2)
-Rmodel$sigOE <- .1
+Rmodel$sigPN <- .2  ## next SSM attempt (v2)
+Rmodel$sigOE <- .05
 set.seed(0)
 calculate(Rmodel, Rmodel$getDependencies(c('a','b','sigPN','sigOE'), determOnly = TRUE))
 simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
