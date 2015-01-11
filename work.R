@@ -390,7 +390,6 @@ save(dflitters, dfLit, file='dflittersGAMMA-UNIFprior.RData')
 ## spatial
 spatialCode <- quote({
     control$niter <- 200000
-    control$saveSamples <- TRUE   ##### changed #####
     runList <- list('all', 'default', 'auto')
     abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial, control=control)
     abspatial$run(runList)
@@ -437,6 +436,22 @@ dfSpatSamples <- data.frame(mcmc=mcmcCol, param=paramCol, samp=sampCol)
 save(dfspatial, dfSpat, abspatial, dfSpatSamples, file='dfspatialWithSamples.RData')
 
 
+
+
+## mhp (Minnesota Health Plan, http://glmm.wikidot.com/minnesota-health-plan)
+mhpCode <- quote({
+    control$niter <- 200000
+    runList <- list('all', 'default', 'auto')
+    abmhp <- autoBlock(code=code_mhp, constants=constants_mhp, data=data_mhp, inits=inits_mhp, control=control)
+    abmhp$run(runList)
+    abList <- list(mhp=abmhp)
+    dfmhp <- createDFfromABlist(abList)
+    filename <- file.path(path, 'dfmhp.RData')
+    save(dfmhp, file = filename)
+})
+filename <- file.path(path, 'runmhp.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(mhpCode), file=filename, append=TRUE)
 
 
 

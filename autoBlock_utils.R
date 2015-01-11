@@ -780,6 +780,12 @@ inits_spatial <- list(mu=0, sigma=5, rho=60, g=rep(0,N))
 rm(list = c('myscallops', 'N', 'catch', 'lat', 'long', 'dist', 'i', 'j'))
 
 
+################
+### mhp (Minnesota Health Plan, http://glmm.wikidot.com/minnesota-health-plan)
+################
+load('mhp3.RData')
+
+
 
 
 ## cutree_custom <- function(ht, maxHeight, maxGroupSize, maxHeightRelativeFromBase) {
