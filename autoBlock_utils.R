@@ -243,7 +243,10 @@ autoBlock <- setRefClass(
                 Cmodel$setInits(abModel$inits)
                 if(setSeed0) set.seed(0)
                 timingList[[i]] <- as.numeric(system.time(CmcmcList[[i]]$run(niter))[3])
-                samplesList[[i]] <- as.matrix(CmcmcList[[i]]$mvSamples)
+                samplesTEMP <- as.matrix(CmcmcList[[i]]$mvSamples)
+                ## slight hack here, to remove samples of any deterministic nodes...
+                namesToKeep <- setdiff(dimnames(samplesTEMP)[[2]], abModel$Rmodel$getNodeNames(determOnly=TRUE, returnScalarComponents=TRUE))
+                samplesList[[i]] <- samplesTEMP[, namesToKeep]
                 meansList[[i]] <- apply(samplesList[[i]], 2, mean)
                 sdsList[[i]]   <- apply(samplesList[[i]], 2, sd)
                 essList[[i]]   <- apply(samplesList[[i]], 2, effectiveSize)
