@@ -243,10 +243,11 @@ autoBlock <- setRefClass(
                 Cmodel$setInits(abModel$inits)
                 if(setSeed0) set.seed(0)
                 timingList[[i]] <- as.numeric(system.time(CmcmcList[[i]]$run(niter))[3])
-                samplesTEMP <- as.matrix(CmcmcList[[i]]$mvSamples)
                 ## slight hack here, to remove samples of any deterministic nodes...
+                samplesTEMP <- as.matrix(CmcmcList[[i]]$mvSamples)
                 namesToKeep <- setdiff(dimnames(samplesTEMP)[[2]], abModel$Rmodel$getNodeNames(determOnly=TRUE, returnScalarComponents=TRUE))
                 samplesList[[i]] <- samplesTEMP[, namesToKeep]
+                ## end of slight hack...
                 meansList[[i]] <- apply(samplesList[[i]], 2, mean)
                 sdsList[[i]]   <- apply(samplesList[[i]], 2, sd)
                 essList[[i]]   <- apply(samplesList[[i]], 2, effectiveSize)
@@ -275,8 +276,11 @@ autoBlock <- setRefClass(
             essPT[[it]] <<- sort(essPTList[[bestInd]])
             
             if(auto) {
-                samp <- as.matrix(CmcmcList[[bestInd]]$mvSamples)
-                burnedSamples[[it]] <<- samp[(floor(niter/2)+1):niter, ]
+                ## slight hack here, to remove samples of any deterministic nodes...
+                samplesTEMP <- as.matrix(CmcmcList[[bestInd]]$mvSamples)
+                namesToKeep <- setdiff(dimnames(samplesTEMP)[[2]], abModel$Rmodel$getNodeNames(determOnly=TRUE, returnScalarComponents=TRUE))
+                burnedSamples[[it]] <<- samplesTEMP[(floor(niter/2)+1):niter, namesToKeep]
+                ## end of slight hack...
                 empCov[[it]] <<- cov(burnedSamples[[it]])
                 empCor[[it]] <<- cov2cor(empCov[[it]])
                 distMatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
