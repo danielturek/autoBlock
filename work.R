@@ -453,6 +453,44 @@ filename <- file.path(path, 'runmhp.R')
 cat(codeToText(preCode), file=filename)
 cat(codeToText(mhpCode), file=filename, append=TRUE)
 
+load('dfmhp.RData')
+niter <- 200000
+dfmhp$timePer10k <- dfmhp$timing *10000/niter
+dfmhp$essPer10k  <- dfmhp$ess    *10000/niter * 2
+dfmhp$Efficiency <- dfmhp$essPer10k / dfmhp$timePer10k
+print(max(abs(dfmhp$Efficiency - dfmhp$essPT*2)))
+dfmhp$mcmc <- gsub('-.+', '', dfmhp$blocking)
+dfMHP <- printMinTimeABS(dfmhp, round=FALSE)
+save(dfmhp, dfMHP, file='dfmhp.RData')
+
+
+
+
+## ice (auto-regressive BUGS example)
+iceCode <- quote({
+    control$niter <- 200000
+    runList <- list('all', 'default', 'auto')
+    abice <- autoBlock(code=code_ice, constants=constants_ice, data=data_ice, inits=inits_ice, control=control)
+    abice$run(runList)
+    abList <- list(ice=abice)
+    dfice <- createDFfromABlist(abList)
+    filename <- file.path(path, 'dfice.RData')
+    save(dfice, file = filename)
+})
+filename <- file.path(path, 'runice.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(iceCode), file=filename, append=TRUE)
+
+load('dfice.RData')
+niter <- 200000
+dfice$timePer10k <- dfice$timing *10000/niter
+dfice$essPer10k  <- dfice$ess    *10000/niter * 2
+dfice$Efficiency <- dfice$essPer10k / dfice$timePer10k
+print(max(abs(dfice$Efficiency - dfice$essPT*2)))
+dfice$mcmc <- gsub('-.+', '', dfice$blocking)
+dfICE <- printMinTimeABS(dfice, round=FALSE)
+save(dfice, dfICE, file='dfice.RData')
+
 
 
 

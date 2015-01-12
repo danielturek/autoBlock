@@ -794,6 +794,13 @@ load('mhp3.RData')
 
 
 
+################
+## ice (auto-regressive BUGS example)
+################
+load('ice.RData')
+
+
+
 
 ## cutree_custom <- function(ht, maxHeight, maxGroupSize, maxHeightRelativeFromBase) {
 ##     labels <- ht$labels;     height <- ht$height;     merge <- ht$merge
