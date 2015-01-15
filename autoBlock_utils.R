@@ -802,6 +802,16 @@ load('ice.RData')
 
 
 
+
+################
+### Red State Blue State model From Gelman book
+################
+load('redblue3.RData')
+
+
+
+
+
 ## cutree_custom <- function(ht, maxHeight, maxGroupSize, maxHeightRelativeFromBase) {
 ##     labels <- ht$labels;     height <- ht$height;     merge <- ht$merge
 ##     nNodes <- length(labels)

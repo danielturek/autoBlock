@@ -494,6 +494,35 @@ save(dfice, dfICE, file='dfice.RData')
 
 
 
+## Red State Blue State from Gelman book
+redblueCode <- quote({
+    control$niter <- 200000
+    runList <- list('all', 'default', 'auto')
+    abredblue <- autoBlock(code=code_redblue, constants=constants_redblue, data=data_redblue, inits=inits_redblue, control=control)
+    abredblue$run(runList)
+    abList <- list(redblue=abredblue)
+    dfredblue <- createDFfromABlist(abList)
+    filename <- file.path(path, 'dfredblue.RData')
+    save(dfredblue, file = filename)
+})
+filename <- file.path(path, 'runredblue.R')
+cat(codeToText(preCode), file=filename)
+cat(codeToText(redblueCode), file=filename, append=TRUE)
+
+load('dfredblue.RData')
+niter <- 200000
+dfredblue$timePer10k <- dfredblue$timing *10000/niter
+dfredblue$essPer10k  <- dfredblue$ess    *10000/niter * 2
+dfredblue$Efficiency <- dfredblue$essPer10k / dfredblue$timePer10k
+print(max(abs(dfredblue$Efficiency - dfredblue$essPT*2)))
+dfredblue$mcmc <- gsub('-.+', '', dfredblue$blocking)
+dfREDBLUE <- printMinTimeABS(dfredblue, round=FALSE)
+save(dfredblue, dfREDBLUE, file='dfredblue.RData')
+
+
+
+
+
 ## testing of litters priors
 if(FALSE) {
     library(nimble)
