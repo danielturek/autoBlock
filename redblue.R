@@ -76,7 +76,31 @@ if(FALSE) {
             y[i] ~ dbern( p[i] )
         }
     })
-    save(list = c(ls(), 'code_redblue', 'constants_redblue', 'data_redblue', 'inits_redblue'), file = 'redblue3.RData')
+    code_redblueJAGS <- quote({
+        ## top-level parameters
+        for(i in 1:2) {     for(j in 1:2) {     gamma[i, j] ~ dnorm(0, 0.0001)     }     }
+        sigmaIntercept ~ dunif(0, 100)
+        sigmaSlope ~ dunif(0, 100)
+        rho ~ dunif(-1, 1)
+        ## Sigma matrix
+        Prec[1, 1] <- 1 / (sigmaIntercept^2 * (1-rho^2))
+        Prec[2, 2] <- 1 / (sigmaSlope^2     * (1-rho^2))
+        Prec[1, 2] <- -1 * rho / (sigmaIntercept * sigmaSlope * (1-rho^2))
+        Prec[2, 1] <- -1 * rho / (sigmaIntercept * sigmaSlope * (1-rho^2))
+        ## latent "states"
+        for(i in 1:Nstates) {
+            stateBetaMeans[i, 1] <- gamma[1, 1] + gamma[1, 2] * stateIncome[i]
+            stateBetaMeans[i, 2] <- gamma[2, 1] + gamma[2, 2] * stateIncome[i]
+            stateBetas[i, 1:2] ~ dmnorm(stateBetaMeans[i, 1:2], Prec[1:2, 1:2])
+        }
+        ## likelihood
+        for(i in 1:N) {
+            eta[i] <- stateBetas[ state[i], 1 ] + stateBetas[ state[i], 2 ] * income[i]
+            logit(p[i]) <- eta[i]
+            y[i] ~ dbern( p[i] )
+        }
+    })
+    save(list = c(ls(), 'code_redblue', 'code_redblueJAGS', 'constants_redblue', 'data_redblue', 'inits_redblue'), file = 'redblue3.RData')
     
 }
 

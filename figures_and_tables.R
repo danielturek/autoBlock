@@ -109,7 +109,7 @@ load('dfspatial.RData')
 dfFig <- rbind(dfS, dfLit, dfSpat)
 dfFig[grepl('^block.*', dfFig$mcmc), ]$mcmc <- 'informed'  ## informed blockings to 'informed'
 dfFig <- dfFig[dfFig$mcmc %in% c('all','auto0','default','autoMax'), ]  ## removed 'informed'
-dfFig$model <- factor(dfFig$model, levels=c('independent', 'correlated', 'litters', 'spatial'), labels=c('State Space\nIndependent', 'State Space\nCorrelated', 'Binomial\nResponse', 'Spatial'))
+dfFig$model <- factor(dfFig$model, levels=c('independent', 'correlated', 'litters', 'spatial'), labels=c('State Space\nIndependent', 'State Space\nCorrelated', 'Random\nEffects', 'Spatial'))
 dfFig$mcmc <- factor(dfFig$mcmc, levels=c('all', 'default', 'auto0', 'autoMax'), labels=c('All Blocked', 'Default', 'All Scalar', 'Auto Block'))
 ## normalize all Efficiencies by that of 'auto0'
 ## for(mod in unique(dfFig$model)) {
