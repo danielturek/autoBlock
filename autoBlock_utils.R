@@ -12,7 +12,6 @@ autoBlockModel <- setRefClass(
         scalarNodeVector = 'character',
         nodeGroupScalars = 'list',
         nodeGroupAllBlocked = 'list',
-        ###########################nodeGroupStochNodes = 'list',
         monitorsVector = 'character'
         ),
     methods = list(
@@ -28,7 +27,6 @@ autoBlockModel <- setRefClass(
             nodeGroupScalars <<- lapply(scalarNodeVector, function(x) x)
             nodeGroupAllBlocked <<- list(scalarNodeVector)
             stochNodeVector <- Rmodel$getNodeNames(stochOnly=TRUE, includeData=FALSE, returnScalarComponents=FALSE)
-            #######################nodeGroupStochNodes <<- lapply(stochNodeVector, function(x) x)
             monitorsVector <<- Rmodel$getNodeNames(stochOnly=TRUE, includeData=FALSE)
         },
         createGroups = function(listOfBlocks = list()) {
@@ -93,10 +91,10 @@ autoBlockParamDefaults <- function() {
     list(
         adaptIntervalBlock = 200,
         cutree_heights = seq(0, 1, by=0.1),
-        makePlots = TRUE,
+        makePlots = FALSE,
         niter = 200000,
         saveSamples = FALSE,
-        setSeed0 = FALSE,
+        setSeed0 = TRUE,
         verbose = TRUE
         )
 }
@@ -415,7 +413,7 @@ autoBlock <- setRefClass(
     )
 
 
-createDFfromABlist <- function(lst) {
+createDFfromABlist <- function(lst, niter) {
     df <- data.frame(model=character(), blocking=character(), timing=numeric(), node=character(), groupSize = numeric(), groupID = numeric(), sampler = character(), mean=numeric(), sd=numeric(), ess=numeric(), essPT=numeric(), stringsAsFactors=FALSE)
     for(iAB in seq_along(lst)) {
         ab <- lst[[iAB]]
@@ -446,6 +444,10 @@ createDFfromABlist <- function(lst) {
             df[newIndDF,]$essPT <- essPT
         }
     }
+    df$timePer10k <- df$timing * 10000/niter
+    df$essPer10k  <- df$ess    * 10000/niter * 2
+    df$Efficiency <- df$essPer10k / df$timePer10k
+    df$mcmc <- gsub('-.+', '', df$blocking)
     return(df)
 }
 
@@ -580,284 +582,6 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
-
-## testBlockSamplerPerformance <- function(N, niter) {
-##     code <- createCodeAndConstants(N)$code
-##     constants <- list()
-##     data <- list()
-##     inits <- list(x=rep(0,N))
-##     Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
-##     spec <- configureMCMC(Rmodel, NULL)
-##     spec$addSampler('RW_block', list(targetNodes='x', adaptScaleOnly=TRUE), print=FALSE)
-##     Rmcmc <- buildMCMC(spec)
-##     Cmodel <- compileNimble(Rmodel)
-##     Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
-##     set.seed(0); Cmcmc(niter)
-##     samples <- as.matrix(nfVar(Cmcmc, 'mvSamples'))
-##     burnedSamples <- samples[(niter/2+1):niter, , drop = FALSE]
-##     ess <- apply(burnedSamples, 2, effectiveSize)
-##     meanESS <- mean(ess)
-##     eff <- meanESS / (niter/2)
-##     adaptedScale <- nfVar(Cmcmc, 'samplerFunctions')$contentsList[[1]]$scale
-##     acceptanceRateHistory <- nfVar(Cmcmc, 'samplerFunctions')$contentsList[[1]]$acceptanceRateHistory
-##     aRate <- acceptanceRateHistory[length(acceptanceRateHistory)]
-##     optimalRates <- c(0.44, 0.35, 0.32, 0.25, 0.234)
-##     optRate <- optimalRates[if(N>5) 5 else N]
-##     retDF <- data.frame(
-##         N = N,
-##         eff = eff,
-##         adaptedScale = adaptedScale,
-##         aRate = aRate,
-##         optRate = optRate
-##     )
-##     return(retDF)
-## }
-
-
-
-#######################################
-########         MODELS        ########
-#######################################
-
-library(nimble)
-library(coda)
-library(ggplot2)
-if(!exists('control')) control <- list()
-
-################
-### tester
-################
-
-code_tester <- nimbleCode({
-    x[1:3] ~ dmnorm(mu[1:3], Q[1:3,1:3])
-    y[1:3] ~ dmnorm(x[1:3], Q[1:3, 1:3])
-    z1 ~ dnorm(y[1], 100)
-})
-
-constants_tester <- list(mu=rep(0,3), Q=diag(3))
-data_tester <- list(y = c(1,2,3))
-inits_tester <- list(x=rep(0,3), z1=0)
-
-##abtester <- autoBlock(code=code_tester, constants=constants_tester, data=data_tester, inits=inits_tester, control=control)
-
-################
-### litters
-################
-
-G <- 2
-N <- 16
-n <- array(c(13, 12, 12, 11, 9, 10, 9, 9, 8, 11, 8, 10, 13, 10, 12, 9, 10, 9, 10, 5, 9, 9, 13, 7, 5, 10, 7, 6, 10, 10, 10, 7), dim = c(2, 16))
-r <- array(c(13, 12, 12, 11, 9, 10, 9, 9, 8, 10, 8, 9, 12, 9, 11, 8, 9, 8, 9, 4, 8, 7, 11, 4, 4, 5, 5, 3, 7, 3, 7, 0), dim = c(2, 16))
-p <- array(0.5, dim = c(2, 16))
-a <- c(1, 1)
-b <- c(1, 1)
-
-constants_litters <- list(G=G, N=N, n=n)
-data_litters      <- list(r=r)
-inits_litters     <- list(a=a, b=b, p=p)
-
-code_litters <- nimbleCode({
-#    a[1] ~ dunif(0, 80000)
-#    b[1] ~ dunif(0, 10000)
-    a[1] ~ dgamma(1, 0.001)   # works well
-    b[1] ~ dgamma(1, 0.001)   # works well
-    a[2] ~ dunif(0, 100)   # works well
-    b[2] ~ dunif(0, 50)    # works well
-     for (i in 1:G) {
-#         a[i] ~ dgamma(1, 0.001)
-#         b[i] ~ dgamma(1, 0.001)
-         for (j in 1:N) {
-             r[i,j] ~ dbin(p[i,j], n[i,j])
-             p[i,j] ~ dbeta(a[i], b[i])
-         }
-     }
-})
-
-##ablitters <- autoBlock(code=code_litters, constants=constants_litters, data=data_litters, inits=inits_litters, control=control)
-
-rm(list = c('G','N','n','r','p','a','b'))
-
-################
-### SSMmub
-################
-
-## better parameterization: mean and autocorrelation
-code_SSMmub<- nimbleCode({
-    mu ~ dnorm(0, sd = 1000)
-    b ~ dnorm(0, sd = 1000)
-    sigPN ~ dunif(0.0001, 1)
-    sigOE ~ dunif(0.0001, 1)
-    x[1] ~ dnorm(mu, sd = sqrt(sigPN^2 + sigOE^2))
-    y[1] ~ dnorm(x[1], sd = sigOE)
-    a <- 1-(b/mu)
-    for(i in 2:t){
-        x[i] ~ dnorm(x[i-1] * a + b, sd = sigPN)
-        y[i] ~ dnorm(x[i], sd = sigOE)
-    }
-})
-t <- 100
-constants_SSMmub <- list(t = t)
-Rmodel <- nimbleModel(code_SSMmub, constants = constants_SSMmub)
-## Rmodel$mu <- 10/(1-.5)   ## original SSM
-Rmodel$mu <- 1/(1-.95)   ## next SSM attempt (v2)
-Rmodel$b <- 1
-## Rmodel$sigPN <- .1  ## original SSM
-Rmodel$sigPN <- .2  ## next SSM attempt (v2)
-Rmodel$sigOE <- .05
-set.seed(0)
-calculate(Rmodel, Rmodel$getDependencies(c('mu','b','sigPN','sigOE'), determOnly = TRUE))
-simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
-data_SSMmub <- list(y = Rmodel$y)
-inits_SSMmub <- list(mu = Rmodel$mu, b = Rmodel$b, sigPN = Rmodel$sigPN, sigOE = Rmodel$sigOE, x = Rmodel$x)
-
-##abSSMmub <- autoBlock(code=code_SSMmub, constants=constants_SSMmub, data=data_SSMmub, inits=inits_SSMmub, control=control)
-
-rm(list = c('t','Rmodel'))
-
-################
-### SSMab
-################
-
-## parameterization in terms of slope (autocorelation) and intercept,
-## which are highly correlated in mixing
-code_SSMab <- nimbleCode({
-    a ~ dunif(-0.9999, 0.9999)
-    b ~ dnorm(0, sd = 1000)
-    sigPN ~ dunif(0.0001, 1)
-    sigOE ~ dunif(0.0001, 1)
-    x[1] ~ dnorm(b/(1-a), sd = sqrt(sigPN^2 + sigOE^2))
-    y[1] ~ dnorm(x[1], sd = sigOE)
-    for(i in 2:t){
-        x[i] ~ dnorm(x[i-1] * a + b, sd = sigPN)
-        y[i] ~ dnorm(x[i], sd = sigOE)
-    }
-})
-t <- 100
-constants_SSMab <- list(t = t)
-Rmodel <- nimbleModel(code_SSMab, constants = constants_SSMab)
-## Rmodel$a <- .5  ## original SSM
-Rmodel$a <- .95  ## next SSM attempt (v2)
-Rmodel$b <- 1
-## Rmodel$sigPN <- .1  ## original SSM
-Rmodel$sigPN <- .2  ## next SSM attempt (v2)
-Rmodel$sigOE <- .05
-set.seed(0)
-calculate(Rmodel, Rmodel$getDependencies(c('a','b','sigPN','sigOE'), determOnly = TRUE))
-simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
-data_SSMab <- list(y = Rmodel$y)
-inits_SSMab <- list(a = Rmodel$a, b = Rmodel$b, sigPN = Rmodel$sigPN, sigOE = Rmodel$sigOE, x = Rmodel$x)
-
-##abSSMab <- autoBlock(code=code_SSMab, constants=constants_SSMab, data=data_SSMab, inits=inits_SSMab, control=control)
-
-rm(list = c('t','Rmodel'))
-
-
-################
-### spatial
-################
-
-library(Imap)
-myscallops <- read.table("http://www.biostat.umn.edu/~brad/data/myscallops.txt", header = TRUE)
-#####myscallops <- myscallops[1:25,]
-N <- dim(myscallops)[1]
-catch <- myscallops$tcatch
-lat <- myscallops$lat
-long <- myscallops$long
-dist <- array(NA, c(N,N))
-for(i in 1:N) for(j in 1:N) dist[i,j] <- gdist(long[i], lat[i], long[j], lat[j])
-
-code_spatial<- nimbleCode({
-    mu ~ dunif(-100, 100)
-    sigma ~ dunif(0, 100)
-    rho ~ dunif(20, 100)
-    muVec[1:N] <- mu * onesVector[1:N]
-    Cov[1:N,1:N] <- sigma^2 * exp(-dist[1:N,1:N] / rho)
-    g[1:N] ~ dmnorm(muVec[1:N], cov = Cov[1:N,1:N])
-    for(i in 1:N) {
-        y[i] ~ dpois(exp(g[i]))
-    }
-})
-
-constants_spatial <- list(N=N, onesVector=rep(1,N), dist=dist)
-data_spatial <- list(y=catch)
-inits_spatial <- list(mu=0, sigma=5, rho=60, g=rep(0,N))
-
-##abspatial <- autoBlock(code=code_spatial, constants=constants_spatial, data=data_spatial, inits=inits_spatial)
-
-rm(list = c('myscallops', 'N', 'catch', 'lat', 'long', 'dist', 'i', 'j'))
-
-
-################
-### mhp (Minnesota Health Plan, http://glmm.wikidot.com/minnesota-health-plan)
-################
-load('mhp3.RData')
-
-
-
-################
-## ice (auto-regressive BUGS example)
-################
-load('ice.RData')
-
-
-
-
-
-################
-### Red State Blue State model From Gelman book
-################
-load('redblue3.RData')
-
-
-
-
-
-## cutree_custom <- function(ht, maxHeight, maxGroupSize, maxHeightRelativeFromBase) {
-##     labels <- ht$labels;     height <- ht$height;     merge <- ht$merge
-##     nNodes <- length(labels)
-##     nMerges <- dim(merge)[1]
-##     if(nMerges+1 != nNodes) stop('something fishy')
-##     df <- data.frame(baseHeight=numeric(nNodes), recentHeight = numeric(nNodes), num=numeric(nNodes))
-##     for(i in 1:nMerges) { for(j in 1:2) {
-##         if(merge[i,j] < 0) df$baseHeight[abs(merge[i,j])] <- df$recentHeight[abs(merge[i,j])] <- height[i] } }
-##     df$num <- rep(1, nNodes)
-##     nodes <- lapply(1:nNodes, function(x) x)
-##     for(i in 1:nMerges) {
-##         ind1 <- if(merge[i,1] < 0) abs(merge[i,1]) else (merge[i,1]+nNodes)
-##         ind2 <- if(merge[i,2] < 0) abs(merge[i,2]) else (merge[i,2]+nNodes)
-##         indout <- i + nNodes
-##         df[indout,] <- NA
-##         if((df$num[ind1]==0) || (df$num[ind2]==0) || is.na(df$num[ind1]) || is.na(df$num[ind2])) stop('something wrong')
-##         canMerge <- TRUE
-##         if(height[i] > maxHeight) canMerge <- FALSE
-##         if(df$num[ind1] + df$num[ind2] > maxGroupSize) canMerge <- FALSE
-##         bh <- min(df$baseHeight[c(ind1,ind2)])
-##         if(height[i] > bh + maxHeightRelativeFromBase*(1-bh)) canMerge <- FALSE
-##         if(canMerge) {
-##             ## merge
-##             df$baseHeight[indout] <- min(df$baseHeight[c(ind1,ind2)])
-##             df$recentHeight[indout] <- height[i]
-##             df$num[indout] <- df$num[ind1] + df$num[ind2]
-##             nodes[[indout]] <- c(nodes[[ind2]], nodes[[ind1]])
-##             if(df$num[indout] != length(nodes[[indout]])) stop('something wrong')
-##             df[ind1,] <- NA;     df[ind2,] <- NA
-##             df$num[c(ind1,ind2)] <- c(0,0)
-##             nodes[[ind1]] <- NA;     nodes[[ind2]] <- NA
-##         } else {
-##             ## don't merge; lower branch becomes a group, higher branch propagates up
-##             indhigher <- if(df$recentHeight[ind1] > df$recentHeight[ind2]) ind1 else ind2
-##             df[indout,] <- df[indhigher,]
-##             df[indhigher,] <- NA
-##             df$num[indhigher] <- 0
-##             nodes[[indout]] <- nodes[[indhigher]]
-##             nodes[[indhigher]] <- NA
-##         }
-##     }
-##     groupInd <- which(df$num > 0)
-##     groupNodeNumbers <- nodes[groupInd]
-##     groups <- lapply(groupNodeNumbers, function(gnn) labels[gnn])
-##     return(groups)
-## }
 
 
 
