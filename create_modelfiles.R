@@ -157,7 +157,6 @@ simulate(Rmodel, Rmodel$getDependencies(c('x', 'y')))
 data <- list(y = Rmodel$y)
 inits <- list(mu = Rmodel$mu, b = Rmodel$b, sigPN = Rmodel$sigPN, sigOE = Rmodel$sigOE, x = Rmodel$x)
 runList <- list('all',
-                blockMUB = list(c('mu','b')),
                 'default',
                 'auto')
 modelfileName <- paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData')

@@ -47,7 +47,6 @@ makeRunScript('mhp')
 
 
 
-
 ## shows how bad sampling efficiency can be, as correlation increases
 ## output used in Figure 'dfsampEff'
 samplingEfficiencyCode <- quote({
