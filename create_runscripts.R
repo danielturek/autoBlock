@@ -15,12 +15,13 @@ makeRunScript <- function(modelName, niter = 200000) {
         {
             source('~/GitHub/autoBlock/autoBlock_utils.R')
             load(MODELFILE)
-            control <- list(niter = NITER)
+            niter <- NITER
+            control <- list(niter = niter)
             ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
             ab$run(runList)
             abList <- list(ab)
             names(abList) <- MODELNAME
-            DF <- createDFfromABlist(abList, NITER)
+            DF <- createDFfromABlist(abList, niter)
             DFSUMMARY <- printMinTimeABS(DF, round=FALSE)
             save(DF, DFSUMMARY, file = RESULTSFILE)            
         },
