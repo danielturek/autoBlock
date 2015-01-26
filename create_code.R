@@ -13,8 +13,8 @@ codeToText <- function(code) {
 makeRunScript <- function(modelName, niter = 200000) {
     scriptCode <- substitute(
         {
-            source('~/GitHub/autoBlock/autoBlock_utils.R')
-            load(MODELFILE)
+            source('autoBlock_utils.R')
+            load(file.path('data', MODELFILE))
             niter <- NITER
             control <- list(niter = niter)
             ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
@@ -23,17 +23,17 @@ makeRunScript <- function(modelName, niter = 200000) {
             names(abList) <- MODELNAME
             DF <- createDFfromABlist(abList, niter)
             DFSUMMARY <- printMinTimeABS(DF, round=FALSE)
-            save(DF, DFSUMMARY, file = RESULTSFILE)            
+            save(DF, DFSUMMARY, file = file.path('results', RESULTSFILE))
         },
         list(MODELNAME = modelName,
              NITER     = niter,
              DF        = as.name(paste0('df', modelName)),
              DFSUMMARY = as.name(paste0('df', modelName, '_summary')),
-             MODELFILE   = paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData'),
-             RESULTSFILE = paste0('~/GitHub/autoBlock/results/results_',  modelName, '.RData')
+             MODELFILE   = paste0('model_',   modelName, '.RData'),
+             RESULTSFILE = paste0('results_', modelName, '.RData')
              )
     )
-    filename <- paste0('~/GitHub/autoBlock/runscripts/run_', modelName, '.R')
+    filename <- paste0('~/GitHub/autoBlock/code/run_', modelName, '.R')
     cat(codeToText(scriptCode), file = filename)
 }
 
@@ -44,7 +44,8 @@ makeRunScript('SSMindependent')
 makeRunScript('SSMcorrelated')
 makeRunScript('spatial')
 makeRunScript('mhp')
-#makeRunScript('redblue')
+##makeRunScript('redblue')
+makeRunScript('test')
 
 
 
@@ -53,9 +54,9 @@ makeRunScript('mhp')
 samplingEfficiencyCode <- quote({
     library(nimble)
     library(coda)
-    source('~/GitHub/autoBlock/autoBlock_utils.R')
-    kValues <- 0:3
-    Nvalues <- c(2, 4, 8)
+    source('autoBlock_utils.R')
+    kValues <- 0:1
+    Nvalues <- c(2, 4)
     niter <- 200000
     keepInd <- (niter/2+1):niter
     dfsamplingEfficiency <- data.frame()
@@ -74,7 +75,8 @@ samplingEfficiencyCode <- quote({
                 for(node in nodeNames) spec$addSampler('RW', list(targetNode=node), print=FALSE)
                 Rmcmc <- buildMCMC(spec)
                 compiledList <- compileNimble(list(Rmodel, Rmcmc))
-                Cmodel <- compiledList[[1]]; Cmcmc <- compiledList[[2]]
+                Cmodel <- compiledList[[1]]
+                Cmcmc <- compiledList[[2]]
                 Cmodel$setInits(inits)
                 set.seed(0)
                 timing <- as.numeric(system.time(Cmcmc$run(niter))[1])
@@ -84,15 +86,14 @@ samplingEfficiencyCode <- quote({
                 ess <- apply(samples, 2, effectiveSize)
                 meanESS <- mean(ess)
                 essPerN <- meanESS / length(keepInd)
-                samples <- NULL; Cmcmcs <- NA; gc()
                 thisDF <- data.frame(expDecay=expDecay, k=k, rho=rho, N=N, timePer10kN=timePer10kN, essPerN=essPerN)
                 dfsamplingEfficiency <- rbind(dfsamplingEfficiency, thisDF)
-                save(dfsamplingEfficiency, file = '~/GitHub/autoBlock/results/results_samplingEfficiency.RData')
+                save(dfsamplingEfficiency, file = file.path('results', 'results_samplingEfficiency.RData'))
             }
         }
     }
 })
-filename <- '~/GitHub/autoBlock/runscripts/run_samplingEfficiency.R'
+filename <- '~/GitHub/autoBlock/code/run_samplingEfficiency.R'
 cat(codeToText(samplingEfficiencyCode), file = filename)
 
 
@@ -106,11 +107,11 @@ cat(codeToText(samplingEfficiencyCode), file = filename)
 ## used in Figure: 'computationalRequirement'
 computationalRequirementCode <- quote({
     library(nimble)
-    source('~/GitHub/autoBlock/autoBlock_utils.R')
+    source('autoBlock_utils.R')
     niter <- 50000
     keepInd <- (niter/2+1):niter
     dfcomputationalRequirement <- data.frame()
-    Nvalues <- c(2, 3, 5)
+    Nvalues <- c(2, 3)
     for(dist in c('uni', 'multi', 'gamma')) {
         for(N in Nvalues) {
             if(dist == 'uni')   candc <- createCodeAndConstants(N)
@@ -146,12 +147,12 @@ computationalRequirementCode <- quote({
                 timePer10kN = timePer10kN
             )
             dfcomputationalRequirement <- rbind(dfcomputationalRequirement, thisDF)
-            save(dfcomputationalRequirement, file = '~/GitHub/autoBlock/results/results_computationalRequirement.RData')
+            save(dfcomputationalRequirement, file = file.path('results', 'results_computationalRequirement.RData'))
             cat('\n'); print(dfcomputationalRequirement)
         }
     }
 })
-filename <- '~/GitHub/autoBlock/runscripts/run_computationalRequirement.R'
+filename <- '~/GitHub/autoBlock/code/run_computationalRequirement.R'
 cat(codeToText(computationalRequirementCode), file = filename)
 
 ## LEGACY
@@ -189,10 +190,10 @@ cat(codeToText(computationalRequirementCode), file = filename)
 ## Used in a Figure of Simulated Data results, and probably a table
 varyingBlksFixedCorrCode <- quote({
     library(nimble)
-    source('~/GitHub/autoBlock/autoBlock_utils.R')
-    k <- 6
+    source('autoBlock_utils.R')
+    k <- 3
     N <- 2^k
-    rhoVector <- c(0.2, 0.5, 0.8)
+    rhoVector <- c(0.2)
     niter <- 200000
     control <- list(niter = niter)
     runList <- list('all', 'auto')
@@ -213,9 +214,9 @@ varyingBlksFixedCorrCode <- quote({
     dfVaryingBlksFixedCorr <- createDFfromABlist(abList, niter)
     dfVaryingBlksFixedCorr$rho <- as.numeric(gsub('.*Corr(.+)', '\\1', dfVaryingBlksFixedCorr$model))
     dfVaryingBlksFixedCorr_summary <- printMinTimeABS(dfVaryingBlksFixedCorr, round=FALSE)
-    save(dfVaryingBlksFixedCorr, dfVaryingBlksFixedCorr_summary, file = '~/GitHub/autoBlock/results/results_varyingBlksFixedCorr.RData')
+    save(dfVaryingBlksFixedCorr, dfVaryingBlksFixedCorr_summary, file = file.path('results', 'results_varyingBlksFixedCorr.RData'))
 })
-filename <- '~/GitHub/autoBlock/runscripts/run_varyingBlksFixedCorr.R'
+filename <- '~/GitHub/autoBlock/code/run_varyingBlksFixedCorr.R'
 cat(codeToText(varyingBlksFixedCorrCode), file = filename)
 
 
@@ -227,8 +228,8 @@ cat(codeToText(varyingBlksFixedCorrCode), file = filename)
 ## used in a figure of simulated results, and also a table
 fixedBlksVaryingCorrCode <- quote({
     library(nimble)
-    source('~/GitHub/autoBlock/autoBlock_utils.R')
-    Nvalues <- c(20, 50, 100)
+    source('autoBlock_utils.R')
+    Nvalues <- c(20)
     niter <- 200000
     control <- list(niter = niter)
     runList <- list('all', 'auto')
@@ -249,12 +250,12 @@ fixedBlksVaryingCorrCode <- quote({
     }
     dfFixedBlksVaryingCorr <- createDFfromABlist(abList, niter)
     dfFixedBlksVaryingCorr$N <- as.numeric(gsub('.*N(.+)', '\\1', dfFixedBlksVaryingCorr$model))
-    dffixedBlksVaryingCorr$model <- gsub('fixedBlksVaryingCorr', '', dffixedBlksVaryingCorr$model)
-    dffixedBlksVaryingCorr$model <- gsub('N([23456789]0)$', 'N0\\1', dffixedBlksVaryingCorr$model)
+    dfFixedBlksVaryingCorr$model <- gsub('fixedBlksVaryingCorr', '', dfFixedBlksVaryingCorr$model)
+    dfFixedBlksVaryingCorr$model <- gsub('N([23456789]0)$', 'N0\\1', dfFixedBlksVaryingCorr$model)
     dfFixedBlksVaryingCorr_summary <- printMinTimeABS(dfFixedBlksVaryingCorr, round=FALSE)
-    save(dfFixedBlksVaryingCorr, dfFixedBlksVaryingCorr_summary, file = '~/GitHub/autoBlock/results/results_fixedBlksVaryingCorr.RData')
+    save(dfFixedBlksVaryingCorr, dfFixedBlksVaryingCorr_summary, file = file.path('results', 'results_fixedBlksVaryingCorr.RData'))
 })
-filename <- '~/GitHub/autoBlock/runscripts/run_fixedBlksVaryingCorr.R'
+filename <- '~/GitHub/autoBlock/code/run_fixedBlksVaryingCorr.R'
 cat(codeToText(fixedBlksVaryingCorrCode), file = filename)
 
 

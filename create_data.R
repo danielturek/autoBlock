@@ -42,7 +42,7 @@ runList <- list('all',
                 }),
                 'default',
                 'auto')
-modelfileName <- paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData')
+modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
 save(code, constants, data, inits, runList, file = modelfileName)
 
 
@@ -116,7 +116,7 @@ inits <- list(
 runList <- list('all',
                 'default',
                 'auto')
-modelfileName <- paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData')
+modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
 save(code, constants, data, inits, runList, file = modelfileName)
 
 
@@ -159,7 +159,7 @@ inits <- list(mu = Rmodel$mu, b = Rmodel$b, sigPN = Rmodel$sigPN, sigOE = Rmodel
 runList <- list('all',
                 'default',
                 'auto')
-modelfileName <- paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData')
+modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
 save(code, constants, data, inits, runList, file = modelfileName)
 
 
@@ -203,7 +203,7 @@ runList <- list('all',
                 blockAB = list(c('a', 'b')),
                 'default',
                 'auto')
-modelfileName <- paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData')
+modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
 save(code, constants, data, inits, runList, file = modelfileName)
 
 
@@ -240,7 +240,7 @@ inits <- list(mu=0, sigma=5, rho=60, g=rep(0,N))
 runList <- list('all',
                 'default',
                 'auto')
-modelfileName <- paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData')
+modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
 save(code, constants, data, inits, runList, file = modelfileName)
 
 
@@ -252,7 +252,7 @@ save(code, constants, data, inits, runList, file = modelfileName)
 rm(list = ls())
 modelName <- 'mhp'
 ## create constants from 'mhp' data frame
-load('~/GitHub/autoBlock/modelfiles/mhp.RData')
+load('~/GitHub/autoBlock/data/mhp.RData')
 N <- dim(mhp)[1]
 count <- as.numeric(mhp$Count)
 subject <- as.numeric(mhp$Subject)
@@ -308,7 +308,7 @@ inits <- list(mu=0, be=c(0,NA), bp=c(0,0,0,NA), bep=c(0,0,0,NA), sds=0.5, sdse=0
 runList <- list('all',
                 'default',
                 'auto')
-modelfileName <- paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData')
+modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
 save(code, constants, data, inits, runList, file = modelfileName)
 
 
@@ -322,7 +322,7 @@ modelName <- 'redblue'
 library(foreign)
 ## create constants from file: '2000_labeled_processed_race.dta', and 'st.dat'
 ## individual level data
-df <- read.dta('~/GitHub/autoBlock/modelfiles/2000_labeled_processed_race.dta')
+df <- read.dta('~/GitHub/autoBlock/data/2000_labeled_processed_race.dta')
 ###df <- df[seq(1, dim(df)[1], 200), ]     ########## TEMPOPRARY #############
 income <- as.numeric(df$income) - 3   ## contains NAs
 state <- df$state
@@ -334,7 +334,7 @@ y <- y[!naIndex]            ##
 N <- length(y)
 Nstates <- max(state)
 ## state level data
-st <- read.table('~/GitHub/autoBlock/modelfiles/st.dat')
+st <- read.table('~/GitHub/autoBlock/data/st.dat')
 st2000 <- st[st$year == 2000, ]
 stateIncome <- st2000$z.st.inc
 ## create code, constants, data, and inits
@@ -379,7 +379,7 @@ code <- quote({
 runList <- list('all',
                 'default',
                 'auto')
-modelfileName <- paste0('~/GitHub/autoBlock/modelfiles/model_', modelName, '.RData')
+modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
 save(code, constants, data, inits, runList, file = modelfileName)
 
 
