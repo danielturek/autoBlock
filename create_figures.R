@@ -54,7 +54,7 @@ load('~/GitHub/autoBlock/results/results_fixedBlksVaryingCorr.RData')
 dfFixed <- dfFixedBlksVaryingCorr_summary
 dfFixed <- dfFixed[dfFixed$N %in% c(20, 50, 100), ]  # remove everything BUT N = 20,50,100
 dfFixed$mcmc <- factor(dfFixed$mcmc, levels=c('all','auto0','autoMax'), labels=c('All Blocked','All Scalar','Auto Blocking'))
-p2 <- ggplot(dfFixed, aes(x=as.factor(N),y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.68, .81)) + labs(y='Efficiency (effective samples / time)', x='Model Size (N)', color='MCMC\nAlgorithm') + scale_color_manual(values=c(red,green,blue,lightblue))
+p2 <- ggplot(dfFixed, aes(x=as.factor(N),y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.68, .81)) + labs(y='Efficiency (effective samples / time)', x='Model size (N)', color='MCMC\nAlgorithm') + scale_color_manual(values=c(red,green,blue,lightblue))
 dev.new(width=6, height=4)
 ##multiplot(p1, p2, cols=2)
 grid.arrange(p1, p2, ncol = 2)
