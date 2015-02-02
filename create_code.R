@@ -47,6 +47,8 @@ makeRunScript('mhp')
 ##makeRunScript('redblue')
 makeRunScript('test')
 
+makeRunScript('Andrew')   ## very temporary
+
 
 
 ## shows how bad sampling efficiency can be, as correlation increases
