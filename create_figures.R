@@ -2,21 +2,21 @@
 
 
 
-## Figure: 'samplingEfficiency'
+## Figure: 'algorithmicEfficiency'
 ## Section on 'Efficiency loss from not blocking sampling'
-## shows lines, attenuation of sampling efficiency, function of correlation, model size
+## shows lines, attenuation of algorithmic efficiency, function of correlation, model size
 library(ggplot2); library(grid); library(gridExtra)
 load('~/GitHub/autoBlock/results/results_samplingEfficiency.RData')
 df <- dfSamplingEfficiency[dfSamplingEfficiency$expDecay==FALSE, ]
 dfExpDecay <- dfSamplingEfficiency[dfSamplingEfficiency$expDecay==TRUE, ]
 df$d <- as.factor(df$N)
 dfExpDecay$d <- as.factor(dfExpDecay$N)
-p1 <- qplot(data=df, x=-log(1-rho), y=essPerN, color=d, geom='line', ylab='Sampling Efficiency', xlab='Correlation Strength', main='Equal correlation blocks\n') + theme(legend.position=c(.82, .79)) + scale_y_log10()
-p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=essPerN, color=d, geom='line', ylab='Sampling Efficiency', xlab='Correlation Strength', main='Decaying correlation blocks\n') + theme(legend.position=c(.82, .79)) + scale_y_log10()
+p1 <- qplot(data=df, x=-log(1-rho), y=essPerN, color=d, geom='line', ylab='Algorithmic Efficiency', xlab='Correlation Strength', main='Equal correlation blocks\n') + theme(legend.position=c(.82, .79)) + scale_y_log10()
+p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=essPerN, color=d, geom='line', ylab='Algorithmic Efficiency', xlab='Correlation Strength', main='Decaying correlation blocks\n') + theme(legend.position=c(.82, .79)) + scale_y_log10()
 dev.new(width=6, height=5)
 grid.arrange(p1, p2, ncol = 2)
-dev.copy2pdf(file='~/GitHub/autoBlock/figures/samplingEfficiency.pdf')
-system('cp ~/GitHub/autoBlock/figures/samplingEfficiency.pdf ~/GitHub/nimblePapers/autoBlock/')
+dev.copy2pdf(file='~/GitHub/autoBlock/figures/algorithmicEfficiency.pdf')
+system('cp ~/GitHub/autoBlock/figures/algorithmicEfficiency.pdf ~/GitHub/nimblePapers/autoBlock/')
 
 
 
@@ -57,7 +57,7 @@ dfFixed$mcmc <- factor(dfFixed$mcmc, levels=c('all','auto0','autoMax'), labels=c
 p2 <- ggplot(dfFixed, aes(x=as.factor(N),y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.68, .81)) + labs(y='Efficiency (effective samples / time)', x='Model size (N)', color='MCMC\nAlgorithm') + scale_color_manual(values=c(red,green,blue,lightblue))
 dev.new(width=6, height=4)
 ##multiplot(p1, p2, cols=2)
-grid.arrange(p1, p2, ncol = 2, main='Contrived model sampling efficiencies')
+grid.arrange(p1, p2, ncol = 2, main='Contrived model MCMC efficiencies')
 dev.copy2pdf(file='~/GitHub/autoBlock/figures/contrivedModels.pdf')
 system('cp ~/GitHub/autoBlock/figures/contrivedModels.pdf ~/GitHub/nimblePapers/autoBlock/')
 
@@ -80,7 +80,7 @@ dfFig <- dfFig[dfFig$mcmc %in% c('all','auto0','default','autoMax'), ]  ## remov
 dfFig$model <- factor(dfFig$model, levels=c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp'), labels=c('Random\nEffects', 'Auto\nRegressive', 'St. Space\nIndep.', 'St. Space\nCorr.', 'Spatial', 'GLMM'))
 dfFig$mcmc <- factor(dfFig$mcmc, levels=c('all', 'default', 'auto0', 'autoMax'), labels=c('All Blocked', 'Default', 'All Scalar', 'Auto Blocking'))
 dev.new(width=5.0, height=4)
-ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.84, .74)) + labs(y='Efficiency (effective samples / time)', x='', color='MCMC Algorithm', title='Sampling efficiencies\n') + scale_color_manual(values=c(red,black,green,blue))
+ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.84, .74)) + labs(y='Efficiency (effective samples / time)', x='', color='MCMC Algorithm', title='Example model MCMC efficiencies\n') + scale_color_manual(values=c(red,black,green,blue))
 dev.copy2pdf(file='~/GitHub/autoBlock/figures/exampleModels.pdf')
 system('cp ~/GitHub/autoBlock/figures/exampleModels.pdf ~/GitHub/nimblePapers/autoBlock/')
 
