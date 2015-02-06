@@ -10,6 +10,7 @@ _Short answers (a few sentences each) to general questions about reproducibility
 Please answer the following short questions. The suggested length for each reply is 2-5 sentences, but please feel free to write more or less if applicable to your case. These do not need to be as polished as the subsequent sections, and feel free to simply answer these quickly off the top of your head.
 
 1. Who are you and what is your research field? Include your name, affiliation, discipline, and the context of your research program necessary to frame your case study.
+name field area
 
 2. Define what the term "reproducibility" means to you generally and/or in the particular context of your case study.
 
