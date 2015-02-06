@@ -4,7 +4,7 @@ _Stage: alpha_
 
 ~1500-2000 words (~6-9 pages)
 
-****BACKGROUND****
+**BACKGROUND**
 
 _Short answers (a few sentences each) to general questions about reproducibility and scientific research_
 
