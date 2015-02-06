@@ -4,7 +4,7 @@ _Stage: alpha_
 
 ~1500-2000 words (~6-9 pages)
 
-#### BACKGROUND 
+#### BACKGROUND
 _Short answers (a few sentences each) to general questions about reproducibility and scientific research_
 
 Please answer the following short questions. The suggested length for each reply is 2-5 sentences, but please feel free to write more or less if applicable to your case. These do not need to be as polished as the subsequent sections, and feel free to simply answer these quickly off the top of your head.
