@@ -11,23 +11,27 @@ Please answer the following short questions. The suggested length for each reply
 
 1. Who are you and what is your research field? Include your name, affiliation, discipline, and the context of your research program necessary to frame your case study.  
 
-name field area
+My name is Daniel Turek, and my area of research is computational statistics and algorithms, with generally with application to problems of ecological statistics.  The case study I’ll be describing relates to the development of an automated procedure for improving MCMC sampling efficiency.  A stochastic procedure is defined using heuristic arguments, then applied to a diverse suite of example modeling scenarios.
 
 2. Define what the term "reproducibility" means to you generally and/or in the particular context of your case study.
 
+In the context of my case study, “reproducibility” means that users / reviews can re-create the same improvements in MCMC efficiency, when applying our procedure on the same example input models.  However, the results will not match exactly due to stochastic differences, but should exhibit similar order of magnitude improvements.
+
 3. Why do you think that reproducibility in your domain is important?
+
+Reproducibility is important so that others may verify the results stated in our publication of this procedure are genuine.
 
 4. How or where did you learn the reproducible practices described in your case study? Mentors, classes, workshops, etc.
 
+BIDS.  But seriously, mostly through practice of using GitHub, as well as general programming experience.  No specific classes or workshops come to mind.
+
 5. What do you see as the major pitfalls to doing reproducible research in your domain, and do you have any suggestions for working around these? Examples could include legal, logistical, human, or technical challenges.
+
+In the area of computational statistics, there would be few barriers to reproducible research aside from ignorance or technical inability.  However, this case study does highlight one genuine barrier: that of performance differences between various machines and computing platforms, which will affect algorithm runtime, which factors into our measure of efficiency.
 
 6. What do you view as the major incentives for doing reproducible research?
 
-The following two questions are optional.
-
-* Are there any broad reproducibility best practices that you'd recommend for researchers in your field?
-
-* Would you recommend any specific websites, training courses, or books for learning more about reproducibility?
+Primarily, as stated in question 3, so that others may actually (and easily) verify our results, if they so choose.
 
 WORKFLOW NARRATIVE
 Section 2 represents the main workflow narrative and should be approximately 500-800 words.
