@@ -7,8 +7,6 @@ _Stage: alpha_
 #### BACKGROUND
 _Short answers (a few sentences each) to general questions about reproducibility and scientific research_
 
-Please answer the following short questions. The suggested length for each reply is 2-5 sentences, but please feel free to write more or less if applicable to your case. These do not need to be as polished as the subsequent sections, and feel free to simply answer these quickly off the top of your head.
-
 1) Who are you and what is your research field? Include your name, affiliation, discipline, and the context of your research program necessary to frame your case study.  
 
 My name is Daniel Turek, and my area of research is computational statistics and algorithms, with generally with application to problems of ecological statistics.  The case study I’ll be describing relates to the development of an automated procedure for improving MCMC sampling efficiency.  A stochastic procedure is defined using heuristic arguments, then applied to a diverse suite of example modeling scenarios.
