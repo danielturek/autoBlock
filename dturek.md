@@ -51,10 +51,7 @@ The reproducible examples work well, and by including a fixed RNG seed in the ex
 Team members jointly contribute to drafting a manuscript describing this new procedure, and presenting results for the suite of example models.  The manuscript specifically references the aforementioned repository, and also explains the caveat in exact reproduction of the results — namely, that they will vary slightly from those presented, and why.  The reviewers are nonetheless thrilled with the algorithm and reproducible results, and readily accept the manuscript for publication.
 
 PAIN POINT(S)
-3. Pain point(s) - an in depth discussion of ideally one, or possibly a few, sections of your workflow that you would describe as failed, incomplete, or particularly challenging in the context of reproducibility
-Sections 3-5 are more detailed reflections on portions of your workflow and should each be approximately 200-400 words.
-
-Describe in detail the steps of a reproducible workflow which you consider to be particularly painful. How do you handle these? How do you avoid them?
+_Describe in detail the steps of a reproducible workflow which you consider to be particularly painful. How do you handle these? How do you avoid them?_
 
 KEY BENEFIT(S)
 4. Key achievement(s) - an in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others
@@ -62,6 +59,7 @@ KEY BENEFIT(S)
 Flesh out a key step that others could benefit from.
 
 TOOLBOX [OPTIONAL]
+Sections 3-5 are more detailed reflections on portions of your workflow and should each be approximately 200-400 words.
 5. Toolbox [Optional] - if applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general
 
 If there is a specific tool that is critical to the achievement of reproducibility in your case study and that you feel may be underappreciated or underused, flesh it out here for benefit of others. Common tools like git or LaTeX should not be described here unless you have used them in an unconventional or particularly effective way that you feel other scientists would not know about.
