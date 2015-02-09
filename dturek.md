@@ -13,7 +13,7 @@ My name is Daniel Turek, and my area of research is computational statistics and
 
 2) Define what the term "reproducibility" means to you generally and/or in the particular context of your case study.
 
-In the context of my case study, “reproducibility” means that users / reviews can re-create the same improvements in MCMC efficiency, when applying our procedure on the same example input models.  However, the results will not match exactly due to stochastic differences, but should exhibit similar order of magnitude improvements.
+In the context of my case study, “reproducibility” means that users / reviewers can re-create the same improvements in MCMC efficiency, when applying our procedure on the same example input models.  However, the results will not match exactly due to stochastic differences, but should exhibit similar order of magnitude improvements.
 
 3) Why do you think that reproducibility in your domain is important?
 
@@ -110,6 +110,25 @@ In concert with developing this diagram, consider how you would describe this pi
             * Would an external researcher know what order to run them in?
 
             * Would they know what parameters to use?
+
+The process begins with our team brainstorming how an automated procedure for improving MCMC efficiency could work.  This is arguably the most fun part of the entire process.  Anywhere from 2-4 people actually hitting the whiteboard to discuss ideas.  Each of several sessions lasts a few hours.  We review theory and literature between these sessions, too.  This initial exploration occurs over one or two weeks.
+
+A plausible idea is hatched, and now must be prototyped to see if it actually works.  The project lead implements the procedure in R, since our engine for doing MCMC runs natively there.  This works well for our team, since everyone is comfortable in R, and code may be shared and reviewed easily.  We create a private Github repository where members of our team write/review/modify the algorithm.  This is a private repo amongst us, since it’s entirely experimental at this point, and not intended for the public.  There is little (or no) documentation at this point.
+
+Multiple iterations are possible at this stage, whereby ideas are implemented and tested.  Depending on the results of each iteration, we go back to the drawing board several times, to figure out where the previous algorithm failed, and how it can be improved.  Once again, we implement a newer version, and test it using a small number of tests we’ve devised.  This part of the process is time consuming, and potentially frustrating, as many dead-ends are reached.  The path forward is not always clear.  This process of revising and testing our MCMC procedure may take up to 6 months.
+
+Eventually (ideally), this process converges to a functional algorithm.  All members of our team are satisfied with the results, and agree the algorithm is ready for a more professional implementation, and hopefully publication.
+
+One or two team members (those closest with the MCMC engine) do a more formal implementation of our procedure for improving MCMC efficiency.  This implementation is added to an existing public Github repository, which contains the basis of the MCMC engine for public use.  This step should only take a few weeks, since the algorithm is well-defined and finalized.  Appropriate documentation is also written in the form of R help files, which are also added to the public repo.
+
+Concurrently, a suite of reproducible examples is assembled.  These come from known, standard, existing models & data sets, and also a selection of custom models, which are chosen as being either “common” applications of MCMC, or “difficult” applications of MCMC.  A new public Github repository is created, and these example models and data sets are added in the form of R data files.  Additionally, bash scripts for running the MCMC procedure on these examples are added, and a sensible README.  The sole purpose of this repo is to be referenced in the our manuscript, as a place containing fully automated scripts for reproducing the results presented in the manuscript.
+
+The reproducible examples work well, and by including a fixed RNG seed in the executable scripts, we can guarantee the same sampling results from each MCMC.  However, the exact *timing* of each MCMC run will vary (between runs and computing platforms), and hence the final measure of efficiency will vary, too.  Thus, the *exact* results are not perfectly reproducible, but will vary approximately 5% between runs.
+
+Team members jointly contribute to drafting a manuscript describing this new procedure, and presenting results for the suite of example models.  The manuscript specifically references the aforementioned repository, and also explains the caveat in exact reproduction of the results — namely, that they will vary slightly from those presented, and why.  The reviewers are nonetheless thrilled with the algorithm and reproducible results, and readily accept the manuscript for publication.
+
+
+
 
 
 
