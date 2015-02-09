@@ -57,11 +57,12 @@ The iterative process of devising and testing our algorithm is decidedly **not**
 
 In addition, the fact that our set of “reproducible” examples are *not* actually reproducible is a small point of contention.  We are conflicted to call these examples reproducible, since the results presented in our manuscript cannot actually be recreated.  Team members agree that this appears to be unavoidable.  We explain this in the manuscript, and call our results “reproducible” nonetheless.
 
+SOMETHING ABOUT NOT USING SWEAVE OR KNITR TO TRANSFER RESULTS, BECAUSE OF…. NO GOOD REASON.
+
 #### KEY BENEFITS
 _An in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others_
 
-Flesh out a key step that others could benefit from.
+GITHUB REPO WITH SCRIPTS FOR RE-CREATING EACH INDIVIDUAL ANALYSIS FROM MANUSCRIPT, AND A SINGLE MASTER SCRIPT FOR RE-RUNNING ALL ANALYSES.
 
 #### TOOLBOX [OPTIONAL]
 _If applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general_
-
