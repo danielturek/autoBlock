@@ -1,8 +1,8 @@
-**Daniel Turek**  
-**Reproducibility Case Study**  
-**Alpha Stage**
+#### Daniel Turek
+#### Reproducibility Case Study
+#### Alpha Stage
 
-#### BACKGROUND
+##### BACKGROUND
 *Short answers (a few sentences each) to general questions about reproducibility and scientific research*
 
 1) Who are you and what is your research field? Include your name, affiliation, discipline, and the context of your research program necessary to frame your case study.  
@@ -29,7 +29,7 @@ In the area of computational statistics, there are not many barriers to reproduc
 
 Primarily, as stated in question (3), so that others may actually (and easily) verify our results, if they so choose.
 
-#### WORKFLOW NARRATIVE
+##### WORKFLOW NARRATIVE
 *Workflow narrative and diagram - a textual narrative describing your workflow with an accompanying diagram showing your workflow visually*  
 
 The process begins with our team brainstorming how an automated procedure for improving MCMC efficiency could work.  This is arguably the most fun part of the entire process.  Anywhere from 2-4 people actually hitting the whiteboard to discuss ideas.  Each of several sessions lasts a few hours.  We review theory and literature between these sessions, too.  This initial exploration occurs over one or two weeks.
