@@ -48,7 +48,7 @@ Concurrently, a suite of reproducible examples is assembled.  These come from kn
 
 The reproducible examples work well, and by including a fixed RNG seed in the executable scripts, we can guarantee the same sampling results from each MCMC.  However, the exact *timing* of each MCMC run will vary (between runs and computing platforms), and hence the final measure of efficiency will vary, too.  Thus, the *exact* results are not perfectly reproducible, but will vary approximately 5% between runs.
 
-Team members jointly contribute to drafting a manuscript describing this new procedure, and presenting results for the suite of example models.  The manuscript specifically references the aforementioned repository, and also explains the caveat in exact reproduction of the results — namely, that they will vary slightly from those presented, and why.  The reviewers are nonetheless thrilled with the algorithm and reproducible results, and readily accept the manuscript for publication.
+Team members jointly contribute to drafting a manuscript describing this new procedure, and presenting results for the suite of example models.  This is jointly written by team members using latex.  The manuscript specifically references the aforementioned repository, and also explains the caveat in exact reproduction of the results — namely, that they will vary slightly from those presented, and why.  The reviewers are nonetheless thrilled with the algorithm and reproducible results, and readily accept the manuscript for publication.
 
 #### PAIN POINTS
 _Describe in detail the steps of a reproducible workflow which you consider to be particularly painful. How do you handle these? How do you avoid them?_
@@ -57,12 +57,12 @@ The iterative process of devising and testing our algorithm is decidedly **not**
 
 In addition, the fact that our set of “reproducible” examples are *not* actually reproducible is a small point of contention.  We are conflicted to call these examples reproducible, since the results presented in our manuscript cannot actually be recreated.  Team members agree that this appears to be unavoidable.  We explain this in the manuscript, and call our results “reproducible” nonetheless.
 
-SOMETHING ABOUT NOT USING SWEAVE OR KNITR TO TRANSFER RESULTS, BECAUSE OF…. NO GOOD REASON.
+For preparation of our manuscript, numerical results are typed into the tex document.  We opted not to use sweave or knitr.  This was a matter of convenience, rather than having all people contributing to the manuscript learn these tools (as not everyone was comfortable with them).
 
 #### KEY BENEFITS
 _An in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others_
 
-GITHUB REPO WITH SCRIPTS FOR RE-CREATING EACH INDIVIDUAL ANALYSIS FROM MANUSCRIPT, AND A SINGLE MASTER SCRIPT FOR RE-RUNNING ALL ANALYSES.
+The most notably reproducible aspect of this project is the public repo containing input data and scripts for re-running all analyses appearing in our manuscript.  This includes individual bash scripts for running each particular analyses; as well as a single “master” script, which simply re-runs all analyses.  So a reviewer can very easily reproduce (to within a small margin of error) all numerical results appearing in the manuscript.
 
 #### TOOLBOX [OPTIONAL]
 _If applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general_
