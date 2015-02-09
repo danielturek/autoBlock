@@ -11,7 +11,7 @@ My name is Daniel Turek, and my area of research is computational statistics and
 
 2) Define what the term "reproducibility" means to you generally and/or in the particular context of your case study.
 
-In the context of my case study, “reproducibility” means that users / reviewers can re-create the same improvements in MCMC efficiency, when applying our procedure on the same example input models.  However, the results will not match exactly due to stochastic differences, but should exhibit similar order of magnitude improvements.
+In the context of my case study, reproducibility means that users / reviewers can re-create the results (improvements in MCMC efficiency) presented in our manuscript.  However, the results will not match exactly due to small differences in algorithm runtime, but should exhibit similar order of magnitude improvements.
 
 3) Why do you think that reproducibility in your domain is important?
 
