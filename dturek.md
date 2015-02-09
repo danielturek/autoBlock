@@ -53,7 +53,7 @@ Team members jointly contribute to drafting a manuscript describing this new pro
 
 The iterative process of devising and testing our algorithm is decidedly **not** well-documented or particularly reproducible.  The only saving grace is that Github is used for versioning control, so in theory we could look backwards at previous work, if necessary.  But in practice, the commit messages are short and not very descriptive, since everything is so experimental at this point.  No less, there’s basically no documentation accompanying the code.  It would be difficult to actually review previous versions of the algorithm or results, if it were necessary.
 
-In addition, the fact that our set of “reproducible” examples are *not* actually reproducible is a small point of contention.  We are conflicted to call these examples reproducible, since the results presented in our manuscript cannot actually be recreated.  Team members agree that this appears to be unavoidable.  We explain this in the manuscript, and call our results “reproducible” nonetheless.
+In addition, the fact that our set of “reproducible” examples are not perfectly reproducible is a small point of contention.  We are conflicted to call these examples reproducible, since the results presented in our manuscript cannot actually be recreated.  Team members agree that this appears to be unavoidable.  We explain this in the manuscript, and call our results “reproducible” nonetheless.
 
 For preparation of our manuscript, numerical results are typed into the tex document.  We opted not to use sweave or knitr.  This was a matter of convenience, rather than having all people contributing to the manuscript learn these tools (as not everyone was comfortable with them).
 
