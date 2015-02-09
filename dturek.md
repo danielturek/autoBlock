@@ -1,5 +1,5 @@
 **Daniel Turek**  
-**Reproducibility Case Study** 
+**Reproducibility Case Study**  
 **Alpha Stage**
 
 ##### BACKGROUND
