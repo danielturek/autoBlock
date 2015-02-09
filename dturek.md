@@ -23,7 +23,7 @@ Mostly through the use of GitHub, from colleagues at Berkeley, and through gener
 
 5) What do you see as the major pitfalls to doing reproducible research in your domain, and do you have any suggestions for working around these? Examples could include legal, logistical, human, or technical challenges.
 
-In the area of computational statistics, there would be few barriers to reproducible research aside from ignorance or technical inability.  However, this case study does highlight one genuine obstacle: that of performance differences between various machines and computing platforms, which will affect algorithm runtime, which factors into our measure of efficiency.
+In the area of computational statistics, there are not many barriers to reproducible research aside from ignorance or technical inability.  However, this case study does highlight one genuine obstacle: that of performance differences between various machines and computing platforms, which will affect algorithm runtime, which factors into our measure of efficiency.
 
 6) What do you view as the major incentives for doing reproducible research?
 
