@@ -1,11 +1,11 @@
-__Daniel Turek__
+**Daniel Turek**
 **Reproducibility Case Study**
-_Stage: alpha_
+*Stage: alpha*
 
 ~1500-2000 words (~6-9 pages)
 
 #### BACKGROUND
-_Short answers (a few sentences each) to general questions about reproducibility and scientific research_
+*Short answers (a few sentences each) to general questions about reproducibility and scientific research*
 
 1) Who are you and what is your research field? Include your name, affiliation, discipline, and the context of your research program necessary to frame your case study.  
 
@@ -32,7 +32,7 @@ In the area of computational statistics, there would be few barriers to reproduc
 Primarily, as stated in question 3, so that others may actually (and easily) verify our results, if they so choose.
 
 #### WORKFLOW NARRATIVE
-_Workflow narrative and diagram - a textual narrative describing your workflow with an accompanying diagram showing your workflow visually_  
+*Workflow narrative and diagram - a textual narrative describing your workflow with an accompanying diagram showing your workflow visually*  
 
 The process begins with our team brainstorming how an automated procedure for improving MCMC efficiency could work.  This is arguably the most fun part of the entire process.  Anywhere from 2-4 people actually hitting the whiteboard to discuss ideas.  Each of several sessions lasts a few hours.  We review theory and literature between these sessions, too.  This initial exploration occurs over one or two weeks.
 
@@ -51,7 +51,7 @@ The reproducible examples work well, and by including a fixed RNG seed in the ex
 Team members jointly contribute to drafting a manuscript describing this new procedure, and presenting results for the suite of example models.  This is jointly written by team members using latex.  The manuscript specifically references the aforementioned repository, and also explains the caveat in exact reproduction of the results — namely, that they will vary slightly from those presented, and why.  The reviewers are nonetheless thrilled with the algorithm and reproducible results, and readily accept the manuscript for publication.
 
 #### PAIN POINTS
-_Describe in detail the steps of a reproducible workflow which you consider to be particularly painful. How do you handle these? How do you avoid them?_
+*Describe in detail the steps of a reproducible workflow which you consider to be particularly painful. How do you handle these? How do you avoid them?*
 
 The iterative process of devising and testing our algorithm is decidedly **not** well-documented or particularly reproducible.  The only saving grace is that Github is used for versioning control, so in theory we could look backwards at previous work, if necessary.  But in practice, the commit messages are short and not very descriptive, since everything is so experimental at this point.  No less, there’s basically no documentation accompanying the code.  It would be difficult to actually review previous algorithms or results, if it were necessary.
 
@@ -60,9 +60,9 @@ In addition, the fact that our set of “reproducible” examples are *not* actu
 For preparation of our manuscript, numerical results are typed into the tex document.  We opted not to use sweave or knitr.  This was a matter of convenience, rather than having all people contributing to the manuscript learn these tools (as not everyone was comfortable with them).
 
 #### KEY BENEFITS
-_An in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others_
+*An in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others*
 
 The most notably reproducible aspect of this project is the public repo containing input data and scripts for re-running all analyses appearing in our manuscript.  This includes individual bash scripts for running each particular analyses; as well as a single “master” script, which simply re-runs all analyses.  So a reviewer can very easily reproduce (to within a small margin of error) all numerical results appearing in the manuscript.
 
 #### TOOLBOX [OPTIONAL]
-_If applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general_
+*If applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general*
