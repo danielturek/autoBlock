@@ -9,7 +9,7 @@ _Short answers (a few sentences each) to general questions about reproducibility
 
 1) Who are you and what is your research field? Include your name, affiliation, discipline, and the context of your research program necessary to frame your case study.  
 
-My name is Daniel Turek, and my area of research is computational statistics and algorithms, with generally with application to problems of ecological statistics.  The case study I’ll be describing relates to the development of an automated procedure for improving MCMC sampling efficiency.  A stochastic procedure is defined using heuristic arguments, then applied to a diverse suite of example modeling scenarios.
+My name is Daniel Turek, and my area of research is computational statistics and algorithms, with generally with application to problems of ecological statistics.  The case study I’ll be describing relates to the development of an automated procedure for improving MCMC sampling efficiency.
 
 2) Define what the term "reproducibility" means to you generally and/or in the particular context of your case study.
 
@@ -30,8 +30,6 @@ In the area of computational statistics, there would be few barriers to reproduc
 6) What do you view as the major incentives for doing reproducible research?
 
 Primarily, as stated in question 3, so that others may actually (and easily) verify our results, if they so choose.
-
-aa
 
 #### WORKFLOW NARRATIVE
 _Workflow narrative and diagram - a textual narrative describing your workflow with an accompanying diagram showing your workflow visually_  
@@ -112,6 +110,8 @@ In concert with developing this diagram, consider how you would describe this pi
             * Would an external researcher know what order to run them in?
 
             * Would they know what parameters to use?
+
+
 
 PAIN POINT(S)
 3. Pain point(s) - an in depth discussion of ideally one, or possibly a few, sections of your workflow that you would describe as failed, incomplete, or particularly challenging in the context of reproducibility
