@@ -48,7 +48,7 @@ Our reproducible examples include a fixed RNG seed in the executable scripts, th
 
 Team members jointly contribute to drafting a manuscript describing our new algorithm, which presents the results from the suite of example models.  This is jointly written by team members using LaTeX.  The manuscript specifically references the repository of reproducible examples, and also explains the caveat in exact reproduction of the results — namely, that they will vary slightly from those presented, and why.  The reviewers are nonetheless thrilled with the algorithm and reproducible nature of our research, and readily accept the manuscript for publication.
 
-#### PAIN POINTS
+##### PAIN POINTS
 *Describe in detail the steps of a reproducible workflow which you consider to be particularly painful. How do you handle these? How do you avoid them?*
 
 The iterative process of devising and testing our algorithm is not well-documented or particularly reproducible.  The only saving grace is that Github is used for versioning control, so in theory we could look backwards at previous work, if necessary.  But in practice, the commit messages are short and not very descriptive, since everything is experimental at this point.  No less, there’s basically no documentation accompanying our code.  It would be difficult to actually review previous versions of the algorithm or results, if it were necessary.
@@ -57,10 +57,10 @@ In addition, the fact that our set of “reproducible” examples are not perfec
 
 For preparation of our manuscript, numerical results are manually typed into a tex document.  We opted not to use sweave or knitr to automate the interaction between R and our manuscript.  This was a conscious decision, since not all team members are familiar or comfortable using these tools.
 
-#### KEY BENEFITS
+##### KEY BENEFITS
 *An in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others*
 
 The most notably reproducible aspect of this project is the public repo containing input data and scripts for re-running all analyses appearing in our manuscript.  This includes individual bash scripts for running each particular analyses, as well as a single “master” script which re-runs all analyses.  A reviewer can easily reproduce (to within a small margin of error) all numerical results appearing in the manuscript, and researchers reading the ensuing publication have an easy path forward to using the algorithm themselves.
 
-#### TOOLBOX [OPTIONAL]
+##### TOOLBOX [OPTIONAL]
 *If applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general*
