@@ -1,5 +1,5 @@
 __Daniel Turek__
-
+**Reproducibility Case Study**
 _Stage: alpha_
 
 ~1500-2000 words (~6-9 pages)
