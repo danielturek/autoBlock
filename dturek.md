@@ -50,15 +50,15 @@ The reproducible examples work well, and by including a fixed RNG seed in the ex
 
 Team members jointly contribute to drafting a manuscript describing this new procedure, and presenting results for the suite of example models.  The manuscript specifically references the aforementioned repository, and also explains the caveat in exact reproduction of the results — namely, that they will vary slightly from those presented, and why.  The reviewers are nonetheless thrilled with the algorithm and reproducible results, and readily accept the manuscript for publication.
 
-PAIN POINT(S)
+#### PAIN POINTS
 _Describe in detail the steps of a reproducible workflow which you consider to be particularly painful. How do you handle these? How do you avoid them?_
 
-KEY BENEFIT(S)
-4. Key achievement(s) - an in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others
+#### KEY BENEFITS
+4. Key achievements - an in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others
 
 Flesh out a key step that others could benefit from.
 
-TOOLBOX [OPTIONAL]
+#### TOOLBOX [OPTIONAL]
 Sections 3-5 are more detailed reflections on portions of your workflow and should each be approximately 200-400 words.
 5. Toolbox [Optional] - if applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general
 
