@@ -7,7 +7,7 @@
 
 1) Who are you and what is your research field? Include your name, affiliation, discipline, and the context of your research program necessary to frame your case study.  
 
-My name is Daniel Turek, and my area of research is computational statistics and algorithms, with generally with application to problems of ecological statistics.  The case study I’ll be describing relates to the development of an automated procedure for improving MCMC sampling efficiency.
+My name is Daniel Turek, and my area of research is computational statistics and algorithms, generally with application to problems of ecological statistics.  The workflow I’ll be describing is the process, from idea inception to publication, of creating an automated procedure to improve MCMC sampling efficiency.
 
 2) Define what the term "reproducibility" means to you generally and/or in the particular context of your case study.
 
