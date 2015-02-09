@@ -55,7 +55,7 @@ The iterative process of devising and testing our algorithm is decidedly **not**
 
 In addition, the fact that our set of “reproducible” examples are not perfectly reproducible is a small point of contention.  We are conflicted to call these examples reproducible, since the results presented in our manuscript cannot actually be recreated.  Team members agree that this appears to be unavoidable.  We explain this in the manuscript, and call our results “reproducible” nonetheless.
 
-For preparation of our manuscript, numerical results are typed into the tex document.  We opted not to use sweave or knitr.  This was a matter of convenience, rather than having all people contributing to the manuscript learn these tools (as not everyone was comfortable with them).
+For preparation of our manuscript, numerical results are typed into the tex document.  We opted not to use sweave or knitr.  This was a conscious decision, since not all team members are familiar or comfortable using these tools.
 
 #### KEY BENEFITS
 *An in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others*
