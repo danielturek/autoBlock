@@ -15,11 +15,11 @@ In the context of my case study, reproducibility means that users / reviewers ca
 
 3) Why do you think that reproducibility in your domain is important?
 
-Reproducibility is important so that others may verify the results stated in our publication of this procedure are genuine.
+Reproducibility is important so that others may verify the results given in our publication.  This ensures that the results are genuine, and also gives a clear path forward for others to use our procedure.
 
 4) How or where did you learn the reproducible practices described in your case study? Mentors, classes, workshops, etc.
 
-BIDS.  But seriously, mostly through practice of using GitHub, as well as general programming experience.  No specific classes or workshops come to mind.
+Mostly through the use of GitHub, colleagues at Berkeley, and general programming experience.  No specific classes or workshops come to mind.
 
 5) What do you see as the major pitfalls to doing reproducible research in your domain, and do you have any suggestions for working around these? Examples could include legal, logistical, human, or technical challenges.
 
@@ -27,7 +27,7 @@ In the area of computational statistics, there would be few barriers to reproduc
 
 6) What do you view as the major incentives for doing reproducible research?
 
-Primarily, as stated in question 3, so that others may actually (and easily) verify our results, if they so choose.
+Primarily, as stated in question (3), so that others may actually (and easily) verify our results, if they so choose.
 
 #### WORKFLOW NARRATIVE
 *Workflow narrative and diagram - a textual narrative describing your workflow with an accompanying diagram showing your workflow visually*  
