@@ -1,6 +1,6 @@
 **Daniel Turek**  
 **Reproducibility Case Study**  
-*Stage: alpha*
+**Stage Alpha**
 
 #### BACKGROUND
 *Short answers (a few sentences each) to general questions about reproducibility and scientific research*
