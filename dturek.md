@@ -1,8 +1,8 @@
-**Daniel Turek**  
-**Reproducibility Case Study**  
-*Stage: alpha*
+**Daniel Turek**
 
-~1500-2000 words (~6-9 pages)
+**Reproducibility Case Study**
+
+*Stage: alpha*
 
 #### BACKGROUND
 *Short answers (a few sentences each) to general questions about reproducibility and scientific research*
