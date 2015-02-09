@@ -65,4 +65,3 @@ Flesh out a key step that others could benefit from.
 #### TOOLBOX [OPTIONAL]
 _If applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general_
 
-If there is a specific tool that is critical to the achievement of reproducibility in your case study and that you feel may be underappreciated or underused, flesh it out here for benefit of others. Common tools like git or LaTeX should not be described here unless you have used them in an unconventional or particularly effective way that you feel other scientists would not know about.
