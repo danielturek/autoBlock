@@ -33,83 +33,6 @@ Primarily, as stated in question 3, so that others may actually (and easily) ver
 
 #### WORKFLOW NARRATIVE
 _Workflow narrative and diagram - a textual narrative describing your workflow with an accompanying diagram showing your workflow visually_  
-_approximately 500-800 words._
-
-The core of your case study is a textual narrative, and associated visual diagram, describing the workflow for your case study.
-
-Please describe your workflow for this specific project, **from soup to nuts**. Imagine walking a friend or a colleague through the basic steps, paying particular attention to links between steps. Don't forget to include "messy parts", loops, aborted efforts, and failures.
-
-To begin constructing your narrative, please start by creating a diagrammatic sketch, which you are welcome to do by hand, that shows your workflow pipeline visually. Think of this like a circuit diagram for your workflow. Boxes should represent individual steps in the process, with arrows showing how the inputs and outputs of each step relate to each other. Be sure to consider
-
-* specialized tools and where they enter your workflow
-
-* the "state" of the data at each stage
-
-* collaborators
-
-* version control repos
-
-* products produced at various stages (graphics, summaries, etc)
-
-* databases
-
-* whitepapers
-
-* customers (if any)
-
-In concert with developing this diagram, consider how you would describe this picture to a friend or colleague. Write this description in text. While doing so, be sure that you address the following questions, where interesting, applicable, and non-obvious from context.
-
-* For each part of that workflow:
-
-    * How often does this step in the workflow happen?
-
-    * How long does it take?
-
-    * Which members of your team participate (or not)?
-
-    * How much human intervention is involved?
-
-        * Is that human intervention recorded in some way?
-
-    * How much is scripted or otherwise automated?
-
-        * What records are kept about this automation process?
-
-    * Which software or online tools do you rely on?
-
-        * What are its key important uses and limitations?
-
-        * Does it make you more efficient or slow you down?
-
-        * Does this tool affect your ability to reproduce your results?
-
-        * Have you previously tried any other tools for this task?
-
-        * Are you aware of tools that might make this step more efficient? If so, why have those tools not made it into your workflow?
-
-    * How opaque is this step to a researcher external to your research group?
-
-        * Is the necessary code online?
-
-            * How is the documentation?
-
-            * Are there tests?
-
-            * Do you keep example input files alongside your code?
-
-        * Is your raw data online?
-
-            * Is it citeable?
-
-            * Does the license allow external researchers to publish a replication/confirmation of your published work?
-
-        * Is your data processing workflow online?
-
-            * Are the scripts documented?
-
-            * Would an external researcher know what order to run them in?
-
-            * Would they know what parameters to use?
 
 The process begins with our team brainstorming how an automated procedure for improving MCMC efficiency could work.  This is arguably the most fun part of the entire process.  Anywhere from 2-4 people actually hitting the whiteboard to discuss ideas.  Each of several sessions lasts a few hours.  We review theory and literature between these sessions, too.  This initial exploration occurs over one or two weeks.
 
@@ -126,11 +49,6 @@ Concurrently, a suite of reproducible examples is assembled.  These come from kn
 The reproducible examples work well, and by including a fixed RNG seed in the executable scripts, we can guarantee the same sampling results from each MCMC.  However, the exact *timing* of each MCMC run will vary (between runs and computing platforms), and hence the final measure of efficiency will vary, too.  Thus, the *exact* results are not perfectly reproducible, but will vary approximately 5% between runs.
 
 Team members jointly contribute to drafting a manuscript describing this new procedure, and presenting results for the suite of example models.  The manuscript specifically references the aforementioned repository, and also explains the caveat in exact reproduction of the results — namely, that they will vary slightly from those presented, and why.  The reviewers are nonetheless thrilled with the algorithm and reproducible results, and readily accept the manuscript for publication.
-
-
-
-
-
 
 PAIN POINT(S)
 3. Pain point(s) - an in depth discussion of ideally one, or possibly a few, sections of your workflow that you would describe as failed, incomplete, or particularly challenging in the context of reproducibility
