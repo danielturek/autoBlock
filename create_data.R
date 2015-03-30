@@ -35,7 +35,8 @@ code <- quote({
 runList <- list('all',
                 blockAB = list(c('a[1]','b[1]'), c('a[2]','b[2]')),
                 crossLevel = quote({
-                    spec <- configureMCMC(Rmodel, nodes=NULL)
+                    spec <- configureMCMC(oldSpec = abModel$initialMCMCspec)  ## new version
+                    spec$setSamplers()  ## new version -- removes all the samplers from initalMCMCspec
                     spec$addSampler('crossLevel', list(topNodes = c('a[1]', 'b[1]')), print=FALSE)
                     spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
                     spec
@@ -382,5 +383,32 @@ runList <- list('all',
 modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
 save(code, constants, data, inits, runList, file = modelfileName)
 
+
+
+
+################
+### test
+################
+
+rm(list = ls())
+modelName <- 'test'
+
+code <- quote({
+    a ~ dnorm(0, 1)
+    b ~ dnorm(a, 1)
+    c ~ dnorm(b, 1)
+})
+
+constants <- list()
+data <- list(c = 1)
+inits <- list(a = 0, b = 0)
+
+runList <- list('all',
+                'default',
+                'auto',
+                blockAB = list(c('a', 'b')))
+
+modelfileName <- paste0('~/GitHub/autoBlock/data/model_', modelName, '.RData')
+save(code, constants, data, inits, runList, file = modelfileName)
 
 
