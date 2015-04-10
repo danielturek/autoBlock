@@ -19,7 +19,7 @@ Reproducibility is important so that others may verify the results given in our 
 
 4) How or where did you learn the reproducible practices described in your case study? Mentors, classes, workshops, etc.
 
-Mostly through the use of GitHub, from colleagues at Berkeley, and through general programming experience.  No specific classes or workshops come to mind.
+Mostly through the use of Github, from colleagues at Berkeley, and through general programming experience.  No specific classes or workshops come to mind.
 
 5) What do you see as the major pitfalls to doing reproducible research in your domain, and do you have any suggestions for working around these? Examples could include legal, logistical, human, or technical challenges.
 
@@ -60,7 +60,7 @@ For preparation of our manuscript, numerical results are manually typed into a t
 ##### KEY BENEFITS
 *An in depth discussion of ideally one, or possibly a few, sections of your workflow that you are particularly proud of and feel are particularly important or useful to others*
 
-The most notably reproducible aspect of this project is the public repo containing input data and scripts for re-running all analyses appearing in our manuscript.  This includes individual bash scripts for running each particular analyses, as well as a single “master” script which re-runs all analyses.  A reviewer can easily reproduce (to within a small margin of error) all numerical results appearing in the manuscript, and researchers reading the ensuing publication have an easy path forward to using the algorithm themselves.
+The most notably reproducible aspect of this project is the public repo containing input data and scripts for re-running all analyses appearing in our manuscript.  This includes individual bash scripts for running each particular analysis, as well as a single “master” script which re-runs all analyses.  A reviewer can easily reproduce (to within a small margin of error) all numerical results appearing in the manuscript, and researchers reading the ensuing publication have an easy path forward to using the algorithm themselves.
 
 ##### TOOLBOX [OPTIONAL]
 *If applicable, a detailed description of a particular specialized tool that plays a key role in making your workflow reproducible, if you think that the tool might be of broader interest or relevance to a general*
