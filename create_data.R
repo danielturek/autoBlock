@@ -37,8 +37,8 @@ runList <- list('all',
                 crossLevel = quote({
                     spec <- configureMCMC(oldSpec = abModel$initialMCMCspec)  ## new version
                     spec$setSamplers()  ## new version -- removes all the samplers from initalMCMCspec
-                    spec$addSampler('crossLevel', list(topNodes = c('a[1]', 'b[1]')), print=FALSE)
-                    spec$addSampler('crossLevel', list(topNodes = c('a[2]', 'b[2]')), print=FALSE)
+                    spec$addSampler('crossLevel', c('a[1]', 'b[1]'), print=FALSE)
+                    spec$addSampler('crossLevel', c('a[2]', 'b[2]'), print=FALSE)
                     spec
                 }),
                 'default',
