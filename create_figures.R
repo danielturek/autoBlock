@@ -6,7 +6,7 @@
 ## Section on 'Efficiency loss from not blocking sampling'
 ## shows lines, attenuation of algorithmic efficiency, function of correlation, model size
 library(ggplot2); library(grid); library(gridExtra)
-load('~/GitHub/autoBlock/results/results_samplingEfficiency.RData')
+load('~/GitHub/legacy/autoBlock/results/results_samplingEfficiency.RData')
 df <- dfSamplingEfficiency[dfSamplingEfficiency$expDecay==FALSE, ]
 dfExpDecay <- dfSamplingEfficiency[dfSamplingEfficiency$expDecay==TRUE, ]
 df$d <- as.factor(df$N)
@@ -15,8 +15,8 @@ p1 <- qplot(data=df, x=-log(1-rho), y=essPerN, color=d, geom='line', ylab='Algor
 p2 <- qplot(data=dfExpDecay, x=-log(1-rho), y=essPerN, color=d, geom='line', ylab='Algorithmic Efficiency', xlab='Correlation Strength') + theme(legend.position=c(.14, .27)) + scale_y_log10()
 dev.new(width=6, height=3.5)
 grid.arrange(p1, p2, ncol = 2)
-dev.copy2pdf(file='~/GitHub/autoBlock/figures/algorithmicEfficiency.pdf')
-system('cp ~/GitHub/autoBlock/figures/algorithmicEfficiency.pdf ~/GitHub/nimblePapers/autoBlock/')
+dev.copy2pdf(file='~/GitHub/legacy/autoBlock/figures/algorithmicEfficiency.pdf')
+system('cp ~/GitHub/legacy/autoBlock/figures/algorithmicEfficiency.pdf ~/GitHub/nimblePapers/autoBlock/')
 
 
 
@@ -26,15 +26,15 @@ system('cp ~/GitHub/autoBlock/figures/algorithmicEfficiency.pdf ~/GitHub/nimbleP
 ## Section on Numerical Timing Results of Computational Efficiency
 ## shows timing of algorithms, for different model structings, and all/non blocked
 library(ggplot2); library(grid); library(gridExtra)
-load('~/GitHub/autoBlock/results/results_computationalRequirement.RData')
+load('~/GitHub/legacy/autoBlock/results/results_computationalRequirement.RData')
 df <- dfComputationalRequirement
 df <- df[df$blocking != 'blockNoAdapt', ]  ## remove non-adaptive blocking
 df$dist <- factor(df$dist, levels=c('uni','gamma','multi'), labels=c('Normal','Gamma','MV Normal'))  ## rename dist factor
 df$blocking <- factor(df$blocking, levels=c('scalar','blockAdapt'), labels=c('All Scalar', 'All Blocked'))  ## rename blocking factor
 dev.new(width=4, height=4)
 qplot(data=df, x=N, y=timePer10kN, geom='line', linetype=dist, color=blocking, ylim=c(0,16), xlim=c(0,500)) + theme(legend.position=c(.43, .65)) + labs(x='Model dimension (d)', y='Runtime (seconds per 10,000 MCMC samples)', color='MCMC\nAlgorithm', linetype='Model\nStructure')
-dev.copy2pdf(file='~/GitHub/autoBlock/figures/computationalRequirement.pdf')
-system('cp ~/GitHub/autoBlock/figures/computationalRequirement.pdf ~/GitHub/nimblePapers/autoBlock/')
+dev.copy2pdf(file='~/GitHub/legacy/autoBlock/figures/computationalRequirement.pdf')
+system('cp ~/GitHub/legacy/autoBlock/figures/computationalRequirement.pdf ~/GitHub/nimblePapers/autoBlock/')
 
 
 
@@ -45,12 +45,12 @@ system('cp ~/GitHub/autoBlock/figures/computationalRequirement.pdf ~/GitHub/nimb
 ## right pane: 'mixedRhos'
 library(ggplot2); library(grid); library(gridExtra)
 red<-'#D55E00';   green<-'#009E73';   pink='#CC79A7';   blue<-'blue';   lightblue<-'#56B4E9'
-load('~/GitHub/autoBlock/results/results_varyingBlksFixedCorr.RData')
+load('~/GitHub/legacy/autoBlock/results/results_varyingBlksFixedCorr.RData')
 dfVary <- dfVaryingBlksFixedCorr_summary
 dfVary <- dfVary[dfVary$mcmc %in% c('all', 'auto0', 'autoMax'), ]
 dfVary$mcmc <- factor(dfVary$mcmc, levels=c('all','auto0','autoMax'), labels=c('All Blocked','All Scalar','Auto Blocking'))
 p1 <- ggplot(dfVary, aes(x=as.factor(rho),y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.69, .81)) + labs(y='Efficiency (effective samples / time)', x='Correlation', color='MCMC\nAlgorithm') + scale_color_manual(values=c(red,green,blue,lightblue))
-load('~/GitHub/autoBlock/results/results_fixedBlksVaryingCorr.RData')
+load('~/GitHub/legacy/autoBlock/results/results_fixedBlksVaryingCorr.RData')
 dfFixed <- dfFixedBlksVaryingCorr_summary
 dfFixed <- dfFixed[dfFixed$N %in% c(20, 50, 100), ]  # remove everything BUT N = 20,50,100
 dfFixed$mcmc <- factor(dfFixed$mcmc, levels=c('all','auto0','autoMax'), labels=c('All Blocked','All Scalar','Auto Blocking'))
@@ -58,8 +58,8 @@ p2 <- ggplot(dfFixed, aes(x=as.factor(N),y=Efficiency,group=mcmc,color=mcmc)) + 
 dev.new(width=6, height=4)
 ##multiplot(p1, p2, cols=2)
 grid.arrange(p1, p2, ncol = 2)
-dev.copy2pdf(file='~/GitHub/autoBlock/figures/contrivedModels.pdf')
-system('cp ~/GitHub/autoBlock/figures/contrivedModels.pdf ~/GitHub/nimblePapers/autoBlock/')
+dev.copy2pdf(file='~/GitHub/legacy/autoBlock/figures/contrivedModels.pdf')
+system('cp ~/GitHub/legacy/autoBlock/figures/contrivedModels.pdf ~/GitHub/nimblePapers/autoBlock/')
 
 
 
@@ -68,12 +68,12 @@ system('cp ~/GitHub/autoBlock/figures/contrivedModels.pdf ~/GitHub/nimblePapers/
 ## Line chart of Efficiency results for: SSM (both), Litters, and Spatial
 library(ggplot2); library(grid); library(gridExtra)
 red<-'#D55E00';   green<-'#009E73';   black<-'black';   blue<-'blue';   lightblue<-'#56B4E9'
-load('~/GitHub/autoBlock/results/results_litters.RData')
-load('~/GitHub/autoBlock/results/results_ice.RData')
-load('~/GitHub/autoBlock/results/results_SSMindependent.RData')
-load('~/GitHub/autoBlock/results/results_SSMcorrelated.RData')
-load('~/GitHub/autoBlock/results/results_spatial.RData')
-load('~/GitHub/autoBlock/results/results_mhp.RData')
+load('~/GitHub/legacy/autoBlock/results/results_litters.RData')
+load('~/GitHub/legacy/autoBlock/results/results_ice.RData')
+load('~/GitHub/legacy/autoBlock/results/results_SSMindependent.RData')
+load('~/GitHub/legacy/autoBlock/results/results_SSMcorrelated.RData')
+load('~/GitHub/legacy/autoBlock/results/results_spatial.RData')
+load('~/GitHub/legacy/autoBlock/results/results_mhp.RData')
 dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
 dfFig[grepl('^block.*', dfFig$mcmc), ]$mcmc <- 'informed'  ## informed blockings to 'informed'
 dfFig <- dfFig[dfFig$mcmc %in% c('all','auto0','default','autoMax'), ]  ## removed 'informed'
@@ -81,8 +81,9 @@ dfFig$model <- factor(dfFig$model, levels=c('litters', 'ice', 'SSMindependent', 
 dfFig$mcmc <- factor(dfFig$mcmc, levels=c('all', 'default', 'auto0', 'autoMax'), labels=c('All Blocked', 'Default', 'All Scalar', 'Auto Blocking'))
 dev.new(width=4.5, height=3.5)
 ggplot(dfFig, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position=c(.82, .74)) + labs(y='Efficiency (effective samples / time)', x='', color='MCMC Algorithm') + scale_color_manual(values=c(red,black,green,blue))
-dev.copy2pdf(file='~/GitHub/autoBlock/figures/exampleModels.pdf')
-system('cp ~/GitHub/autoBlock/figures/exampleModels.pdf ~/GitHub/nimblePapers/autoBlock/')
+dev.copy2pdf(file='~/GitHub/legacy/autoBlock/figures/exampleModels.pdf')
+system('cp ~/GitHub/legacy/autoBlock/figures/exampleModels.pdf ~/GitHub/nimblePapers/autoBlock/')
+
 
 
 
@@ -96,7 +97,30 @@ df[, c('model', 'mcmc', 'Efficiency')]
 
 
 
-
+## NEW figures for presentations on autoBlock
+## only showing All Blocked and Scalar, then also with AutoBlock
+library(ggplot2); library(grid); library(gridExtra)
+red<-'#D55E00';   green<-'#009E73';   black<-'black';   blue<-'blue';   lightblue<-'#56B4E9'
+load('~/GitHub/legacy/autoBlock/results/results_litters.RData')
+load('~/GitHub/legacy/autoBlock/results/results_ice.RData')
+load('~/GitHub/legacy/autoBlock/results/results_SSMindependent.RData')
+load('~/GitHub/legacy/autoBlock/results/results_SSMcorrelated.RData')
+load('~/GitHub/legacy/autoBlock/results/results_spatial.RData')
+load('~/GitHub/legacy/autoBlock/results/results_mhp.RData')
+dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
+dfFig[grepl('^block.*', dfFig$mcmc), ]$mcmc <- 'informed'  ## informed blockings to 'informed'
+dfFig$model <- factor(dfFig$model, levels=c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp'), labels=c('Random\nEffects', 'Auto\nRegressive', 'St. Space\nIndep.', 'St. Space\nCorr.', 'Spatial', 'GLMM'))
+dfFig$mcmc <- factor(dfFig$mcmc, levels=c('auto0','all','autoMax'), labels=c('Univariate','All Blocked','Auto Blocking'))
+hei <- 4
+wid <- 6
+dfFig3 <- dfFig[dfFig$mcmc %in% c('Univariate','All Blocked','Auto Blocking'), ]  ## all, none, auto
+dfFig2 <- dfFig[dfFig$mcmc %in% c('Univariate','All Blocked'), ]  ## all, none
+dev.new(width=wid, height=hei)
+ggplot(dfFig3, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position='right') + labs(y='Efficiency (effective samples / time)', x='', color='MCMC Algorithm') + scale_color_manual(values=c(green,red,blue)) + ylim(0,40)
+dev.copy2pdf(file='~/Downloads/autoBlock_exampleModels3.pdf')
+dev.new(width=wid, height=hei)
+ggplot(dfFig2, aes(x=model,y=Efficiency,group=mcmc,color=mcmc)) + geom_line() + geom_point(size=2.5) + theme(legend.position='right') + labs(y='Efficiency (effective samples / time)', x='', color='MCMC Algorithm') + scale_color_manual(values=c(green,red)) + ylim(0,40)
+dev.copy2pdf(file='~/Downloads/autoBlock_exampleModels2.pdf')
 
 
 
