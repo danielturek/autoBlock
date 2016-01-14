@@ -312,7 +312,7 @@ autoBlockClass <- setRefClass(
                 empCov[[it]] <<- cov(burnedSamples[[it]])
                 empCor[[it]] <<- cov2cor(empCov[[it]])
                 distMatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
-                hTree[[it]] <<- hclust(distMatrix[[it]])
+                hTree[[it]] <<- hclust(distMatrix[[it]], method = 'single')
             }
             
             if(!saveSamples) burnedSamples[[it]] <<- NA
