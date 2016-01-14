@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cp ~/GitHub/autoBlock/autoBlock.R ~/GitHub/automated-blocking-examples/
-cp ~/GitHub/autoBlock/run_examples.sh ~/GitHub/automated-blocking-examples/
-cp ~/GitHub/autoBlock/data/*.RData ~/GitHub/automated-blocking-examples/data/
-cp ~/GitHub/autoBlock/code/* ~/GitHub/automated-blocking-examples/code/
+cp ~/GitHub/legacy/autoBlock/autoBlock.R ~/GitHub/legacy/automated-blocking-examples/
+cp ~/GitHub/legacy/autoBlock/run_examples.sh ~/GitHub/legacy/automated-blocking-examples/
+cp ~/GitHub/legacy/autoBlock/data/*.RData ~/GitHub/legacy/automated-blocking-examples/data/
+cp ~/GitHub/legacy/autoBlock/code/* ~/GitHub/legacy/automated-blocking-examples/code/
 
-## sed -i "" "s|GitHub/autoBlock|GitHub/automated-blocking-examples|g" ~/GitHub/automated-blocking-examples/code/*
+## sed -i "" "s|GitHub/legacy/autoBlock|GitHub/legacy/automated-blocking-examples|g" ~/GitHub/legacy/automated-blocking-examples/code/*

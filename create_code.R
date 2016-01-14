@@ -23,7 +23,7 @@ makeRunScript <- function(modelName) {
              RESULTSFILE = paste0('results_', modelName, '.RData')
              )
     )
-    filename <- paste0('~/GitHub/autoBlock/code/run_', modelName, '.R')
+    filename <- paste0('~/GitHub/legacy/autoBlock/code/run_', modelName, '.R')
     cat(codeToText(scriptCode), file = filename)
 }
 
@@ -85,7 +85,7 @@ samplingEfficiencyCode <- quote({
         }
     }
 })
-filename <- '~/GitHub/autoBlock/code/run_samplingEfficiency.R'
+filename <- '~/GitHub/legacy/autoBlock/code/run_samplingEfficiency.R'
 cat(codeToText(samplingEfficiencyCode), file = filename)
 
 
@@ -144,7 +144,7 @@ computationalRequirementCode <- quote({
         }
     }
 })
-filename <- '~/GitHub/autoBlock/code/run_computationalRequirement.R'
+filename <- '~/GitHub/legacy/autoBlock/code/run_computationalRequirement.R'
 cat(codeToText(computationalRequirementCode), file = filename)
 
 ## LEGACY
@@ -210,7 +210,7 @@ varyingBlksFixedCorrCode <- quote({
     }
     save(dfVaryingBlksFixedCorr, file = file.path('results', 'results_varyingBlksFixedCorr.RData'))
 })
-filename <- '~/GitHub/autoBlock/code/run_varyingBlksFixedCorr.R'
+filename <- '~/GitHub/legacy/autoBlock/code/run_varyingBlksFixedCorr.R'
 cat(codeToText(varyingBlksFixedCorrCode), file = filename)
 
 
@@ -249,7 +249,7 @@ fixedBlksVaryingCorrCode <- quote({
     }
     save(dfFixedBlksVaryingCorr, file = file.path('results', 'results_fixedBlksVaryingCorr.RData'))
 })
-filename <- '~/GitHub/autoBlock/code/run_fixedBlksVaryingCorr.R'
+filename <- '~/GitHub/legacy/autoBlock/code/run_fixedBlksVaryingCorr.R'
 cat(codeToText(fixedBlksVaryingCorrCode), file = filename)
 
 
