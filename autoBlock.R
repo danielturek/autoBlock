@@ -171,7 +171,6 @@ autoBlockClass_oldClass <- setRefClass(
             it <<- 0
         },
         run = function(runList) {
-            browser()
             if(!is.list(runList)) stop('runList argument should be a list')
             if(is.null(names(runList))) names(runList) <- rep('', length(runList))
             abModel$createInitialMCMCspec(runList)  ## here is where the initial MCMC spec is created, for re-use -- for new version
