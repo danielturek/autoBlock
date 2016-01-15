@@ -1,6 +1,17 @@
 
 resultsDirectoryName <- 'results_hclust_single'
 
+fast <- TRUE
+
+if(FAST) {
+    niter_examples <- 5000
+    niter_compReq  <- 1000
+
+} else {
+    niter_examples <- 200000
+    niter_compReq  <- 50000
+}
+
 codeToText <- function(code) {
     a <- deparse(code, width.cutoff=500L)
     a <- a[c(-1, -length(a))]
@@ -16,11 +27,12 @@ makeRunScript <- function(modelName) {
         {
             source('autoBlock.R')
             load(file.path('data', MODELFILE))
-            OUT <- autoBlock(code, constants, data, inits, 200000, runList)$summary
+            OUT <- autoBlock(code, constants, data, inits, NITER, runList)$summary
             save(OUT, file = file.path(RESULTSDIRECTORY, RESULTSFILE))
         },
         list(OUT              = as.name(paste0('df', modelName)),
              MODELFILE        = paste0('model_',   modelName, '.RData'),
+             NITER            = niter_examples,
              RESULTSDIRECTORY = resultsDirectoryName,
              RESULTSFILE      = paste0('results_', modelName, '.RData')
              )
@@ -52,7 +64,7 @@ samplingEfficiencyCode <- substitute(
         source('autoBlock.R')
         kValues <- 0:3
         Nvalues <- c(2, 4, 8, 16)
-        niter <- 200000
+        niter <- NITER
         keepInd <- (niter/2+1):niter
         dfsamplingEfficiency <- data.frame()
         for(expDecay in c(FALSE, TRUE)) {
@@ -88,7 +100,9 @@ samplingEfficiencyCode <- substitute(
             }
         }
     },
-    list(RESULTSDIRECTORY = resultsDirectoryName)
+    list(NITER            = niter_examples,
+         RESULTSDIRECTORY = resultsDirectoryName
+         )
 )
 filename <- '~/GitHub/legacy/autoBlock/code/run_samplingEfficiency.R'
 cat(codeToText(samplingEfficiencyCode), file = filename)
@@ -106,7 +120,7 @@ computationalRequirementCode <- substitute(
     {
         library(nimble)
         source('autoBlock.R')
-        niter <- 50000
+        niter <- NITER
         keepInd <- (niter/2+1):niter
         dfcomputationalRequirement <- data.frame()
         Nvalues <- c(2, 3)
@@ -150,37 +164,13 @@ computationalRequirementCode <- substitute(
             }
         }
     },
-    list(RESULTSDIRECTORY = resultsDirectoryName)
+    list(
+        NITER            = niter_compReq,
+        RESULTSDIRECTORY = resultsDirectoryName
+    )
 )
 filename <- '~/GitHub/legacy/autoBlock/code/run_computationalRequirement.R'
 cat(codeToText(computationalRequirementCode), file = filename)
-
-## LEGACY
-## (from running 'tag's of blockTesting code, then combining them)
-## filename <- 'runblockTesting.sh'
-## cat('#!/bin/bash\n\n', file=filename)
-## for(tag in tagValues) {
-##     cat(paste0('R CMD BATCH --vanilla runblockTesting', tag, '.R\n'), file=filename, append=TRUE)
-##     cat('git add --all\n', file=filename, append=TRUE)
-##     cat(paste0('git commit -a -m\'ran runBlockTesting', tag, '.R\'\n'), file=filename, append=TRUE)
-##     cat('git push\n\n', file=filename, append=TRUE)
-## }
-## system(paste0('chmod 777 ', filename))
-## ## combining the A, B, C, ...  dataframes from blockTesting
-## rm(list=ls())
-## dfCombined <- data.frame()
-## tagValues <- LETTERS[1:13]
-## for(tag in tagValues) {
-##     load(paste0('dfblockTesting', tag, '.RData'))
-##     dfCombined <- rbind(dfCombined, dfblockTesting)
-## }
-## load('dfblockTesting.RData')
-## dfblockTestingGamma <- dfCombined
-## save(dfblockTesting, dfblockTestingUni, dfblockTestingMulti, dfblockTestingGamma,
-##      file = 'dfblockTesting.RData')
-
-
-
 
 
 
@@ -195,7 +185,7 @@ varyingBlksFixedCorrCode <- substitute(
         k <- 6
         N <- 2^k
         rhoVector <- c(0.2, 0.5, 0.8)
-        niter <- 50000
+        niter <- NITER
         runList <- list('all', 'auto')
         dfVaryingBlksFixedCorr <- NULL
         for(rho in rhoVector) {
@@ -207,11 +197,6 @@ varyingBlksFixedCorrCode <- substitute(
             codeAndConstants <- createCodeAndConstants(N, indList, rep(rho,length(indList)))
             code <- codeAndConstants$code
             constants <- codeAndConstants$constants
-            ## OLD VERSION
-            ##ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-            ##ab$run(runList)
-            ##abList[[paste0('varyingBlksFixedCorr', rho)]] <- ab
-            ## NEW VERSION
             dfTEMP <- autoBlock(code=code, constants=constants, data=data, inits=inits, niter=niter, run=runList)$summary
             dfTEMP <- cbind(data.frame(rho=rho), dfTEMP)
             if(is.null(dfVaryingBlksFixedCorr)) dfVaryingBlksFixedCorr <- dfTEMP
@@ -219,7 +204,10 @@ varyingBlksFixedCorrCode <- substitute(
         }
         save(dfVaryingBlksFixedCorr, file = file.path(RESULTSDIRECTORY, 'results_varyingBlksFixedCorr.RData'))
     },
-    list(RESULTSDIRECTORY = resultsDirectoryName)
+    list(
+        NITER            = niter_compReq,
+        RESULTSDIRECTORY = resultsDirectoryName
+    )
 )
 filename <- '~/GitHub/legacy/autoBlock/code/run_varyingBlksFixedCorr.R'
 cat(codeToText(varyingBlksFixedCorrCode), file = filename)
@@ -236,7 +224,7 @@ fixedBlksVaryingCorrCode <- substitute(
         library(nimble)
         source('autoBlock.R')
         Nvalues <- c(20, 30, 50)
-        niter <- 50000
+        niter <- NITER
         runList <- list('all', 'auto')
         dfFixedBlksVaryingCorr <- NULL
         for(N in Nvalues) {
@@ -249,11 +237,6 @@ fixedBlksVaryingCorrCode <- substitute(
             constants <- codeAndConstants$constants
             data <- list()
             inits <- list(x=rep(0,N))
-            ## OLD VERSION
-            ##ab <- autoBlock(code=code, constants=constants, data=data, inits=inits, control=control)
-            ##ab$run(runList)
-            ##abList[[paste0('fixedBlksVaryingCorrN', N)]] <- ab
-            ## NEW VERSION
             dfTEMP <- autoBlock(code=code, constants=constants, data=data, inits=inits, niter=niter, run=runList)$summary
             dfTEMP <- cbind(data.frame(N=N), data.frame(model=paste0('N',N)), dfTEMP)
             if(is.null(dfFixedBlksVaryingCorr)) dfFixedBlksVaryingCorr <- dfTEMP
@@ -261,51 +244,13 @@ fixedBlksVaryingCorrCode <- substitute(
         }
         save(dfFixedBlksVaryingCorr, file = file.path(RESULTSDIRECTORY, 'results_fixedBlksVaryingCorr.RData'))
     },
-    list(RESULTSDIRECTORY = resultsDirectoryName)
+    list(
+        NITER            = niter_compReq,
+        RESULTSDIRECTORY = resultsDirectoryName
+    )
 )
 filename <- '~/GitHub/legacy/autoBlock/code/run_fixedBlksVaryingCorr.R'
 cat(codeToText(fixedBlksVaryingCorrCode), file = filename)
-
-
-
-## LEGACY
-## filename <- 'runfixedBlksVaryingCorr.sh'
-## cat('#!/bin/bash\n\n', file=filename)
-## for(tag in tagValues) {
-##     cat(paste0('R CMD BATCH --vanilla runfixedBlksVaryingCorr', tag, '.R\n'), file=filename, append=TRUE)
-##     cat('git add --all\n', file=filename, append=TRUE)
-##     cat(paste0('git commit -a -m\'ran runfixedBlksVaryingCorr', tag, '.R\'\n'), file=filename, append=TRUE)
-##     cat('git push\n\n', file=filename, append=TRUE)
-## }
-## system(paste0('chmod 777 ', filename))
-## ## combining the A, B, C, ...  dataframes from fixedBlksVaryingCorr
-## rm(list=ls())
-## dfCombined <- data.frame()
-## tagValues <- LETTERS[1:3]
-## for(tag in tagValues) {
-##     load(paste0('dffixedBlksVaryingCorr', tag, '.RData'))
-##     dfCombined <- rbind(dfCombined, dffixedBlksVaryingCorr)
-## }
-## dffixedBlksVaryingCorr <- dfCombined
-## save(dffixedBlksVaryingCorr, file = 'dffixedBlksVaryingCorr.RData')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
