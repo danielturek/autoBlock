@@ -1,12 +1,10 @@
 
 resultsDirectoryName <- 'results_hclust_single'
-
 fast <- TRUE
 
-if(FAST) {
+if(fast) {
     niter_examples <- 5000
     niter_compReq  <- 1000
-
 } else {
     niter_examples <- 200000
     niter_compReq  <- 50000

@@ -1,5 +1,5 @@
 source("autoBlock.R")
 load(file.path("data", "model_test.RData"))
-dftest <- autoBlock(code, constants, data, inits, 2e+05, runList)$summary
+dftest <- autoBlock(code, constants, data, inits, 5000, runList)$summary
 save(dftest, file = file.path("results_hclust_single", "results_test.RData"))
 

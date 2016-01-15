@@ -1,7 +1,7 @@
 library(nimble)
 source("autoBlock.R")
 Nvalues <- c(20, 30, 50)
-niter <- 50000
+niter <- 1000
 runList <- list("all", "auto")
 dfFixedBlksVaryingCorr <- NULL
 for (N in Nvalues) {
