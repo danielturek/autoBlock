@@ -18,7 +18,7 @@ for (expDecay in c(FALSE, TRUE)) {
             Rmodel <- nimbleModel(code = code, constants = constants, data = data, inits = inits)
             nodeNames <- Rmodel$expandNodeNames("x", returnScalarComponents = TRUE)
             spec <- configureMCMC(Rmodel, nodes = NULL)
-            for (node in nodeNames) spec$addSampler("RW", list(targetNode = node), print = FALSE)
+            for (node in nodeNames) spec$addSampler(type = "RW", target = node, print = FALSE)
             Rmcmc <- buildMCMC(spec)
             compiledList <- compileNimble(list(Rmodel, Rmcmc))
             Cmodel <- compiledList[[1]]

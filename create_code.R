@@ -77,7 +77,7 @@ samplingEfficiencyCode <- substitute(
                     Rmodel <- nimbleModel(code=code, constants=constants, data=data, inits=inits)
                     nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
                     spec <- configureMCMC(Rmodel, nodes = NULL)
-                    for(node in nodeNames) spec$addSampler('RW', list(targetNode=node), print=FALSE)
+                    for(node in nodeNames) spec$addSampler(type = 'RW', target = node, print=FALSE)
                     Rmcmc <- buildMCMC(spec)
                     compiledList <- compileNimble(list(Rmodel, Rmcmc))
                     Cmodel <- compiledList[[1]]
@@ -135,9 +135,9 @@ computationalRequirementCode <- substitute(
                 nodeNames <- Rmodel$expandNodeNames('x', returnScalarComponents = TRUE)
                 specList <- list()  # ordering: scalar, blockNoAdapt, blockAdapt
                 for(i in 1:3) specList[[i]] <- configureMCMC(Rmodel, nodes = NULL)
-                for(node in nodeNames) specList[[1]]$addSampler('RW', list(targetNode=node), print=FALSE)
-                specList[[2]]$addSampler('RW_block', list(targetNodes=nodeNames, adaptScaleOnly=TRUE), print=FALSE)
-                specList[[3]]$addSampler('RW_block', list(targetNodes=nodeNames), print=FALSE)
+                for(node in nodeNames) specList[[1]]$addSampler(type = 'RW', target = node, print=FALSE)
+                specList[[2]]$addSampler(type = 'RW_block', target = nodeNames, control=list(adaptScaleOnly=TRUE), print=FALSE)
+                specList[[3]]$addSampler(type = 'RW_block', target = nodeNames, print=FALSE)
                 toCompileList <- list(Rmodel)
                 for(i in 1:3) toCompileList[[i+1]] <- buildMCMC(specList[[i]])
                 compiledList <- compileNimble(toCompileList)

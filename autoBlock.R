@@ -1,5 +1,6 @@
 
-
+library(nimble)
+library(coda)
 
 autoBlock <- function(code, constants=list(), data=list(), inits=list(),
                       niter = 10000,
@@ -7,7 +8,7 @@ autoBlock <- function(code, constants=list(), data=list(), inits=list(),
                       setSeed0 = TRUE,
                       verbose = FALSE,
                       round = TRUE ) {
-    ab <- autoBlockClass(code, constants, data, inits,
+    ab <- autoBlockClass_oldClass(code, constants, data, inits,
                          control = list(niter=niter, setSeed0=setSeed0, verbose=verbose))
     if(!'auto' %in% run) run <- c(run, 'auto')  ## always use 'autoBlock' routine
     ab$run(run)
@@ -40,8 +41,8 @@ autoBlock <- function(code, constants=list(), data=list(), inits=list(),
 
 
 
-autoBlockModel <- setRefClass(
-    Class = 'autoBlockModel',
+autoBlockModel_oldClass <- setRefClass(
+    Class = 'autoBlockModel_oldClass',
     fields = list(
         code = 'ANY',
         constants = 'list',
@@ -75,8 +76,8 @@ autoBlockModel <- setRefClass(
         createInitialMCMCspec = function(runList) {
             initialMCMCspec <<- configureMCMC(Rmodel)
             nInitialSamplers <- length(initialMCMCspec$samplerSpecs)
-            initialMCMCspec$addSampler('RW',       control = list(targetNode  = scalarNodeVector[1]), print=FALSE)  ## add one RW sampler
-            initialMCMCspec$addSampler('RW_block', control = list(targetNodes = scalarNodeVector[1]), print=FALSE)  ## add one RW_block sampler
+            initialMCMCspec$addSampler(type = 'RW',       target = scalarNodeVector[1], print=FALSE)  ## add one RW sampler
+            initialMCMCspec$addSampler(type = 'RW_block', target = scalarNodeVector[1], print=FALSE)  ## add one RW_block sampler
             addCustomizedSamplersToInitialMCMCspec(runList)
             initialMCMCspec$addMonitors(monitorsVector, print=FALSE)
             RinitialMCMC <- buildMCMC(initialMCMCspec)
@@ -125,16 +126,12 @@ autoBlockParamDefaults <- function() {
 }
 
 
-autoBlockClass <- setRefClass(
-
-    Class = 'autoBlockClass',
-
+autoBlockClass_oldClass <- setRefClass(
+    Class = 'autoBlockClass_oldClass',
     fields = list(
-        
         ## special
         abModel = 'ANY',
         it = 'numeric',
-
         ## overall control
         cutree_heights = 'numeric',
         makePlots = 'logical',
@@ -142,7 +139,6 @@ autoBlockClass <- setRefClass(
         saveSamples = 'logical',
         setSeed0 = 'logical',
         verbose = 'logical',
-
         ## persistant lists of historical data
         naming = 'list',
         candidateGroups = 'list',
@@ -163,26 +159,22 @@ autoBlockClass <- setRefClass(
         distMatrix = 'list',
         hTree = 'list'
         ),
-
     methods = list(
-
         initialize = function(code, constants=list(), data=list(), inits=list(), control=list()) {
             library(lattice)
             library(coda)
             library(nimble)
-            abModel <<- autoBlockModel(code=code, constants=constants, data=data, inits=inits)
+            abModel <<- autoBlockModel_oldClass(code=code, constants=constants, data=data, inits=inits)
             defaultsList <- autoBlockParamDefaults()
             for(i in seq_along(defaultsList)) if(is.null(control[[names(defaultsList)[i]]])) control[[names(defaultsList)[i]]] <- defaultsList[[i]]
             for(i in seq_along(control)) eval(substitute(verbose <<- VALUE, list(verbose=as.name(names(control)[i]), VALUE=control[[i]])))
             it <<- 0
         },
-
         run = function(runList) {
+            browser()
             if(!is.list(runList)) stop('runList argument should be a list')
             if(is.null(names(runList))) names(runList) <- rep('', length(runList))
-
             abModel$createInitialMCMCspec(runList)  ## here is where the initial MCMC spec is created, for re-use -- for new version
-            
             for(i in seq_along(runList)) {
                 runListElement <- runList[[i]]
                 runListName <- names(runList)[i]
@@ -195,25 +187,19 @@ autoBlockClass <- setRefClass(
                 } else stop('don\'t understand element in run list')
                 ##Rmodel <- abModel$newModel() ## original version
                 switch(type,
-                       
                        none =    { specList <- list(createSpecFromGroups(abModel$nodeGroupScalars))
                                    runSpecListAndSaveBest(specList, 'none') },
-
                        all =     { specList <- list(createSpecFromGroups(abModel$nodeGroupAllBlocked))
                                    runSpecListAndSaveBest(specList, 'all') },
-
                        default = { specList <- list(configureMCMC(oldSpec = abModel$initialMCMCspec))
                                    runSpecListAndSaveBest(specList, 'default') },
-
                        blocks =  { specList <- list(createSpecFromGroups(abModel$createGroups(runListElement)))
                                    name <- if(runListName == '') 'customBlocks' else runListName
                                    runSpecListAndSaveBest(specList, name) },
-
                        spec =    { Rmodel <- abModel$Rmodel  ## just hoping that the customSpec will find this
                                    specList <- list(eval(runListElement, envir=environment()))
                                    name <- if(runListName == '') 'customSpec' else runListName
                                    runSpecListAndSaveBest(specList, name) },
-
                        auto =    { autoIt <- 0
                                    while((autoIt < 2) || ((!groupingsEquiv(grouping[[it]], grouping[[it-1]])) && (min(essPT[[it]]) > min(essPT[[it-1]])))) {
                                        ##Rmodel <- abModel$newModel() ## original version
@@ -225,7 +211,6 @@ autoBlockClass <- setRefClass(
                                },
                        stop('don\'t understand element in run list'))
             }
-
             names(candidateGroups) <<- naming
             names(grouping) <<- naming
             names(groupSizes) <<- naming
@@ -239,7 +224,6 @@ autoBlockClass <- setRefClass(
             names(ess) <<- naming
             names(essPT) <<- naming
         },
-
         determineCandidateGroupsFromCurrentSample = function() {
             cutreeList <- lapply(cutree_heights, function(height) cutree(hTree[[it]], h = height))
             names(cutreeList) <- paste0('cut', cutree_heights)
@@ -248,11 +232,9 @@ autoBlockClass <- setRefClass(
             candidateGroupsList <- lapply(uniqueCutreeList, function(ct) determineGroupsFromCutree(ct))
             return(candidateGroupsList)
         },
-        
         determineGroupsFromCutree = function(ct) {
             return(lapply(unique(ct), function(x) names(ct)[ct==x]))
         },
-        
         runSpecListAndSaveBest = function(specList, name, auto=FALSE) {
             RmcmcList <- timingList <- samplesList <- meansList <- sdsList <- essList <- essPTList <- essPTminList <- list()
             for(i in seq_along(specList)) {
@@ -279,15 +261,12 @@ autoBlockClass <- setRefClass(
                 meansList[[i]] <- apply(samplesList[[i]], 2, mean)
                 sdsList[[i]]   <- apply(samplesList[[i]], 2, sd)
                 essList[[i]]   <- apply(samplesList[[i]], 2, effectiveSize)
-                
                 if(!saveSamples) samplesList[[i]] <- NA
-                
                 essPTList[[i]] <- essList[[i]] / timingList[[i]]
                 essPTminList[[i]] <- sort(essPTList[[i]])[1]
             }
             bestInd <- as.numeric(which(unlist(essPTminList) == max(unlist(essPTminList))))
             if(!is.null(names(specList))) name <- paste0(name, '-', names(specList)[bestInd])
-            
             it <<- it + 1
             naming[[it]] <<- name
             candidateGroups[[it]] <<- lapply(specList, function(spec) determineGroupsFromSpec(spec))
@@ -302,7 +281,6 @@ autoBlockClass <- setRefClass(
             sds[[it]] <<- sdsList[[bestInd]]
             ess[[it]] <<- essList[[bestInd]]
             essPT[[it]] <<- sort(essPTList[[bestInd]])
-            
             if(auto) {
                 ## slight hack here, to remove samples of any deterministic nodes...
                 samplesTEMP <- as.matrix(CmcmcList[[bestInd]]$mvSamples)
@@ -314,50 +292,41 @@ autoBlockClass <- setRefClass(
                 distMatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
                 hTree[[it]] <<- hclust(distMatrix[[it]], method = 'single')
             }
-            
             if(!saveSamples) burnedSamples[[it]] <<- NA
-            
             if(verbose) printCurrent(name, specList[[bestInd]])
             if(makePlots && auto) makeCurrentPlots(name)
         },
-
         determineGroupsFromSpec = function(spec) {
             groups <- list()
             for(ss in spec$samplerSpecs) {
-                if(ss$type == 'RW_block') {
-                    nodes <- ss$control$targetNodes
-                } else if(ss$type == 'crossLevel') {
-                    topNodes <- ss$control$topNodes
+                if(ss$name == 'crossLevel') {
+                    topNodes <- ss$target
                     lowNodes <- spec$model$getDependencies(topNodes, self=FALSE, stochOnly=TRUE, includeData=FALSE)
                     nodes <- c(topNodes, lowNodes)
-                } else if(!is.null(ss$control$targetNode)) {
-                    nodes <- ss$control$targetNode
-                } else stop('don\'t understand sampler type')
+                } else {
+                    nodes <- ss$target
+                }
                 groups[[length(groups)+1]] <- spec$model$expandNodeNames(nodes, returnScalarComponents=TRUE)
             }
             return(groups)
         },
-
         determineNodeGroupSizesFromGroups = function(groups) {
             groupSizeVector <- numeric(0)
             for(gp in groups) for(node in gp) groupSizeVector[[node]] <- length(gp)
             return(groupSizeVector)
         },
-
         determineNodeGroupIDsFromGroups = function(groups) {
             groupIDvector <- numeric(0)
             for(i in seq_along(groups)) for(node in groups[[i]]) groupIDvector[[node]] <- i
             return(groupIDvector)
         },
-
         determineSamplersFromGroupsAndSpec = function(groups, spec) {
             samplerSpecs <- spec$samplerSpecs
             if(length(groups) != length(samplerSpecs)) stop('something wrong')
             samplerVector <- character(0)
-            for(i in seq_along(groups)) for(node in groups[[i]]) samplerVector[[node]] <- samplerSpecs[[i]]$type
+            for(i in seq_along(groups)) for(node in groups[[i]]) samplerVector[[node]] <- samplerSpecs[[i]]$name
             return(samplerVector)
         },
-        
         createSpecFromGroups = function(groups) {
             ##spec <- configureMCMC(Rmodel, nodes=NULL, monitors=character(0)) ## original version
             spec <- configureMCMC(oldSpec = abModel$initialMCMCspec)  ## new version
@@ -365,15 +334,14 @@ autoBlockClass <- setRefClass(
             for(nodeGroup in groups) addSamplerToSpec(abModel$Rmodel, spec, nodeGroup)
             return(spec)
         },
-        
         checkOverMCMCspec = function(spec) {
             warn <- FALSE
             for(ss in spec$samplerSpecs) {
-                ## if(ss$type == 'end') {
+                ## if(ss$name == 'end') {
                 ##     msg <- 'using \'end\' sampler may lead to results we don\'t want'
                 ##     cat(paste0('\nWARNING: ', msg, '\n\n')); warning(msg)
                 ## }
-                if(grepl('^conjugate_', ss$type) && nimble:::nimbleOptions$verifyConjugatePosterior) {
+                if(grepl('^conjugate_', ss$name) && nimbleOptions('verifyConjugatePosteriors')) {
                     ##msg <- 'conjugate sampler running slow due to checking the posterior'
                     ##cat(paste0('\nWARNING: ', msg, '\n\n')); warning(msg)
                     warn <- TRUE
@@ -384,7 +352,6 @@ autoBlockClass <- setRefClass(
                 warning(msg, call. = FALSE)
             }
         },
-
         printCurrent = function(name, spec) {
             cat(paste0('\n################################\nbegin iteration ', it, ': ', name, '\n################################\n'))
             if(length(candidateGroups[[it]]) > 1) { cat('\ncandidate groups:\n'); cg<-candidateGroups[[it]]; for(i in seq_along(cg)) { cat(paste0('\n',names(cg)[i],':\n')); printGrouping(cg[[i]]) } }
@@ -395,16 +362,13 @@ autoBlockClass <- setRefClass(
             cat('\nESS/time:\n'); print(round(essPT[[it]], 1))
             cat(paste0('\n################################\nend iteration ', it, ': ', name, '\n################################\n\n'))
         },
-
         makeCurrentPlots = function(name) {
             dev.new()
             if(inherits(try(plot(as.dendrogram(hTree[[it]]), ylim=c(0,1), main=name), silent=TRUE), 'try-error')) dev.off()
         },
-
         printGrouping = function(g) {
             for(i in seq_along(g)) cat(paste0('[', i, '] ', paste0(g[[i]], collapse=', '), '\n'))
         },
-
         groupingsEquiv = function(grouping1, grouping2) {
             grouping1 <- lapply(grouping1, sort)
             grouping2 <- lapply(grouping2, sort)
@@ -428,26 +392,22 @@ autoBlockClass <- setRefClass(
 
 addSamplerToSpec <- function(Rmodel, spec, nodeGroup) {
     if(length(nodeGroup) > 1) {
-        spec$addSampler(type = 'RW_block', control = list(targetNodes=nodeGroup), print = FALSE); return()
+        spec$addSampler(type = 'RW_block', target = nodeGroup, print = FALSE); return()
     }
     if(!(nodeGroup %in% Rmodel$getNodeNames())) {
-        spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup), print = FALSE); return()
+        spec$addSampler(type = 'RW', target = nodeGroup, print = FALSE); return()
     }
     if(nodeGroup %in% Rmodel$getMaps('nodeNamesEnd')) {
         ##cat(paste0('warning: using \'end\' sampler for node ', nodeGroup, ' may lead to results we don\'t want\n\n'))
-        spec$addSampler(type = 'end', control = list(targetNode=nodeGroup), print = FALSE); return()
+        spec$addSampler(type = 'end', target = nodeGroup, print = FALSE); return()
     }
-    ## conjugacyResult <- Rmodel$checkConjugacy(nodeGroup)
-    ## if((!is.null(conjugacyResult)) && conjOveride) {
-    ##     spec$addSampler(type = conjugacyResult$samplerType, control = conjugacyResult$control, print = FALSE); return()
-    ## }
-    if(Rmodel$getNodeInfo()[[nodeGroup]]$isDiscrete()) {
-        spec$addSampler(type = 'slice', control = list(targetNode=nodeGroup), print = FALSE); return()
+    if(Rmodel$isDiscrete(nodeGroup)) {
+        spec$addSampler(type = 'slice', target = node, print = FALSE); return()
     }
     if(length(Rmodel$expandNodeNames(nodeGroup, returnScalarComponents = TRUE)) > 1) {
-        spec$addSampler(type = 'RW_block', control = list(targetNodes=nodeGroup), print = FALSE); return()
+        spec$addSampler(type = 'RW_block', target = nodeGroup, print = FALSE); return()
     }
-    spec$addSampler(type = 'RW', control = list(targetNode=nodeGroup), print = FALSE); return()
+    spec$addSampler(type = 'RW', target = nodeGroup, print = FALSE); return()
 }
 
 createDFfromABlist <- function(lst, niter) {
