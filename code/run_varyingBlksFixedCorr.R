@@ -3,7 +3,7 @@ source("autoBlock.R")
 k <- 6
 N <- 2^k
 rhoVector <- c(0.2, 0.5, 0.8)
-niter <- 1000
+niter <- 50000
 runList <- list("all", "auto")
 dfVaryingBlksFixedCorr <- NULL
 for (rho in rhoVector) {

@@ -3,7 +3,7 @@ library(coda)
 source("autoBlock.R")
 kValues <- 0:3
 Nvalues <- c(2, 4, 8, 16)
-niter <- 5000
+niter <- 50000
 keepInd <- (niter/2 + 1):niter
 dfsamplingEfficiency <- data.frame()
 for (expDecay in c(FALSE, TRUE)) {
