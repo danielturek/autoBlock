@@ -25,5 +25,5 @@ for (rho in rhoVector) {
         dfVaryingBlksFixedCorr <- dfTEMP
     else dfVaryingBlksFixedCorr <- rbind(dfVaryingBlksFixedCorr, dfTEMP)
 }
-save(dfVaryingBlksFixedCorr, file = file.path("results_hclust_single", "results_varyingBlksFixedCorr.RData"))
+save(dfVaryingBlksFixedCorr, file = file.path("results_hclust_average", "results_varyingBlksFixedCorr.RData"))
 

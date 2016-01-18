@@ -37,7 +37,7 @@ for (dist in c("uni", "multi", "gamma")) {
         }
         thisDF <- data.frame(N = rep(N, 3), dist = rep(dist, 3), blocking = c("scalar", "blockNoAdapt", "blockAdapt"), timePer10kN = timePer10kN)
         dfcomputationalRequirement <- rbind(dfcomputationalRequirement, thisDF)
-        save(dfcomputationalRequirement, file = file.path("results_hclust_single", "results_computationalRequirement.RData"))
+        save(dfcomputationalRequirement, file = file.path("results_hclust_average", "results_computationalRequirement.RData"))
         cat("\n")
         print(dfcomputationalRequirement)
     }
