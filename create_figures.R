@@ -5,8 +5,7 @@
 ## these should only need to be created *once*, after simulations are run
 rm(list=ls())
 exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
-#####for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average')) {
-for(thisResultDir in c('results', 'results_hclust_single')) {
+for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average')) {
     for(exModelName in exampleModelNames) {
         dataFileName <- paste0('results_', exModelName, '.RData')
         loadDir <- file.path('~/GitHub/legacy/autoBlock', thisResultDir, dataFileName)
