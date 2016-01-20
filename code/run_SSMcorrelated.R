@@ -1,5 +1,5 @@
 source("autoBlock.R")
 load(file.path("data", "model_SSMcorrelated.RData"))
 dfSSMcorrelated <- autoBlock(code, constants, data, inits, 50000, runList)$summary
-save(dfSSMcorrelated, file = file.path("results_hclust_median", "results_SSMcorrelated.RData"))
+save(dfSSMcorrelated, file = file.path("results_hclust_wardd", "results_SSMcorrelated.RData"))
 

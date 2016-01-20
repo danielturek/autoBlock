@@ -4,9 +4,10 @@
 ## *_summary data frames......
 ## these should only need to be created *once*, after simulations are run
 rm(list=ls())
+## FAILED: hclust method 'median'
 exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
 for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average')) {
-######for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average', 'results_hclust_median')) {
+######for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average', 'results_hclust_wardd')) {
     for(exModelName in exampleModelNames) {
         dataFileName <- paste0('results_', exModelName, '.RData')
         loadDir <- file.path('~/GitHub/legacy/autoBlock', thisResultDir, dataFileName)
@@ -157,7 +158,6 @@ dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSM
 dfFig$method <- 'complete'
 dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
 dfAllMethods <- dfFig
-## define add one hclust method function
 addOneHclustMethod <- function(name) {
     resultsDirName <- paste0('results_hclust_', name)
     for(exName in exampleModelNames) {
@@ -170,8 +170,9 @@ addOneHclustMethod <- function(name) {
     dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
     dfAllMethods <<- rbind(dfAllMethods, dfFig)
 }
+## FAILED: hclust method 'median'
 otherMethodsToAdd <- c('single', 'average')
-##otherMethodsToAdd <- c('single', 'average', 'median')
+##otherMethodsToAdd <- c('single', 'average', 'wardd')
 for(method in otherMethodsToAdd)
     addOneHclustMethod(method)
 dfAllMethods$method <- factor(dfAllMethods$method)

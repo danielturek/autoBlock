@@ -1,5 +1,5 @@
 
-resultsDirectoryName <- 'results_hclust_median'
+resultsDirectoryName <- 'results_hclust_wardd'
 fast <- FALSE
 
 if(fast) {
