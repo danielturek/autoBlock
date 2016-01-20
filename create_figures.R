@@ -1,13 +1,40 @@
 
+
+## before making exampleModels figure, we need to process and create the
+## *_summary data frames......
+## these should only need to be created *once*, after simulations are run
+rm(list=ls())
+exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
+#####for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average')) {
+for(thisResultDir in c('results', 'results_hclust_single')) {
+    for(exModelName in exampleModelNames) {
+        dataFileName <- paste0('results_', exModelName, '.RData')
+        loadDir <- file.path('~/GitHub/legacy/autoBlock', thisResultDir, dataFileName)
+        load(loadDir)
+        if(thisResultDir == 'results') {
+            thisDF <- eval(parse(text = paste0('df', exModelName, '_summary')))
+            } else thisDF <- eval(parse(text = paste0('df', exModelName)))
+        thisDF$model <- factor(exModelName)
+        thisDF[thisDF$mcmc == 'All Blocked', 'mcmc'] <- 'all'
+        thisDF[thisDF$mcmc == 'All Scalar', 'mcmc'] <- 'auto0'
+        thisDF[thisDF$mcmc == 'Default', 'mcmc'] <- 'default'
+        thisDF[thisDF$mcmc == 'Auto-Blocking', 'mcmc'] <- 'autoMax'
+        eval(parse(text = paste0('df', exModelName, '_summary <- thisDF')))
+        eval(parse(text = paste0('save(\'df', exModelName, '_summary\', file = \'', thisResultDir, '/results_', exModelName, '_summary.RData\')')))
+    }
+}
+
+
 rm(list=ls())
 
 ## initial (baseline) runs, using hclust method 'complete'
-##resultsDirName <- 'results'
-##figFileNameTag <- ''
+resultsDirName <- 'results'
+figFileNameTag <- ''
 
 ## next set of runs, for BA reviewers, using hclust method 'single'
 resultsDirName <- 'results_hclust_single'
 figFileNameTag <- '_hclust_single'
+
 
 
 ## Figure: 'algorithmicEfficiency'
@@ -88,22 +115,8 @@ system(systemCopyCall)
 
 
 
-## before making exampleModels figure, we need to process and create the
-## *_summary data frames......
-exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
-for(exModelName in exampleModelNames) {
-    dataFileName <- paste0('results_', exName, '.RData')
-    loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
-    load(loadDir)
-    thisDF <- eval(parse(text = paste0('df', exModelName)))
-    thisDF$model <- factor(exModelName)
-    thisDF[thisDF$mcmc == 'All Blocked', 'mcmc'] <- 'all'
-    thisDF[thisDF$mcmc == 'All Scalar', 'mcmc'] <- 'auto0'
-    thisDF[thisDF$mcmc == 'Default', 'mcmc'] <- 'default'
-    thisDF[thisDF$mcmc == 'Auto-Blocking', 'mcmc'] <- 'autoMax'
-    eval(parse(text = paste0('df', exModelName, '_summary <- thisDF')))
-    eval(parse(text = paste0('save(\'df', exModelName, '_summary\', file = \'', resultsDirName, '/results_', exModelName, '_summary.RData\')')))
-}
+
+
 
 ## Figure 'exampleModels'
 ## Line chart of Efficiency results for: SSM (both), Litters, and Spatial
@@ -129,12 +142,64 @@ systemCopyCall <- paste0('cp ', figureFile, ' ~/GitHub/nimble/nimblePapers/autoB
 system(systemCopyCall)
 
 
+## make one plot with the performance of the 3 hclust methods:
+## complete, single, average
+rm(list=ls())
+red<-'#D55E00';   green<-'#009E73';   black<-'black';   blue<-'blue';   lightblue<-'#56B4E9'
+exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
+resultsDirName <- 'results'
+for(exName in exampleModelNames) {
+    dataFileName <- paste0('results_', exName, '_summary.RData')
+    loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
+    load(loadDir)
+}
+dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
+dfFig$method <- 'complete'
+dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
+dfAllMethods <- dfFig
+resultsDirName <- 'results_hclust_single'
+for(exName in exampleModelNames) {
+    dataFileName <- paste0('results_', exName, '_summary.RData')
+    loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
+    load(loadDir)
+}
+dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
+dfFig$method <- 'single'
+dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
+dfAllMethods <- rbind(dfAllMethods, dfFig)
+##resultsDirName <- 'results_hclust_average'
+##for(exName in exampleModelNames) {
+##    dataFileName <- paste0('results_', exName, '_summary.RData')
+##    loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
+##    load(loadDir)
+##}
+##dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
+##dfFig$method <- 'average'
+##dfAllMethods <- rbind(dfAllMethods, dfFig)
+dfAllMethods$method <- factor(dfAllMethods$method)
+dfAllMethods$model <- factor(dfAllMethods$model, levels=c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp'), labels=c('Random\nEffects', 'Auto\nRegressive', 'St. Space\nIndep.', 'St. Space\nCorr.', 'Spatial', 'GLMM'))
+dfAllMethods <- dfAllMethods[dfAllMethods$mcmc %in% c('all','auto0','default','autoMax'), ]
+dfAllMethods$mcmc <- factor(dfAllMethods$mcmc, levels=c('all', 'default', 'auto0', 'autoMax'), labels=c('All Blocked', 'Default', 'All Scalar', 'Auto Blocking'))
+dfAllMethods <- dfAllMethods[, c('model', 'mcmc', 'method', 'Efficiency')]
+library(ggplot2)
+ggplot(dfAllMethods[dfAllMethods$mcmc=='Auto Blocking',], aes(model, Efficiency, group=method, color=method)) + geom_line()
+
+## efficiency reduction factors
+## for the 'single' method
+dfAllMethods[dfAllMethods$mcmc=='Auto Blocking' & dfAllMethods$method=='single', ]$Efficiency / dfAllMethods[dfAllMethods$mcmc=='Auto Blocking' & dfAllMethods$method=='complete', ]$Efficiency
+## for the 'average' method
+dfAllMethods[dfAllMethods$mcmc=='Auto Blocking' & dfAllMethods$method=='average', ]$Efficiency / dfAllMethods[dfAllMethods$mcmc=='Auto Blocking' & dfAllMethods$method=='complete', ]$Efficiency
+
+
+
 
 ## efficiency improvement factors
-df <- dfFig
 ##df <- df[df$model != 'independent',]
 for(mod in unique(df$model)) df[df$model==mod,]$Efficiency <- df[df$model==mod & df$mcmc=='Auto Blocking',]$Efficiency / df[df$model==mod,]$Efficiency
 df[, c('model', 'mcmc', 'Efficiency')]
+
+
+
 
 
 
