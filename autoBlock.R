@@ -288,8 +288,8 @@ autoBlockClass_oldClass <- setRefClass(
                 ## end of slight hack...
                 empCov[[it]] <<- cov(burnedSamples[[it]])
                 empCor[[it]] <<- cov2cor(empCov[[it]])
-                distMatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
-                hTree[[it]] <<- hclust(distMatrix[[it]], method = 'median')
+@                Distmatrix[[it]] <<- as.dist(1 - abs(empCor[[it]]))
+                hTree[[it]] <<- hclust(distMatrix[[it]], method = 'ward.D')
             }
             if(!saveSamples) burnedSamples[[it]] <<- NA
             if(verbose) printCurrent(name, specList[[bestInd]])
