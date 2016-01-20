@@ -6,6 +6,7 @@
 rm(list=ls())
 exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
 for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average')) {
+######for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average', 'results_hclust_median')) {
     for(exModelName in exampleModelNames) {
         dataFileName <- paste0('results_', exModelName, '.RData')
         loadDir <- file.path('~/GitHub/legacy/autoBlock', thisResultDir, dataFileName)
@@ -156,26 +157,23 @@ dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSM
 dfFig$method <- 'complete'
 dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
 dfAllMethods <- dfFig
-resultsDirName <- 'results_hclust_single'
-for(exName in exampleModelNames) {
-    dataFileName <- paste0('results_', exName, '_summary.RData')
-    loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
-    load(loadDir)
+## define add one hclust method function
+addOneHclustMethod <- function(name) {
+    resultsDirName <- paste0('results_hclust_', name)
+    for(exName in exampleModelNames) {
+        dataFileName <- paste0('results_', exName, '_summary.RData')
+        loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
+        load(loadDir)
+    }
+    dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
+    dfFig$method <- name
+    dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
+    dfAllMethods <<- rbind(dfAllMethods, dfFig)
 }
-dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
-dfFig$method <- 'single'
-dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
-dfAllMethods <- rbind(dfAllMethods, dfFig)
-resultsDirName <- 'results_hclust_average'
-for(exName in exampleModelNames) {
-    dataFileName <- paste0('results_', exName, '_summary.RData')
-    loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
-    load(loadDir)
-}
-dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
-dfFig$method <- 'average'
-dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
-dfAllMethods <- rbind(dfAllMethods, dfFig)
+otherMethodsToAdd <- c('single', 'average')
+##otherMethodsToAdd <- c('single', 'average', 'median')
+for(method in otherMethodsToAdd)
+    addOneHclustMethod(method)
 dfAllMethods$method <- factor(dfAllMethods$method)
 dfAllMethods$model <- factor(dfAllMethods$model, levels=c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp'), labels=c('Random\nEffects', 'Auto\nRegressive', 'St. Space\nIndep.', 'St. Space\nCorr.', 'Spatial', 'GLMM'))
 dfAllMethods <- dfAllMethods[dfAllMethods$mcmc %in% c('all','auto0','default','autoMax'), ]
