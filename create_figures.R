@@ -166,15 +166,16 @@ dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSM
 dfFig$method <- 'single'
 dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
 dfAllMethods <- rbind(dfAllMethods, dfFig)
-##resultsDirName <- 'results_hclust_average'
-##for(exName in exampleModelNames) {
-##    dataFileName <- paste0('results_', exName, '_summary.RData')
-##    loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
-##    load(loadDir)
-##}
-##dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
-##dfFig$method <- 'average'
-##dfAllMethods <- rbind(dfAllMethods, dfFig)
+resultsDirName <- 'results_hclust_average'
+for(exName in exampleModelNames) {
+    dataFileName <- paste0('results_', exName, '_summary.RData')
+    loadDir <- file.path('~/GitHub/legacy/autoBlock', resultsDirName, dataFileName)
+    load(loadDir)
+}
+dfFig <- rbind(dflitters_summary, dfice_summary, dfSSMindependent_summary, dfSSMcorrelated_summary, dfspatial_summary, dfmhp_summary)
+dfFig$method <- 'average'
+dfFig <- dfFig[, c('model', 'mcmc', 'method', 'Efficiency')]
+dfAllMethods <- rbind(dfAllMethods, dfFig)
 dfAllMethods$method <- factor(dfAllMethods$method)
 dfAllMethods$model <- factor(dfAllMethods$model, levels=c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp'), labels=c('Random\nEffects', 'Auto\nRegressive', 'St. Space\nIndep.', 'St. Space\nCorr.', 'Spatial', 'GLMM'))
 dfAllMethods <- dfAllMethods[dfAllMethods$mcmc %in% c('all','auto0','default','autoMax'), ]
@@ -182,12 +183,18 @@ dfAllMethods$mcmc <- factor(dfAllMethods$mcmc, levels=c('all', 'default', 'auto0
 dfAllMethods <- dfAllMethods[, c('model', 'mcmc', 'method', 'Efficiency')]
 library(ggplot2)
 ggplot(dfAllMethods[dfAllMethods$mcmc=='Auto Blocking',], aes(model, Efficiency, group=method, color=method)) + geom_line()
+figureFile <- '~/GitHub/legacy/autoBlock/figures/hclustMethodComparison.pdf'
+dev.copy2pdf(file=figureFile)
+
+
 
 ## efficiency reduction factors
 ## for the 'single' method
 dfAllMethods[dfAllMethods$mcmc=='Auto Blocking' & dfAllMethods$method=='single', ]$Efficiency / dfAllMethods[dfAllMethods$mcmc=='Auto Blocking' & dfAllMethods$method=='complete', ]$Efficiency
+##[1] 1.08940080 0.50979445 1.12148930 0.78565123 0.08720652 0.51997152
 ## for the 'average' method
 dfAllMethods[dfAllMethods$mcmc=='Auto Blocking' & dfAllMethods$method=='average', ]$Efficiency / dfAllMethods[dfAllMethods$mcmc=='Auto Blocking' & dfAllMethods$method=='complete', ]$Efficiency
+##[1] 1.05321486 0.49618926 1.23319142 0.75028737 0.08655572 0.49997262
 
 
 
