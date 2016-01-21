@@ -1,0 +1,395 @@
+
+R version 3.2.2 (2015-08-14) -- "Fire Safety"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(nimble)
+
+Attaching package: ‘nimble’
+
+The following object is masked from ‘package:stats’:
+
+    simulate
+
+The following object is masked from ‘package:base’:
+
+    deparse
+
+> library(coda)
+> source("autoBlock.R")
+> kValues <- 0:3
+> Nvalues <- c(2, 4, 8, 16)
+> niter <- 50000
+> keepInd <- (niter/2 + 1):niter
+> dfsamplingEfficiency <- data.frame()
+> for (expDecay in c(FALSE, TRUE)) {
++     for (k in kValues) {
++         for (N in Nvalues) {
++             rho <- 1 - (1 - 0.8)^k
++             candc <- createCodeAndConstants(N, list(1:N), rho, expDecay = expDecay)
++             code <- candc$code
++             constants <- candc$constants
++             data <- list()
++             inits <- list(x = rep(0, N))
++             Rmodel <- nimbleModel(code = code, constants = constants, data = data, inits = inits)
++             nodeNames <- Rmodel$expandNodeNames("x", returnScalarComponents = TRUE)
++             spec <- configureMCMC(Rmodel, nodes = NULL)
++             for (node in nodeNames) spec$addSampler(type = "RW", target = node, print = FALSE)
++             Rmcmc <- buildMCMC(spec)
++             compiledList <- compileNimble(list(Rmodel, Rmcmc))
++             Cmodel <- compiledList[[1]]
++             Cmcmc <- compiledList[[2]]
++             Cmodel$setInits(inits)
++             set.seed(0)
++             timing <- as.numeric(system.time(Cmcmc$run(niter))[1])
++             timePer10kN <- timing/(niter/10000)
++             samples <- as.matrix(Cmcmc$mvSamples)
++             samples <- samples[keepInd, , drop = FALSE]
++             ess <- apply(samples, 2, effectiveSize)
++             meanESS <- mean(ess)
++             essPerN <- meanESS/length(keepInd)
++             thisDF <- data.frame(expDecay = expDecay, k = k, rho = rho, N = N, timePer10kN = timePer10kN, essPerN = essPerN)
++             dfsamplingEfficiency <- rbind(dfsamplingEfficiency, thisDF)
++             save(dfsamplingEfficiency, file = file.path("results_hclust_wardd", "results_samplingEfficiency.RData"))
++         }
++     }
++ }
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_code.cpp -o P1_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_code_nfCode.cpp -o P1_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P1_code01_20_04_35_09.so P1_code.o P1_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_nfRefClass32.cpp -o P1_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P1_nfRefClass3201_20_04_35_18.so P1_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P2_code.cpp -o P2_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P2_code_nfCode.cpp -o P2_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P2_code01_20_04_35_26.so P2_code.o P2_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P2_nfRefClass32.cpp -o P2_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P2_nfRefClass3201_20_04_35_34.so P2_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P3_code.cpp -o P3_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P3_code_nfCode.cpp -o P3_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P3_code01_20_04_35_44.so P3_code.o P3_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P3_nfRefClass32.cpp -o P3_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P3_nfRefClass3201_20_04_35_52.so P3_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P4_code.cpp -o P4_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P4_code_nfCode.cpp -o P4_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P4_code01_20_04_36_04.so P4_code.o P4_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P4_nfRefClass32.cpp -o P4_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P4_nfRefClass3201_20_04_36_12.so P4_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P5_code.cpp -o P5_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P5_code_nfCode.cpp -o P5_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P5_code01_20_04_36_30.so P5_code.o P5_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P5_nfRefClass32.cpp -o P5_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P5_nfRefClass3201_20_04_36_38.so P5_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P6_code.cpp -o P6_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P6_code_nfCode.cpp -o P6_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P6_code01_20_04_36_47.so P6_code.o P6_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P6_nfRefClass32.cpp -o P6_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P6_nfRefClass3201_20_04_36_55.so P6_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P7_code.cpp -o P7_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P7_code_nfCode.cpp -o P7_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P7_code01_20_04_37_04.so P7_code.o P7_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P7_nfRefClass32.cpp -o P7_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P7_nfRefClass3201_20_04_37_13.so P7_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P8_code.cpp -o P8_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P8_code_nfCode.cpp -o P8_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P8_code01_20_04_37_24.so P8_code.o P8_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P8_nfRefClass32.cpp -o P8_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P8_nfRefClass3201_20_04_37_33.so P8_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P9_code.cpp -o P9_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P9_code_nfCode.cpp -o P9_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P9_code01_20_04_37_53.so P9_code.o P9_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P9_nfRefClass32.cpp -o P9_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P9_nfRefClass3201_20_04_38_02.so P9_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P10_code.cpp -o P10_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P10_code_nfCode.cpp -o P10_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P10_code01_20_04_38_10.so P10_code.o P10_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P10_nfRefClass32.cpp -o P10_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P10_nfRefClass3201_20_04_38_19.so P10_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P11_code.cpp -o P11_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P11_code_nfCode.cpp -o P11_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P11_code01_20_04_38_28.so P11_code.o P11_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P11_nfRefClass32.cpp -o P11_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P11_nfRefClass3201_20_04_38_36.so P11_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P12_code.cpp -o P12_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P12_code_nfCode.cpp -o P12_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P12_code01_20_04_38_48.so P12_code.o P12_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P12_nfRefClass32.cpp -o P12_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P12_nfRefClass3201_20_04_38_56.so P12_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P13_code.cpp -o P13_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P13_code_nfCode.cpp -o P13_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P13_code01_20_04_39_17.so P13_code.o P13_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P13_nfRefClass32.cpp -o P13_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P13_nfRefClass3201_20_04_39_26.so P13_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P14_code.cpp -o P14_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P14_code_nfCode.cpp -o P14_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P14_code01_20_04_39_34.so P14_code.o P14_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P14_nfRefClass32.cpp -o P14_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P14_nfRefClass3201_20_04_39_43.so P14_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P15_code.cpp -o P15_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P15_code_nfCode.cpp -o P15_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P15_code01_20_04_39_53.so P15_code.o P15_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P15_nfRefClass32.cpp -o P15_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P15_nfRefClass3201_20_04_40_01.so P15_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P16_code.cpp -o P16_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P16_code_nfCode.cpp -o P16_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P16_code01_20_04_40_13.so P16_code.o P16_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P16_nfRefClass32.cpp -o P16_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P16_nfRefClass3201_20_04_40_21.so P16_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P17_code.cpp -o P17_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P17_code_nfCode.cpp -o P17_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P17_code01_20_04_40_43.so P17_code.o P17_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P17_nfRefClass32.cpp -o P17_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P17_nfRefClass3201_20_04_40_51.so P17_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P18_code.cpp -o P18_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P18_code_nfCode.cpp -o P18_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P18_code01_20_04_41_00.so P18_code.o P18_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P18_nfRefClass32.cpp -o P18_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P18_nfRefClass3201_20_04_41_08.so P18_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P19_code.cpp -o P19_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P19_code_nfCode.cpp -o P19_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P19_code01_20_04_41_18.so P19_code.o P19_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P19_nfRefClass32.cpp -o P19_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P19_nfRefClass3201_20_04_41_26.so P19_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P20_code.cpp -o P20_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P20_code_nfCode.cpp -o P20_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P20_code01_20_04_41_38.so P20_code.o P20_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P20_nfRefClass32.cpp -o P20_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P20_nfRefClass3201_20_04_41_46.so P20_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P21_code.cpp -o P21_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P21_code_nfCode.cpp -o P21_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P21_code01_20_04_42_06.so P21_code.o P21_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P21_nfRefClass32.cpp -o P21_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P21_nfRefClass3201_20_04_42_14.so P21_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P22_code.cpp -o P22_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P22_code_nfCode.cpp -o P22_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P22_code01_20_04_42_23.so P22_code.o P22_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P22_nfRefClass32.cpp -o P22_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P22_nfRefClass3201_20_04_42_32.so P22_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P23_code.cpp -o P23_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P23_code_nfCode.cpp -o P23_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P23_code01_20_04_42_41.so P23_code.o P23_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P23_nfRefClass32.cpp -o P23_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P23_nfRefClass3201_20_04_42_50.so P23_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P24_code.cpp -o P24_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P24_code_nfCode.cpp -o P24_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P24_code01_20_04_43_01.so P24_code.o P24_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P24_nfRefClass32.cpp -o P24_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P24_nfRefClass3201_20_04_43_09.so P24_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P25_code.cpp -o P25_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P25_code_nfCode.cpp -o P25_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P25_code01_20_04_43_30.so P25_code.o P25_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P25_nfRefClass32.cpp -o P25_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P25_nfRefClass3201_20_04_43_38.so P25_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P26_code.cpp -o P26_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P26_code_nfCode.cpp -o P26_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P26_code01_20_04_43_48.so P26_code.o P26_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P26_nfRefClass32.cpp -o P26_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P26_nfRefClass3201_20_04_43_56.so P26_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P27_code.cpp -o P27_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P27_code_nfCode.cpp -o P27_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P27_code01_20_04_44_06.so P27_code.o P27_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P27_nfRefClass32.cpp -o P27_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P27_nfRefClass3201_20_04_44_15.so P27_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P28_code.cpp -o P28_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P28_code_nfCode.cpp -o P28_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P28_code01_20_04_44_28.so P28_code.o P28_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P28_nfRefClass32.cpp -o P28_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P28_nfRefClass3201_20_04_44_36.so P28_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P29_code.cpp -o P29_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P29_code_nfCode.cpp -o P29_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P29_code01_20_04_44_59.so P29_code.o P29_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P29_nfRefClass32.cpp -o P29_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P29_nfRefClass3201_20_04_45_08.so P29_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P30_code.cpp -o P30_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P30_code_nfCode.cpp -o P30_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P30_code01_20_04_45_17.so P30_code.o P30_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P30_nfRefClass32.cpp -o P30_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P30_nfRefClass3201_20_04_45_26.so P30_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P31_code.cpp -o P31_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P31_code_nfCode.cpp -o P31_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P31_code01_20_04_45_36.so P31_code.o P31_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P31_nfRefClass32.cpp -o P31_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P31_nfRefClass3201_20_04_45_45.so P31_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P32_code.cpp -o P32_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P32_code_nfCode.cpp -o P32_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P32_code01_20_04_45_58.so P32_code.o P32_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P32_nfRefClass32.cpp -o P32_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P32_nfRefClass3201_20_04_46_07.so P32_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+> 
+> 
+> proc.time()
+   user  system elapsed 
+650.038 174.019 679.520 
