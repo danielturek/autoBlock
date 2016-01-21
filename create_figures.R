@@ -6,8 +6,7 @@
 rm(list=ls())
 ## FAILED: hclust method 'median'
 exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
-for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average')) {
-######for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average', 'results_hclust_wardd')) {
+for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average', 'results_hclust_wardd')) {
     for(exModelName in exampleModelNames) {
         dataFileName <- paste0('results_', exModelName, '.RData')
         loadDir <- file.path('~/GitHub/legacy/autoBlock', thisResultDir, dataFileName)
@@ -33,8 +32,8 @@ resultsDirName <- 'results'
 figFileNameTag <- ''
 
 ## next set of runs, for BA reviewers, using hclust method 'single'
-resultsDirName <- 'results_hclust_single'
-figFileNameTag <- '_hclust_single'
+##resultsDirName <- 'results_hclust_single'
+##figFileNameTag <- '_hclust_single'
 
 
 
@@ -143,8 +142,8 @@ systemCopyCall <- paste0('cp ', figureFile, ' ~/GitHub/nimble/nimblePapers/autoB
 system(systemCopyCall)
 
 
-## make one plot with the performance of the 3 hclust methods:
-## complete, single, average
+## make one plot with the performance of the different hclust methods:
+## complete, single, average, wardd
 rm(list=ls())
 red<-'#D55E00';   green<-'#009E73';   black<-'black';   blue<-'blue';   lightblue<-'#56B4E9'
 exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
@@ -171,8 +170,7 @@ addOneHclustMethod <- function(name) {
     dfAllMethods <<- rbind(dfAllMethods, dfFig)
 }
 ## FAILED: hclust method 'median'
-otherMethodsToAdd <- c('single', 'average')
-##otherMethodsToAdd <- c('single', 'average', 'wardd')
+otherMethodsToAdd <- c('single', 'average', 'wardd')
 for(method in otherMethodsToAdd)
     addOneHclustMethod(method)
 dfAllMethods$method <- factor(dfAllMethods$method)
