@@ -1,5 +1,5 @@
 
-resultsDirectoryName <- 'results_hclust_wardd'
+resultsDirectoryName <- 'results_hclust_complete2'
 fast <- FALSE
 
 if(fast) {

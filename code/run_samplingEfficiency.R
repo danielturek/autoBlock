@@ -34,7 +34,7 @@ for (expDecay in c(FALSE, TRUE)) {
             essPerN <- meanESS/length(keepInd)
             thisDF <- data.frame(expDecay = expDecay, k = k, rho = rho, N = N, timePer10kN = timePer10kN, essPerN = essPerN)
             dfsamplingEfficiency <- rbind(dfsamplingEfficiency, thisDF)
-            save(dfsamplingEfficiency, file = file.path("results_hclust_wardd", "results_samplingEfficiency.RData"))
+            save(dfsamplingEfficiency, file = file.path("results_hclust_complete2", "results_samplingEfficiency.RData"))
         }
     }
 }

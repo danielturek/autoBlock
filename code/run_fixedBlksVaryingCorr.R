@@ -20,5 +20,5 @@ for (N in Nvalues) {
         dfFixedBlksVaryingCorr <- dfTEMP
     else dfFixedBlksVaryingCorr <- rbind(dfFixedBlksVaryingCorr, dfTEMP)
 }
-save(dfFixedBlksVaryingCorr, file = file.path("results_hclust_wardd", "results_fixedBlksVaryingCorr.RData"))
+save(dfFixedBlksVaryingCorr, file = file.path("results_hclust_complete2", "results_fixedBlksVaryingCorr.RData"))
 
