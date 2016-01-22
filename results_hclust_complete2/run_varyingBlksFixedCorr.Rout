@@ -1,0 +1,144 @@
+
+R version 3.2.2 (2015-08-14) -- "Fire Safety"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(nimble)
+
+Attaching package: ‘nimble’
+
+The following object is masked from ‘package:stats’:
+
+    simulate
+
+The following object is masked from ‘package:base’:
+
+    deparse
+
+> source("autoBlock.R")
+> k <- 6
+> N <- 2^k
+> rhoVector <- c(0.2, 0.5, 0.8)
+> niter <- 50000
+> runList <- list("all", "auto")
+> dfVaryingBlksFixedCorr <- NULL
+> for (rho in rhoVector) {
++     blockLengths <- c(1, 2^(0:(k - 1)))
++     indList <- list()
++     cur <- 1
++     for (len in blockLengths) {
++         indList <- c(indList, list(cur:(cur + len - 1)))
++         cur <- cur + len
++     }
++     data <- list()
++     inits <- list(x = rep(0, N))
++     codeAndConstants <- createCodeAndConstants(N, indList, rep(rho, length(indList)))
++     code <- codeAndConstants$code
++     constants <- codeAndConstants$constants
++     dfTEMP <- autoBlock(code = code, constants = constants, data = data, inits = inits, niter = niter, run = runList)$summary
++     dfTEMP <- cbind(data.frame(rho = rho), dfTEMP)
++     if (is.null(dfVaryingBlksFixedCorr)) 
++         dfVaryingBlksFixedCorr <- dfTEMP
++     else dfVaryingBlksFixedCorr <- rbind(dfVaryingBlksFixedCorr, dfTEMP)
++ }
+defining model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_code.cpp -o P1_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_code_nfCode.cpp -o P1_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P1_code01_21_10_42_04.so P1_code.o P1_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_nfRefClass32.cpp -o P1_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P1_nfRefClass3201_21_10_42_17.so P1_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+
+Auto-Blocking summary:
+           mcmc  node       S     C Efficiency
+1   All Blocked x[17]   50.14  1.48      33.99
+2    All Scalar x[63] 1454.26 12.13     119.93
+3 Auto-Blocking x[49]  154.88  1.12     137.77
+
+Auto-Blocking converged on the node groupings:
+[1] x[3], x[4]
+[2] x[5], x[6], x[7], x[8]
+[3] x[9], x[10], x[11], x[12], x[13], x[14], x[15], x[16]
+[4] x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32]
+[5] x[33], x[34], x[35], x[36], x[37], x[38], x[39], x[40], x[41], x[42], x[43], x[44], x[45], x[46], x[47], x[48], x[49], x[50], x[51], x[52], x[53], x[54], x[55], x[56], x[57], x[58], x[59], x[60], x[61], x[62], x[63], x[64]
+
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+defining model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P2_code.cpp -o P2_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P2_code_nfCode.cpp -o P2_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P2_code01_21_10_53_15.so P2_code.o P2_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P2_nfRefClass32.cpp -o P2_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P2_nfRefClass3201_21_10_53_28.so P2_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+
+Auto-Blocking summary:
+           mcmc  node      S     C Efficiency
+1    All Scalar x[45] 299.59 12.32      24.31
+2   All Blocked x[13]  43.60  1.46      29.82
+3 Auto-Blocking x[63] 128.02  1.14     111.99
+
+Auto-Blocking converged on the node groupings:
+[1] x[3], x[4]
+[2] x[5], x[6], x[7], x[8]
+[3] x[9], x[10], x[11], x[12], x[13], x[14], x[15], x[16]
+[4] x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32]
+[5] x[33], x[34], x[35], x[36], x[37], x[38], x[39], x[40], x[41], x[42], x[43], x[44], x[45], x[46], x[47], x[48], x[49], x[50], x[51], x[52], x[53], x[54], x[55], x[56], x[57], x[58], x[59], x[60], x[61], x[62], x[63], x[64]
+
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+defining model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P3_code.cpp -o P3_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P3_code_nfCode.cpp -o P3_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P3_code01_21_11_01_45.so P3_code.o P3_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P3_nfRefClass32.cpp -o P3_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P3_nfRefClass3201_21_11_01_58.so P3_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+
+Auto-Blocking summary:
+           mcmc  node     S     C Efficiency
+1    All Scalar x[57] 59.04 12.21       4.83
+2   All Blocked  x[5] 27.72  1.47      18.85
+3 Auto-Blocking x[52] 49.89  1.13      44.10
+
+Auto-Blocking converged on the node groupings:
+[1] x[3], x[4]
+[2] x[5], x[6], x[7], x[8]
+[3] x[9], x[10], x[11], x[12], x[13], x[14], x[15], x[16]
+[4] x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32]
+[5] x[33], x[34], x[35], x[36], x[37], x[38], x[39], x[40], x[41], x[42], x[43], x[44], x[45], x[46], x[47], x[48], x[49], x[50], x[51], x[52], x[53], x[54], x[55], x[56], x[57], x[58], x[59], x[60], x[61], x[62], x[63], x[64]
+
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+> save(dfVaryingBlksFixedCorr, file = file.path("results_hclust_complete2", "results_varyingBlksFixedCorr.RData"))
+> 
+> 
+> proc.time()
+    user   system  elapsed 
+1711.955 1641.451 1675.979 
