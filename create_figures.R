@@ -6,7 +6,7 @@
 rm(list=ls())
 ## FAILED: hclust method 'median'
 exampleModelNames <- c('litters', 'ice', 'SSMindependent', 'SSMcorrelated', 'spatial', 'mhp')
-for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average', 'results_hclust_wardd')) {
+for(thisResultDir in c('results', 'results_hclust_single', 'results_hclust_average', 'results_hclust_wardd', 'results_hclust_complete2')) {
     for(exModelName in exampleModelNames) {
         dataFileName <- paste0('results_', exModelName, '.RData')
         loadDir <- file.path('~/GitHub/legacy/autoBlock', thisResultDir, dataFileName)
@@ -170,7 +170,7 @@ addOneHclustMethod <- function(name) {
     dfAllMethods <<- rbind(dfAllMethods, dfFig)
 }
 ## FAILED: hclust method 'median'
-otherMethodsToAdd <- c('single', 'average', 'wardd')
+otherMethodsToAdd <- c('single', 'average', 'wardd', 'complete2')
 for(method in otherMethodsToAdd)
     addOneHclustMethod(method)
 dfAllMethods$method <- factor(dfAllMethods$method)
