@@ -25,13 +25,20 @@ makeRunScript <- function(modelName) {
         {
             source('autoBlock.R')
             load(file.path('data', MODELFILE))
-            OUT <- autoBlock(code, constants, data, inits, NITER, runList)$summary
+            saveSamples <- TRUE
+            ab <- autoBlock(code, constants, data, inits, NITER, runList, saveSamples=saveSamples)
+            OUT <- ab$summary
             save(OUT, file = file.path(RESULTSDIRECTORY, RESULTSFILE))
+            if(saveSamples) {
+                samples <- ab$samples
+                save(samples, NITER, file = file.path(RESULTSDIRECTORY, SAMPLESFILE))
+            }
         },
         list(OUT              = as.name(paste0('df', modelName)),
              MODELFILE        = paste0('model_',   modelName, '.RData'),
              NITER            = niter_examples,
              RESULTSDIRECTORY = resultsDirectoryName,
+             SAMPLESFILE      = paste0('results_', modelName, '_samples.RData')
              RESULTSFILE      = paste0('results_', modelName, '.RData')
              )
     )

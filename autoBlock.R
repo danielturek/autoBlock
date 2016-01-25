@@ -7,9 +7,10 @@ autoBlock <- function(code, constants=list(), data=list(), inits=list(),
                       run = list('all', 'default'),
                       setSeed0 = TRUE,
                       verbose = FALSE,
+                      saveSamples = FALSE,
                       round = TRUE ) {
     ab <- autoBlockClass_oldClass(code, constants, data, inits,
-                         control = list(niter=niter, setSeed0=setSeed0, verbose=verbose))
+                         control = list(niter=niter, setSeed0=setSeed0, verbose=verbose, saveSamples=saveSamples))
     if(!'auto' %in% run) run <- c(run, 'auto')  ## always use 'autoBlock' routine
     ab$run(run)
     lastAutoInd <- max(grep('^auto', ab$naming))   ## index of final 'auto' iteration
@@ -36,6 +37,7 @@ autoBlock <- function(code, constants=list(), data=list(), inits=list(),
     spec <- configureMCMC(Rmodel, nodes = NULL)
     for(nodeGroup in lastAutoGrouping) addSamplerToSpec(Rmodel, spec, nodeGroup)
     retList <- list(summary=dfmin, autoGroups=nonTrivialGroups, Rmodel=Rmodel, spec=spec)
+    if(saveSamples) retList$samples <- ab$samples
     return(invisible(retList))
 }
 
