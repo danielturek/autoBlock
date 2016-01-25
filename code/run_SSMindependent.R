@@ -1,5 +1,13 @@
 source("autoBlock.R")
 load(file.path("data", "model_SSMindependent.RData"))
-dfSSMindependent <- autoBlock(code, constants, data, inits, 50000, runList)$summary
-save(dfSSMindependent, file = file.path("results_hclust_complete2", "results_SSMindependent.RData"))
+saveSamples <- TRUE
+niter <- 50000
+ab <- autoBlock(code, constants, data, inits, niter, runList, saveSamples = saveSamples)
+dfSSMindependent <- ab$summary
+save(dfSSMindependent, file = file.path("results_samples", "results_SSMindependent.RData"))
+if (saveSamples) {
+    burnedSamplesList <- ab$samples
+    for (i in 1:length(burnedSamplesList)) burnedSamplesList[[i]] <- burnedSamplesList[[i]][(floor(niter/2) + 1):niter, ]
+    save(burnedSamplesList, niter, file = file.path("results_samples", "results_SSMindependent_samples.RData"))
+}
 

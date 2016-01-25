@@ -1,5 +1,5 @@
 
-resultsDirectoryName <- 'results_hclust_complete2'
+resultsDirectoryName <- 'results_samples'
 fast <- FALSE
 
 if(fast) {
@@ -26,19 +26,22 @@ makeRunScript <- function(modelName) {
             source('autoBlock.R')
             load(file.path('data', MODELFILE))
             saveSamples <- TRUE
-            ab <- autoBlock(code, constants, data, inits, NITER, runList, saveSamples=saveSamples)
+            niter <- NITER
+            ab <- autoBlock(code, constants, data, inits, niter, runList, saveSamples=saveSamples)
             OUT <- ab$summary
             save(OUT, file = file.path(RESULTSDIRECTORY, RESULTSFILE))
             if(saveSamples) {
-                samples <- ab$samples
-                save(samples, NITER, file = file.path(RESULTSDIRECTORY, SAMPLESFILE))
+                burnedSamplesList <- ab$samples
+                for(i in 1:length(burnedSamplesList))
+                    burnedSamplesList[[i]] <- burnedSamplesList[[i]][(floor(niter/2)+1):niter, ]
+                save(burnedSamplesList, niter, file = file.path(RESULTSDIRECTORY, SAMPLESFILE))
             }
         },
         list(OUT              = as.name(paste0('df', modelName)),
              MODELFILE        = paste0('model_',   modelName, '.RData'),
              NITER            = niter_examples,
              RESULTSDIRECTORY = resultsDirectoryName,
-             SAMPLESFILE      = paste0('results_', modelName, '_samples.RData')
+             SAMPLESFILE      = paste0('results_', modelName, '_samples.RData'),
              RESULTSFILE      = paste0('results_', modelName, '.RData')
              )
     )
