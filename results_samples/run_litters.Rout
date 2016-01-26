@@ -1,0 +1,74 @@
+
+R version 3.2.2 (2015-08-14) -- "Fire Safety"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source("autoBlock.R")
+
+Attaching package: ‘nimble’
+
+The following object is masked from ‘package:stats’:
+
+    simulate
+
+The following object is masked from ‘package:base’:
+
+    deparse
+
+> load(file.path("data", "model_litters.RData"))
+> saveSamples <- TRUE
+> niter <- 50000
+> ab <- autoBlock(code, constants, data, inits, niter, runList, saveSamples = saveSamples)
+defining model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_code.cpp -o P1_code.o
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_code_nfCode.cpp -o P1_code_nfCode.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P1_code01_25_11_19_04.so P1_code.o P1_code_nfCode.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+g++ -I/usr/share/R/include -DNDEBUG -DEIGEN_MPL2_ONLY=1 -I"/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/include"     -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c P1_nfRefClass32.cpp -o P1_nfRefClass32.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o P1_nfRefClass3201_25_11_19_17.so P1_nfRefClass32.o -L/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -Wl,-rpath=/accounts/projects/paciorek/dturek/R/x86_64-pc-linux-gnu-library/3.2/nimble/CppCode -lnimble -L/usr/lib/R/lib -lR
+
+Auto-Blocking summary:
+           mcmc     node      S    C Efficiency
+1       Default     a[1]   3.37 1.26       2.67
+2   All Blocked p[1, 16]   1.84 0.66       2.81
+3    All Scalar     a[1]   5.56 0.65       8.50
+4       blockAB  p[1, 7]  18.28 0.57      32.17
+5    crossLevel     a[2] 111.63 2.91      38.41
+6 Auto-Blocking  p[1, 3]  23.94 0.57      41.91
+
+Auto-Blocking converged on the node groupings:
+[1] a[1], b[1]
+[2] a[2], b[2]
+
+defining model...
+building model...
+setting data and initial values...
+checking model...   (use nimbleModel(..., check = FALSE) to skip model check)
+model building finished
+> dflitters <- ab$summary
+> save(dflitters, file = file.path("results_samples", "results_litters.RData"))
+> if (saveSamples) {
++     burnedSamplesList <- ab$samples
++     for (i in 1:length(burnedSamplesList)) burnedSamplesList[[i]] <- burnedSamplesList[[i]][(floor(niter/2) + 1):niter, ]
++     save(burnedSamplesList, niter, file = file.path("results_samples", "results_litters_samples.RData"))
++ }
+> 
+> 
+> proc.time()
+   user  system elapsed 
+426.670 756.103 418.114 
