@@ -2,7 +2,7 @@ require(mcmcplots)
 inputDir <- 'results_samples'
 outputDir <- 'results_samples_plots'
 outputFileName <- 'posterior_plots'
-fast <- TRUE
+fast <- FALSE
 verbose <- TRUE
 openPDF <- TRUE
 
@@ -15,7 +15,7 @@ getSamplesFiles <- function(inputDir) {
 }
 makeAll <- function(samplesFiles, fast, verbose) {
     if(verbose) message('making list of all samples')
-    if(fast) samplesFiles <- samplesFiles[1:2]
+    ##if(fast) samplesFiles <- samplesFiles[3:4]
     all <- list()
     for(file in samplesFiles) {
         load(file)
@@ -48,8 +48,15 @@ makeExamplePlots <- function(ex, outputDir, verbose) {
     if(verbose) message('making plot for ', ex$name)
     `All Scalar` <- ex$sampList[['All Scalar']]
     AutoBlock <- ex$sampList[['AutoBlock']]
-    random <- switch(ex$name, GLMM = 6, NULL)
-    denoverplot(`All Scalar`, AutoBlock, style='plain', random=random)
+    random <- switch(ex$nameNS,
+                     RandomEffectsmodel = 14,
+                     AutoRegressivemodel = NULL,
+                     StateSpacemodelindependent = 20,
+                     StateSpacemodelcorrelated = 20,
+                     Spatialmodel = 20,
+                     GLMM = 6)
+    denoverplot(`All Scalar`, AutoBlock, style='plain', random=random, plot.title=ex$name,
+                col = c('#009E73', 'blue'))
     dev.copy2pdf(file = paste0(outputDir, '/', ex$nameNS, '.pdf'))
     dev.off()
 }
@@ -64,11 +71,10 @@ makePDF <- function(outputDir, outputFileName, verbose, openPDF) {
 samplesFiles <- getSamplesFiles(inputDir)
 all <- makeAll(samplesFiles, fast, verbose)
 for(ex in all) makeExamplePlots(ex, outputDir, verbose)
+makePDF(outputDir, outputFileName, verbose, openPDF)
 
-
-
-args(denoverplot)
-?denoverplot
+##args(denoverplot)
+##?denoverplot
 
 ##ex <- all[[2]]
 
