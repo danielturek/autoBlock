@@ -72,15 +72,7 @@ samplesFiles <- getSamplesFiles(inputDir)
 all <- makeAll(samplesFiles, fast, verbose)
 for(ex in all) makeExamplePlots(ex, outputDir, verbose)
 makePDF(outputDir, outputFileName, verbose, openPDF)
-
-##args(denoverplot)
-##?denoverplot
-
-##ex <- all[[2]]
-
-##makeOutputFile(all, outputDir, outputFileName)
-##if(openPDF) system(paste0('open ', outputDir, '/', outputFileName, '.pdf'))
-
+system(paste0('cp ', outputDir, '/', outputFileName, '.pdf ~/GitHub/nimble/nimblePapers/autoBlock/Bayesian_Analysis_submission/'))
 
 
 ## makeOutputFile <- function(all, outputDir, outputFileName) {
